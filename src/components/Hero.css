@@ -30,8 +30,8 @@
   position: relative;
   z-index: 2;
   max-width: none;
-  padding-left: 10vw;
-  padding-right: 10vw;
+  padding-left: 80px;
+  padding-right: 20px;
 }
 
 .heroGrid {
@@ -187,7 +187,7 @@
 }
 
 @media (min-width: 981px) and (orientation: landscape) {
-  .heroCard {
-    transform: translateX(-25vw);
+  .heroGrid {
+    margin-left: 0;
   }
 }
