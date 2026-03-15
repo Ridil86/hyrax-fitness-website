@@ -12,16 +12,17 @@ const quotes = [
   },
   {
     avatar: '/img/avatar-athlete-2-128x128.jpg',
-    name: 'James R.',
+    name: 'Priya K.',
     role: 'Rock Runner',
     text: 'I travel for work three weeks out of the month and could never stick to a program. Hyrax sessions are short enough to fit into a hotel gym or a park near the airport. The customized routines adjust to whatever equipment I have access to that week.',
   },
   {
     avatar: '/img/avatar-athlete-3-128x128.jpg',
-    name: 'Priya K.',
+    name: 'James R.',
     role: 'Sentinel',
     text: 'The diet plan alone was worth the upgrade. I was eating well but not eating right for how I train. Within a few weeks my recovery improved and I stopped hitting that afternoon wall. The personal trainer adjustments each week keep things fresh too.',
   },
+  /*
   {
     avatar: '/img/avatar-athlete-1-128x128.jpg',
     name: 'Derek T.',
@@ -40,6 +41,7 @@ const quotes = [
     role: 'Sentinel',
     text: 'Former rugby player, bad knees, and a decade of excuses. Hyrax gave me sled pushes and carries instead of running and box jumps. Six months in I\'m lighter, my knees feel better than they have in years, and I\'m hitting benchmarks I didn\'t think were realistic.',
   },
+  */
 ];
 
 export default function Testimonials() {
