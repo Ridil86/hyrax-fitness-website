@@ -11,7 +11,7 @@ const tiers = [
     price: 'Free',
     priceSub: 'forever',
     features: [
-      'Full workout video library',
+      'Limited workout video library',
       'Downloadable PDF guides',
       'Movement tutorials',
       'Community access',
@@ -39,7 +39,7 @@ const tiers = [
   {
     level: 'All In',
     name: 'Sentinel',
-    desc: 'No half measures. Expert guidance, peak nutrition, and a system built around your life.',
+    desc: 'No half measures. Expert guidance, peak nutrition, and a system fully customized around your life.',
     price: '$20',
     priceSub: '/ month',
     features: [
@@ -62,8 +62,8 @@ const comparisonFeatures = [
     items: [
       {
         name: 'Workout Video Library',
-        detail: 'Full access to every Hyrax workout filmed and explained. Covers all five modules with scaling options for every fitness level.',
-        pup: true,
+        detail: 'Access to Hyrax workout videos covering all five modules with scaling options for every fitness level. Pup members get a curated starter selection.',
+        pup: 'limited',
         runner: true,
         sentinel: true,
       },
@@ -170,6 +170,17 @@ function Dash() {
       <path d="M7 10h6" stroke="#fff" strokeWidth="2" strokeLinecap="round" />
     </svg>
   );
+}
+
+function Limited() {
+  return (
+    <span className="compare-limited" aria-label="Limited access">Limited</span>
+  );
+}
+
+function CellIcon({ value }) {
+  if (value === 'limited') return <Limited />;
+  return value ? <Check /> : <Dash />;
 }
 
 export default function Programs() {
@@ -288,9 +299,9 @@ function ComparisonGroup({ group }) {
             <strong className="compare-feature-name">{item.name}</strong>
             <span className="compare-feature-detail">{item.detail}</span>
           </td>
-          <td className="compare-plan-col">{item.pup ? <Check /> : <Dash />}</td>
-          <td className="compare-plan-col featured">{item.runner ? <Check /> : <Dash />}</td>
-          <td className="compare-plan-col">{item.sentinel ? <Check /> : <Dash />}</td>
+          <td className="compare-plan-col"><CellIcon value={item.pup} /></td>
+          <td className="compare-plan-col featured"><CellIcon value={item.runner} /></td>
+          <td className="compare-plan-col"><CellIcon value={item.sentinel} /></td>
         </tr>
       ))}
     </>

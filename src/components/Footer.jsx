@@ -3,14 +3,13 @@ import './Footer.css';
 
 const footerLinks = {
   Explore: [
-    { to: '/#method', label: 'Method' },
-    { to: '/#workouts', label: 'Workouts' },
     { to: '/programs', label: 'Programs' },
+    { to: '/gallery', label: 'Gallery' },
+    { to: '/faq', label: 'FAQ' },
   ],
   Resources: [
-    { to: '/faq', label: 'FAQ' },
     { to: '/#get-started', label: 'Get Started' },
-    { to: '/gallery', label: 'Gallery' },
+    { to: '/#testimonials', label: 'Testimonials' },
   ],
 };
 

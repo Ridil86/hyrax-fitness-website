@@ -30,7 +30,7 @@ const faqs = [
   },
   {
     q: 'What\u2019s the difference between Pup, Rock Runner, and Sentinel?',
-    a: 'Pup is free and gives you access to the full workout video and PDF library. It\u2019s perfect for exploring the system. Rock Runner ($5/mo) adds customized workout routines and benchmark tracking for those ready to train with structure. Sentinel ($20/mo) is the full package: a digital personal trainer, customized workouts, diet plans, and priority support.',
+    a: 'Pup is free and gives you limited access to the workout video library plus full PDF guides. It\u2019s perfect for exploring the system. Rock Runner ($5/mo) unlocks the full video library, customized workout routines, and benchmark tracking for those ready to train with structure. Sentinel ($20/mo) is the full package: a digital personal trainer, customized workouts, diet plans, and priority support.',
   },
   {
     q: 'What if I have knee or impact limitations?',

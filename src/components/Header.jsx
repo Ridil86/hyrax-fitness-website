@@ -22,8 +22,6 @@ export default function Header() {
   const closeMenu = () => setMenuOpen(false);
 
   const navLinks = [
-    { to: '/#method', label: 'Method' },
-    { to: '/#workouts', label: 'Workouts' },
     { to: '/programs', label: 'Programs' },
     { to: '/gallery', label: 'Gallery' },
     { to: '/faq', label: 'FAQ' },

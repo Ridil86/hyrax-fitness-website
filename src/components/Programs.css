@@ -194,6 +194,18 @@
   fill: rgba(27, 18, 10, .14);
 }
 
+.compare-limited {
+  display: inline-block;
+  padding: 3px 10px;
+  border-radius: 999px;
+  font-size: .78rem;
+  font-weight: 700;
+  letter-spacing: .02em;
+  background: rgba(211, 191, 151, .30);
+  color: var(--rock);
+  border: 1px solid rgba(211, 191, 151, .40);
+}
+
 /* Footer CTAs */
 .compare-table tfoot td {
   padding: 16px 14px;
