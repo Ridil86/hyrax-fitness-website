@@ -29,7 +29,7 @@ export default function Hero() {
         <div className="hero-overlay" />
       </div>
 
-      <div className="wrap hero-wrap">
+      <div className="hero-wrap">
         <motion.div
           className="heroGrid"
           variants={container}
