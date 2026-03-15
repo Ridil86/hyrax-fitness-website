@@ -22,7 +22,7 @@ const tiers = [
   {
     level: 'Committed',
     name: 'Rock Runner',
-    desc: 'Self-starters who want structure and accountability. You know you\'ll show up \u2014 now train with precision.',
+    desc: 'Self-starters who want structure and accountability. You know you\'ll show up and be ready to train.',
     price: '$5',
     priceSub: '/ month',
     features: [
@@ -56,8 +56,125 @@ const tiers = [
   },
 ];
 
+const comparisonFeatures = [
+  {
+    category: 'Content Library',
+    items: [
+      {
+        name: 'Workout Video Library',
+        detail: 'Full access to every Hyrax workout filmed and explained. Covers all five modules with scaling options for every fitness level.',
+        pup: true,
+        runner: true,
+        sentinel: true,
+      },
+      {
+        name: 'Downloadable PDF Guides',
+        detail: 'Printable workout sheets, equipment checklists, and session planners you can take to the gym or the trail.',
+        pup: true,
+        runner: true,
+        sentinel: true,
+      },
+      {
+        name: 'Movement Tutorials',
+        detail: 'Step-by-step breakdowns for every Hyrax movement pattern. Learn proper form for carries, crawls, bolts, and scrambles.',
+        pup: true,
+        runner: true,
+        sentinel: true,
+      },
+    ],
+  },
+  {
+    category: 'Community',
+    items: [
+      {
+        name: 'Community Access',
+        detail: 'Join the Hyrax community to share progress, ask questions, and connect with other athletes training the same system.',
+        pup: true,
+        runner: true,
+        sentinel: true,
+      },
+    ],
+  },
+  {
+    category: 'Personalization',
+    items: [
+      {
+        name: 'Customized Workout Routines',
+        detail: 'Training plans built around your intake assessment. Workouts are tailored to your fitness level, equipment access, and weekly schedule.',
+        pup: false,
+        runner: true,
+        sentinel: true,
+      },
+      {
+        name: 'Customized Diet Plans',
+        detail: 'Nutrition guidance matched to your training load and goals. Covers meal timing, macros, and practical food choices that support performance.',
+        pup: false,
+        runner: false,
+        sentinel: true,
+      },
+    ],
+  },
+  {
+    category: 'Tracking & Analytics',
+    items: [
+      {
+        name: 'Benchmark Tracking',
+        detail: 'Log your Outcrop Challenge scores, carry loads, and session times. See exactly where you stand and how far you have come.',
+        pup: false,
+        runner: true,
+        sentinel: true,
+      },
+      {
+        name: 'Progress Analytics',
+        detail: 'Charts and insights that break down your improvement over weeks and months. Spot trends, plateaus, and breakthroughs at a glance.',
+        pup: false,
+        runner: true,
+        sentinel: true,
+      },
+    ],
+  },
+  {
+    category: 'Coaching & Support',
+    items: [
+      {
+        name: 'Digital Personal Trainer',
+        detail: 'An adaptive coaching system that adjusts your program week to week based on your performance, recovery, and feedback.',
+        pup: false,
+        runner: false,
+        sentinel: true,
+      },
+      {
+        name: 'Priority Support',
+        detail: 'Fast-track access to help with your training, form questions, and program adjustments. Get answers when you need them.',
+        pup: false,
+        runner: false,
+        sentinel: true,
+      },
+    ],
+  },
+];
+
+function Check() {
+  return (
+    <svg className="compare-icon check" viewBox="0 0 20 20" fill="none" aria-label="Included">
+      <circle cx="10" cy="10" r="10" />
+      <path d="M6 10.5l2.5 2.5L14 7.5" stroke="#fff" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+    </svg>
+  );
+}
+
+function Dash() {
+  return (
+    <svg className="compare-icon dash" viewBox="0 0 20 20" fill="none" aria-label="Not included">
+      <circle cx="10" cy="10" r="10" />
+      <path d="M7 10h6" stroke="#fff" strokeWidth="2" strokeLinecap="round" />
+    </svg>
+  );
+}
+
 export default function Programs() {
   const { ref, inView } = useInView({ triggerOnce: true, threshold: 0.1 });
+  const { ref: chartRef, inView: chartInView } = useInView({ triggerOnce: true, threshold: 0.05 });
 
   return (
     <section id="programs">
@@ -68,7 +185,7 @@ export default function Programs() {
               <h2>Choose Your Path</h2>
               <p className="muted">
                 Three tiers built for where you are and where you want to go.
-                Every path leads to the same mountain &mdash; pick the pace that suits you.
+                Every path leads to the same mountain. Pick the pace that suits you.
               </p>
             </div>
             <span className="pill">Pup to Sentinel</span>
@@ -103,7 +220,79 @@ export default function Programs() {
             </motion.article>
           ))}
         </div>
+
+        {/* Comparison Chart */}
+        <div className="compare-section" ref={chartRef}>
+          <ScrollReveal>
+            <div className="sectionHead" style={{ marginTop: 54 }}>
+              <div>
+                <h2>Compare Plans</h2>
+                <p className="muted">
+                  A closer look at what each tier includes so you can pick the right fit.
+                </p>
+              </div>
+            </div>
+          </ScrollReveal>
+
+          <motion.div
+            className="compare-table-wrap"
+            initial={{ opacity: 0, y: 30 }}
+            animate={chartInView ? { opacity: 1, y: 0 } : {}}
+            transition={{ duration: 0.6, ease: 'easeOut' }}
+          >
+            <table className="compare-table" aria-label="Plan comparison">
+              <thead>
+                <tr>
+                  <th className="compare-feature-col">Feature</th>
+                  <th className="compare-plan-col">Pup<span className="compare-price">Free</span></th>
+                  <th className="compare-plan-col featured">Rock Runner<span className="compare-price">$5/mo</span></th>
+                  <th className="compare-plan-col">Sentinel<span className="compare-price">$20/mo</span></th>
+                </tr>
+              </thead>
+              <tbody>
+                {comparisonFeatures.map((group) => (
+                  <ComparisonGroup key={group.category} group={group} />
+                ))}
+              </tbody>
+              <tfoot>
+                <tr>
+                  <td className="compare-feature-col" />
+                  <td className="compare-plan-col">
+                    <a className="btn primary compare-cta" href="/#get-started">Get Started</a>
+                  </td>
+                  <td className="compare-plan-col featured">
+                    <a className="btn primary compare-cta" href="/#get-started">Get Started</a>
+                  </td>
+                  <td className="compare-plan-col">
+                    <a className="btn primary compare-cta" href="/#get-started">Get Started</a>
+                  </td>
+                </tr>
+              </tfoot>
+            </table>
+          </motion.div>
+        </div>
       </div>
     </section>
+  );
+}
+
+function ComparisonGroup({ group }) {
+  return (
+    <>
+      <tr className="compare-category-row">
+        <td colSpan={4}>{group.category}</td>
+      </tr>
+      {group.items.map((item) => (
+        <tr className="compare-row" key={item.name}>
+          <td className="compare-feature-col">
+            <strong className="compare-feature-name">{item.name}</strong>
+            <span className="compare-feature-detail">{item.detail}</span>
+          </td>
+          <td className="compare-plan-col">{item.pup ? <Check /> : <Dash />}</td>
+          <td className="compare-plan-col featured">{item.runner ? <Check /> : <Dash />}</td>
+          <td className="compare-plan-col">{item.sentinel ? <Check /> : <Dash />}</td>
+        </tr>
+      ))}
+    </>
   );
 }

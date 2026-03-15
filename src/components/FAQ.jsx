@@ -18,7 +18,7 @@ const faqs = [
   },
   {
     q: 'Do I need a gym?',
-    a: 'No. You can run Hyrax Fitness outdoors with stairs, a backpack, and space for short sprints. In a gym, sleds, kettlebells, and sandbags are excellent upgrades \u2014 but the system works just as well in a park or your backyard.',
+    a: 'No. You can run Hyrax Fitness outdoors with stairs, a backpack, and space for short sprints. In a gym, sleds, kettlebells, and sandbags are excellent upgrades, but the system works just as well in a park or your backyard.',
   },
   {
     q: 'Is this more cardio or strength?',
@@ -30,15 +30,15 @@ const faqs = [
   },
   {
     q: 'What\u2019s the difference between Pup, Rock Runner, and Sentinel?',
-    a: 'Pup is free and gives you access to the full workout video and PDF library \u2014 perfect for exploring the system. Rock Runner ($5/mo) adds customized workout routines and benchmark tracking for those ready to train with structure. Sentinel ($20/mo) is the full package: a digital personal trainer, customized workouts, diet plans, and priority support.',
+    a: 'Pup is free and gives you access to the full workout video and PDF library. It\u2019s perfect for exploring the system. Rock Runner ($5/mo) adds customized workout routines and benchmark tracking for those ready to train with structure. Sentinel ($20/mo) is the full package: a digital personal trainer, customized workouts, diet plans, and priority support.',
   },
   {
     q: 'What if I have knee or impact limitations?',
-    a: 'Use bike sprints, sled pushes, incline walking, and step ups with controlled cadence. Keep bolts short and rests generous until joints adapt. The system is designed to be modified \u2014 intensity matters more than specific movements.',
+    a: 'Use bike sprints, sled pushes, incline walking, and step ups with controlled cadence. Keep bolts short and rests generous until joints adapt. The system is designed to be modified to meet your needs and capabilities. Intensity matters more than specific movements.',
   },
   {
     q: 'How long are the workouts?',
-    a: 'Most sessions run 30 to 45 minutes including warmup and cooldown. They\u2019re designed to be dense and efficient \u2014 every minute counts. No filler, no waiting around.',
+    a: 'Most sessions run 30 to 45 minutes including warmup and cooldown. They\u2019re designed to be dense and efficient where every minute counts. No filler, no waiting around.',
   },
   {
     q: 'Can I cancel or change my plan anytime?',
