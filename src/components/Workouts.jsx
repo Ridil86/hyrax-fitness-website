@@ -97,7 +97,7 @@ export default function Workouts() {
                   </div>
                 </div>
                 <div style={{ height: 14 }} />
-                <a className="btn" href="#get-started">Get the 2 week starter plan</a>
+                <a className="btn primary" href="#get-started">Get Started</a>
               </div>
             </div>
 

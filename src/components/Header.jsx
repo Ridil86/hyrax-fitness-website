@@ -1,10 +1,12 @@
 import { useState, useEffect } from 'react';
+import { Link, useLocation } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import './Header.css';
 
 export default function Header() {
   const [menuOpen, setMenuOpen] = useState(false);
   const [scrolled, setScrolled] = useState(false);
+  const location = useLocation();
 
   useEffect(() => {
     const onScroll = () => setScrolled(window.scrollY > 20);
@@ -12,27 +14,32 @@ export default function Header() {
     return () => window.removeEventListener('scroll', onScroll);
   }, []);
 
+  // Close mobile menu on route change
+  useEffect(() => {
+    setMenuOpen(false);
+  }, [location]);
+
   const closeMenu = () => setMenuOpen(false);
 
   const navLinks = [
-    { href: '#method', label: 'Method' },
-    { href: '#workouts', label: 'Workouts' },
-    { href: '#programs', label: 'Programs' },
-    { href: '#gallery', label: 'Gallery' },
-    { href: '#faq', label: 'FAQ' },
+    { to: '/#method', label: 'Method' },
+    { to: '/#workouts', label: 'Workouts' },
+    { to: '/programs', label: 'Programs' },
+    { to: '/gallery', label: 'Gallery' },
+    { to: '/faq', label: 'FAQ' },
   ];
 
   return (
     <header className={`site-header ${scrolled ? 'scrolled' : ''}`}>
       <div className="wrap">
         <div className="nav">
-          <a className="brand" href="#top" aria-label="Hyrax Fitness home">
+          <Link className="brand" to="/" aria-label="Hyrax Fitness home">
             <img src="/img/hyrax-fitness-logo-512x512.png" alt="Hyrax Fitness logo" />
             <div className="name">
               <strong>HYRAX FITNESS</strong>
               <span>Scramble. Haul. Bolt. Recover.</span>
             </div>
-          </a>
+          </Link>
 
           <button
             className="menuBtn"
@@ -51,12 +58,11 @@ export default function Header() {
           <div className="menuPanel desktop">
             <nav className="links" aria-label="Primary">
               {navLinks.map(link => (
-                <a key={link.href} href={link.href}>{link.label}</a>
+                <Link key={link.to} to={link.to}>{link.label}</Link>
               ))}
             </nav>
             <div className="cta">
-              <a className="btn ghost" href="#programs">See programs</a>
-              <a className="btn primary" href="#get-started">Get the starter plan</a>
+              <Link className="btn primary" to="/#get-started">Get Started</Link>
             </div>
           </div>
 
@@ -71,12 +77,11 @@ export default function Header() {
               >
                 <nav className="links" aria-label="Primary">
                   {navLinks.map(link => (
-                    <a key={link.href} href={link.href} onClick={closeMenu}>{link.label}</a>
+                    <Link key={link.to} to={link.to} onClick={closeMenu}>{link.label}</Link>
                   ))}
                 </nav>
                 <div className="cta">
-                  <a className="btn ghost" href="#programs" onClick={closeMenu}>See programs</a>
-                  <a className="btn primary" href="#get-started" onClick={closeMenu}>Get the starter plan</a>
+                  <Link className="btn primary" to="/#get-started" onClick={closeMenu}>Get Started</Link>
                 </div>
               </motion.div>
             )}

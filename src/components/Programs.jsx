@@ -5,38 +5,54 @@ import './Programs.css';
 
 const tiers = [
   {
-    level: 'Beginner',
+    level: 'Explorer',
     name: 'Pup',
-    desc: 'Low impact, short distances, plenty of recovery.',
+    desc: 'Curious newcomers testing the terrain. Dip in, explore the movements, and see if the Hyrax way clicks.',
     price: 'Free',
-    priceSub: 'starter plan',
-    features: ['3 sessions per week', 'Light carries and step ups', 'Walk jog bolts', 'Longer rests'],
-    cta: 'Download starter plan',
+    priceSub: 'forever',
+    features: [
+      'Full workout video library',
+      'Downloadable PDF guides',
+      'Movement tutorials',
+      'Community access',
+    ],
+    cta: 'Get Started',
     ctaClass: 'btn primary',
-    href: '#get-started',
   },
   {
-    level: 'Standard',
+    level: 'Committed',
     name: 'Rock Runner',
-    desc: 'The sweet spot: moderate load with consistent density.',
-    price: '$29',
+    desc: 'Self-starters who want structure and accountability. You know you\'ll show up \u2014 now train with precision.',
+    price: '$5',
     priceSub: '/ month',
-    features: ['4 sessions per week', 'Structured progressions', 'Benchmark tracking', 'Equipment options'],
-    cta: 'Join the waitlist',
-    ctaClass: 'btn',
-    href: '#get-started',
+    features: [
+      'Customized workout routines',
+      'Benchmark tracking',
+      'Full workout video library',
+      'Downloadable PDF guides',
+      'Progress analytics',
+    ],
+    cta: 'Get Started',
+    ctaClass: 'btn primary',
     featured: true,
   },
   {
-    level: 'Advanced',
-    name: 'Sentinel Pro',
-    desc: 'Heavier loads, sharper sprints, tighter recovery.',
-    price: '$59',
+    level: 'All In',
+    name: 'Sentinel',
+    desc: 'No half measures. Expert guidance, peak nutrition, and a system built around your life.',
+    price: '$20',
     priceSub: '/ month',
-    features: ['5 sessions per week', 'Heavier carries and holds', 'Reactive sentinel blocks', 'Optional test events'],
-    cta: 'Request coaching',
-    ctaClass: 'btn',
-    href: '#get-started',
+    features: [
+      'Digital Personal Trainer',
+      'Customized workout routines',
+      'Customized diet plans',
+      'Benchmark tracking',
+      'Full workout video library',
+      'Downloadable PDF guides',
+      'Priority support',
+    ],
+    cta: 'Get Started',
+    ctaClass: 'btn primary',
   },
 ];
 
@@ -49,13 +65,13 @@ export default function Programs() {
         <ScrollReveal>
           <div className="sectionHead">
             <div>
-              <h2>Programs and Levels</h2>
+              <h2>Choose Your Path</h2>
               <p className="muted">
-                Three tiers that scale impact, load, and density. Swap equipment freely.
-                The pattern matters more than the tools.
+                Three tiers built for where you are and where you want to go.
+                Every path leads to the same mountain &mdash; pick the pace that suits you.
               </p>
             </div>
-            <span className="pill">Pup to Pro</span>
+            <span className="pill">Pup to Sentinel</span>
           </div>
         </ScrollReveal>
 
@@ -81,7 +97,7 @@ export default function Programs() {
                   {tier.features.map((f, j) => <li key={j}>{f}</li>)}
                 </ul>
                 <div className="actions">
-                  <a className={tier.ctaClass} href={tier.href}>{tier.cta}</a>
+                  <a className={tier.ctaClass} href="/#get-started">{tier.cta}</a>
                 </div>
               </div>
             </motion.article>

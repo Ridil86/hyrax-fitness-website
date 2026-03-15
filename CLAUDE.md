@@ -5,6 +5,7 @@ Hyrax Fitness is a start-stop, scramble-and-carry training system inspired by th
 
 ## Tech Stack
 - **Framework**: React 19 + Vite 8
+- **Routing**: react-router-dom (BrowserRouter)
 - **Animations**: Framer Motion
 - **Scroll Detection**: react-intersection-observer
 - **Styling**: CSS Modules (plain CSS files per component)
@@ -13,19 +14,19 @@ Hyrax Fitness is a start-stop, scramble-and-carry training system inspired by th
 ## Project Structure
 ```
 src/
-  App.jsx              # Main app with lazy-loaded sections
+  App.jsx              # Router setup with page routes + ScrollManager
   main.jsx             # Entry point
   components/
-    Header.jsx/.css    # Sticky nav with mobile hamburger menu
+    Header.jsx/.css    # Sticky nav with mobile hamburger, uses Link for routing
     Hero.jsx/.css      # Full-screen hero with animated entrance
     Method.jsx/.css    # 5 training modules grid
     Workouts.jsx/.css  # Signature workouts cards
-    Programs.jsx/.css  # 3-tier pricing (Pup, Rock Runner, Sentinel Pro)
-    Gallery.jsx/.css   # Photo gallery grid
+    Programs.jsx/.css  # 3-tier pricing page (Pup, Rock Runner, Sentinel)
+    Gallery.jsx/.css   # Photo gallery page
     Testimonials.jsx/.css  # 3 testimonial cards
-    FAQ.jsx/.css       # Animated accordion FAQ
-    GetStarted.jsx/.css    # CTA with email form
-    Footer.jsx/.css    # Footer with nav links
+    FAQ.jsx/.css       # 10-question animated accordion page
+    GetStarted.jsx/.css    # CTA for intake flow + class format and event cards
+    Footer.jsx/.css    # Footer with route-aware links
     LazyImage.jsx      # Intersection-observer lazy image loader
     ScrollReveal.jsx   # Framer Motion scroll-reveal wrapper
   hooks/
@@ -37,6 +38,20 @@ src/
 public/
   img/                 # All site images (24 files)
 ```
+
+## Routing Architecture
+- **`/`** (Home): Hero → Method → Workouts → Testimonials → GetStarted
+- **`/programs`**: Programs page (3 pricing tiers)
+- **`/gallery`**: Photo gallery page
+- **`/faq`**: FAQ page (10 Q&As)
+
+### Navigation Pattern
+- Page routes use `<Link to="/programs">` from react-router-dom
+- Home page section links use `<Link to="/#method">` (hash-based scroll)
+- `ScrollManager` component in App.jsx handles:
+  - Scrolling to hash targets when navigating (e.g., `/#method`)
+  - Scrolling to top when navigating to a new page without hash
+- SPA rewrite rule in Amplify ensures all routes serve `index.html`
 
 ## Design System
 - **Colors**: `--ink` (#1B120A), `--paper` (#FBF7E6), `--sand` (#D3BF97), `--rock` (#A48051), `--earth` (#654C2B), `--sunset` (#F28501 - primary), `--sunrise` (#FDB90F)
@@ -86,20 +101,36 @@ Note: On Windows with Git Bash, always prefix AWS CLI commands with `MSYS_NO_PAT
 - **Account**: Ridil86
 
 ## Content Sections
-1. **Hero** - Full-screen with logo, tagline, CTA, and stats
+
+### Home Page (`/`)
+1. **Hero** - Full-screen with logo, tagline, "Get Started" CTA, and stats
 2. **Method** - 5 training modules (Bask & Prime, Scramble, Forage & Haul, Sentinel, Bolt to Cover)
 3. **Workouts** - 3 signature formats (Outcrop Circuit, Bolt Ladder, Colony Session) + Outcrop Challenge
-4. **Programs** - 3 tiers: Pup (Free), Rock Runner ($29/mo), Sentinel Pro ($59/mo)
-5. **Gallery** - 5-image masonry grid
-6. **Testimonials** - 3 athlete quotes
-7. **FAQ** - 4 questions with animated accordion
-8. **Get Started** - Email signup CTA + class format and event cards
+4. **Testimonials** - 3 athlete quotes
+5. **Get Started** - Intake flow CTA + class format and event cards
+
+### Programs Page (`/programs`)
+- 3 tiers: Pup (Free), Rock Runner ($5/mo), Sentinel ($20/mo)
+- Each tier has "Get Started" button linking to intake flow
+
+### Gallery Page (`/gallery`)
+- 5-image masonry grid
+
+### FAQ Page (`/faq`)
+- 10 questions with animated accordion
+- Covers: getting started, who it's for, progression, plan differences, limitations, cancellation
 
 ## Key Features
-- Lazy-loaded sections via React.lazy() + Suspense
+- Multi-page SPA with React Router (BrowserRouter)
+- Lazy-loaded pages/sections via React.lazy() + Suspense
 - Lazy-loaded images via IntersectionObserver
 - Scroll-reveal animations via Framer Motion
+- ScrollManager for hash-based navigation across pages
 - Animated mobile menu with hamburger-to-X transform
 - Interactive FAQ accordion with smooth open/close
 - Responsive: desktop, tablet, and mobile layouts
 - SPA rewrite rule configured in Amplify for client-side routing
+
+## Future Work
+- Intake questionnaire flow (health, activity level, age, sex, diet)
+- Connect program tier CTAs to intake system

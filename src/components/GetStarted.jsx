@@ -1,22 +1,8 @@
-import { useState } from 'react';
-import { motion } from 'framer-motion';
 import ScrollReveal from './ScrollReveal';
 import LazyImage from './LazyImage';
 import './GetStarted.css';
 
 export default function GetStarted() {
-  const [email, setEmail] = useState('');
-  const [submitted, setSubmitted] = useState(false);
-
-  const handleSubmit = (e) => {
-    e.preventDefault();
-    if (email) {
-      setSubmitted(true);
-      setTimeout(() => setSubmitted(false), 3000);
-      setEmail('');
-    }
-  };
-
   return (
     <section id="get-started">
       <div className="wrap">
@@ -25,43 +11,16 @@ export default function GetStarted() {
             <div className="inner">
               <div>
                 <span className="pill">Start here</span>
-                <h2 style={{ margin: '12px 0 10px' }}>Get the 2 week starter plan</h2>
-                <p className="muted" style={{ margin: 0 }}>
-                  Drop in your email to receive a PDF link, a simple equipment list, and the Outcrop Challenge benchmark sheet.
+                <h2 style={{ margin: '12px 0 10px' }}>Find your training path</h2>
+                <p className="muted" style={{ margin: '0 0 6px' }}>
+                  Take a quick assessment to discover your ideal Hyrax program.
+                  We&rsquo;ll ask about your fitness background, goals, and preferences &mdash;
+                  then build a plan that fits your life.
                 </p>
-
-                <form onSubmit={handleSubmit} aria-label="Starter plan email capture">
-                  <input
-                    type="email"
-                    name="email"
-                    placeholder="you@domain.com"
-                    autoComplete="email"
-                    value={email}
-                    onChange={(e) => setEmail(e.target.value)}
-                    required
-                  />
-                  <motion.button
-                    className="btn primary"
-                    type="submit"
-                    whileTap={{ scale: 0.97 }}
-                  >
-                    {submitted ? 'Sent!' : 'Send me the plan'}
-                  </motion.button>
-                </form>
-
-                {submitted && (
-                  <motion.p
-                    className="success-msg"
-                    initial={{ opacity: 0, y: 10 }}
-                    animate={{ opacity: 1, y: 0 }}
-                  >
-                    Check your inbox for the starter plan!
-                  </motion.p>
-                )}
-
-                <p className="muted small" style={{ margin: '10px 0 0' }}>
-                  By signing up you agree to receive Hyrax Fitness updates. Unsubscribe anytime.
+                <p className="muted small" style={{ margin: '0 0 16px' }}>
+                  It takes about 2 minutes. No commitment, no credit card.
                 </p>
+                <a className="btn primary" href="#get-started">Get Started</a>
               </div>
 
               <LazyImage

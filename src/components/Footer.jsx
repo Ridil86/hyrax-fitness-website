@@ -1,35 +1,37 @@
+import { Link } from 'react-router-dom';
 import './Footer.css';
 
 const footerLinks = {
   Explore: [
-    { href: '#method', label: 'Method' },
-    { href: '#workouts', label: 'Workouts' },
-    { href: '#programs', label: 'Programs' },
+    { to: '/#method', label: 'Method' },
+    { to: '/#workouts', label: 'Workouts' },
+    { to: '/programs', label: 'Programs' },
   ],
   Resources: [
-    { href: '#faq', label: 'FAQ' },
-    { href: '#get-started', label: 'Starter Plan' },
-    { href: '#gallery', label: 'Imagery' },
-  ],
-  Contact: [
-    { href: '#get-started', label: 'Email Signup' },
-    { href: '#top', label: 'Back to Top' },
+    { to: '/faq', label: 'FAQ' },
+    { to: '/#get-started', label: 'Get Started' },
+    { to: '/gallery', label: 'Gallery' },
   ],
 };
 
 export default function Footer() {
+  const scrollToTop = (e) => {
+    e.preventDefault();
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  };
+
   return (
     <footer>
       <div className="wrap">
         <div className="foot">
           <div>
-            <a className="brand" href="#top" style={{ padding: 0 }}>
+            <Link className="brand" to="/" style={{ padding: 0 }}>
               <img src="/img/hyrax-fitness-logo-512x512.png" alt="Hyrax Fitness logo" />
               <div className="name">
                 <strong>HYRAX FITNESS</strong>
                 <span className="muted">Scramble. Haul. Bolt. Recover.</span>
               </div>
-            </a>
+            </Link>
           </div>
 
           <div className="cols" aria-label="Footer links">
@@ -37,10 +39,14 @@ export default function Footer() {
               <div key={title}>
                 <h4>{title}</h4>
                 {links.map(link => (
-                  <a key={link.href + link.label} href={link.href}>{link.label}</a>
+                  <Link key={link.to + link.label} to={link.to}>{link.label}</Link>
                 ))}
               </div>
             ))}
+            <div>
+              <h4>More</h4>
+              <a href="#" onClick={scrollToTop}>Back to Top</a>
+            </div>
           </div>
         </div>
 

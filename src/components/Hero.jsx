@@ -58,7 +58,7 @@ export default function Hero() {
                     </span>
                   </p>
                   <div className="heroActions">
-                    <a className="btn primary" href="#get-started">Download the starter plan</a>
+                    <a className="btn primary" href="#get-started">Get Started</a>
                   </div>
                 </motion.div>
 
