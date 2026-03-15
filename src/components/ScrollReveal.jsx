@@ -11,14 +11,12 @@ export default function ScrollReveal({
   className = '',
   delay = 0,
   duration = 0.6,
-  as = 'div',
   ...props
 }) {
   const { ref, inView } = useInView({ triggerOnce: true, threshold: 0.1 });
-  const Component = motion.create(as);
 
   return (
-    <Component
+    <motion.div
       ref={ref}
       className={className}
       initial="hidden"
@@ -28,6 +26,6 @@ export default function ScrollReveal({
       {...props}
     >
       {children}
-    </Component>
+    </motion.div>
   );
 }
