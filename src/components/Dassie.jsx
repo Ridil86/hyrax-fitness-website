@@ -48,6 +48,7 @@ export default function Dassie() {
               src="/img/the-dassie-1024x576.jpg"
               alt="Rock hyrax perched on a sun-warmed outcrop"
               className="dassie-hero-img"
+              style={{ position: 'absolute', inset: 0, width: '100%', height: '100%' }}
             />
             <div className="dassie-hero-overlay" />
             <div className="dassie-hero-content">
