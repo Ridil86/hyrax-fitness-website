@@ -14,7 +14,7 @@ const fadeUp = {
 const stats = [
   { value: '30-45 min', label: 'Sessions' },
   { value: '5', label: 'Modules' },
-  { value: '3 Tiers', label: 'Pup to Pro' },
+  { value: '3 Tiers', label: 'Pup to Iron Dassie' },
 ];
 
 export default function Hero() {

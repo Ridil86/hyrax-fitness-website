@@ -7,7 +7,7 @@ const quotes = [
   {
     avatar: '/img/avatar-athlete-1-128x128.jpg',
     name: 'Monica S.',
-    role: 'Sentinel',
+    role: 'Iron Dassie',
     text: 'I used to train at CrossFit but the cardio was just too much. I wasn\'t able to gain muscle because I was burning so many calories and didn\'t have the proper nutritional guidance. Ever since starting Hyrax everything has changed. I\'m stronger, healthier, and feel like I have more energy than ever.',
   },
   {
@@ -19,7 +19,7 @@ const quotes = [
   {
     avatar: '/img/avatar-athlete-3-128x128.jpg',
     name: 'James R.',
-    role: 'Sentinel',
+    role: 'Iron Dassie',
     text: 'The diet plan alone was worth the upgrade. I was eating well but not eating right for how I train. Within a few weeks my recovery improved and I stopped hitting that afternoon wall. The personal trainer adjustments each week keep things fresh too.',
   },
   /*
@@ -38,7 +38,7 @@ const quotes = [
   {
     avatar: '/img/avatar-athlete-3-128x128.jpg',
     name: 'Marcus W.',
-    role: 'Sentinel',
+    role: 'Iron Dassie',
     text: 'Former rugby player, bad knees, and a decade of excuses. Hyrax gave me sled pushes and carries instead of running and box jumps. Six months in I\'m lighter, my knees feel better than they have in years, and I\'m hitting benchmarks I didn\'t think were realistic.',
   },
   */

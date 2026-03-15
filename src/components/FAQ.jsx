@@ -10,7 +10,7 @@ const faqs = [
   },
   {
     q: 'Who is this for?',
-    a: 'Anyone who wants functional fitness without the treadmill grind. Whether you\u2019re a complete beginner or an experienced athlete, the Hyrax method scales to your level. The Pup tier is free and designed for newcomers, while Sentinel is built for those who want full coaching.',
+    a: 'Anyone who wants functional fitness without the treadmill grind. Whether you\u2019re a complete beginner or an experienced athlete, the Hyrax method scales to your level. The Pup tier is free and designed for newcomers, while Iron Dassie is built for those who want full coaching.',
   },
   {
     q: 'How do I get started?',
@@ -26,11 +26,11 @@ const faqs = [
   },
   {
     q: 'How do I progress?',
-    a: 'Increase one variable at a time: rounds, load, step height, crawl distance, density, or rest reduction. Keep movement quality high and finish sessions with a calm cooldown. The Benchmark tracking in Rock Runner and Sentinel tiers helps you see exactly where you\u2019re improving.',
+    a: 'Increase one variable at a time: rounds, load, step height, crawl distance, density, or rest reduction. Keep movement quality high and finish sessions with a calm cooldown. The Benchmark tracking in Rock Runner and Iron Dassie tiers helps you see exactly where you\u2019re improving.',
   },
   {
-    q: 'What\u2019s the difference between Pup, Rock Runner, and Sentinel?',
-    a: 'Pup is free and gives you limited access to the workout video library plus full PDF guides. It\u2019s perfect for exploring the system. Rock Runner ($5/mo) unlocks the full video library, customized workout routines, and benchmark tracking for those ready to train with structure. Sentinel ($20/mo) is the full package: a digital personal trainer, customized workouts, diet plans, and priority support.',
+    q: 'What\u2019s the difference between Pup, Rock Runner, and Iron Dassie?',
+    a: 'Pup is free and gives you limited access to the workout video library plus full PDF guides. It\u2019s perfect for exploring the system. Rock Runner ($5/mo) unlocks the full video library, customized workout routines, and benchmark tracking for those ready to train with structure. Iron Dassie ($20/mo) is the full package: a digital personal trainer, customized workouts, diet plans, and priority support.',
   },
   {
     q: 'What if I have knee or impact limitations?',

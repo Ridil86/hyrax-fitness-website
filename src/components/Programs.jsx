@@ -39,7 +39,7 @@ const tiers = [
   },
   {
     level: 'All In',
-    name: 'Sentinel',
+    name: 'Iron Dassie',
     desc: 'No half measures. Expert guidance, peak nutrition, and a system fully customized around your life.',
     price: '$20',
     priceSub: '/ month',
@@ -200,7 +200,7 @@ export default function Programs() {
                 Every path leads to the same mountain. Pick the pace that suits you.
               </p>
             </div>
-            <span className="pill">Pup to Sentinel</span>
+            <span className="pill">Pup to Iron Dassie</span>
           </div>
         </ScrollReveal>
 
@@ -258,7 +258,7 @@ export default function Programs() {
                   <th className="compare-feature-col">Feature</th>
                   <th className="compare-plan-col">Pup<span className="compare-price">Free</span></th>
                   <th className="compare-plan-col featured">Rock Runner<span className="compare-price">$5/mo</span></th>
-                  <th className="compare-plan-col">Sentinel<span className="compare-price">$20/mo</span></th>
+                  <th className="compare-plan-col">Iron Dassie<span className="compare-price">$20/mo</span></th>
                 </tr>
               </thead>
               <tbody>

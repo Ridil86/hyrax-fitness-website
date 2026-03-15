@@ -3,6 +3,7 @@ import './Footer.css';
 
 const footerLinks = {
   Explore: [
+    { to: '/#method', label: 'Method' },
     { to: '/programs', label: 'Programs' },
     { to: '/gallery', label: 'Gallery' },
     { to: '/faq', label: 'FAQ' },

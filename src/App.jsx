@@ -5,6 +5,7 @@ import Hero from './components/Hero';
 import Footer from './components/Footer';
 import './styles/global.css';
 
+const Dassie = lazy(() => import('./components/Dassie'));
 const Method = lazy(() => import('./components/Method'));
 const Workouts = lazy(() => import('./components/Workouts'));
 const Testimonials = lazy(() => import('./components/Testimonials'));
@@ -44,6 +45,9 @@ function HomePage() {
   return (
     <>
       <Hero />
+      <Suspense fallback={<SectionLoader />}>
+        <Dassie />
+      </Suspense>
       <Suspense fallback={<SectionLoader />}>
         <Method />
       </Suspense>

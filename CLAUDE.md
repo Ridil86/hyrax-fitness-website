@@ -21,7 +21,8 @@ src/
     Hero.jsx/.css      # Full-screen hero with animated entrance
     Method.jsx/.css    # 5 training modules grid
     Workouts.jsx/.css  # Signature workouts cards
-    Programs.jsx/.css  # 3-tier pricing page (Pup, Rock Runner, Sentinel)
+    Dassie.jsx/.css    # "Why the Hyrax?" section about the rock hyrax / dassie
+    Programs.jsx/.css  # 3-tier pricing page (Pup, Rock Runner, Iron Dassie) + comparison chart + events
     Gallery.jsx/.css   # Photo gallery page
     Testimonials.jsx/.css  # 3 testimonial cards
     FAQ.jsx/.css       # 10-question animated accordion page
@@ -40,7 +41,7 @@ public/
 ```
 
 ## Routing Architecture
-- **`/`** (Home): Hero → Method → Workouts → Testimonials → GetStarted
+- **`/`** (Home): Hero → Dassie → Method → Workouts → Testimonials → GetStarted
 - **`/programs`**: Programs page (3 pricing tiers)
 - **`/gallery`**: Photo gallery page
 - **`/faq`**: FAQ page (10 Q&As)
@@ -104,13 +105,16 @@ Note: On Windows with Git Bash, always prefix AWS CLI commands with `MSYS_NO_PAT
 
 ### Home Page (`/`)
 1. **Hero** - Full-screen with logo, tagline, "Get Started" CTA, and stats
-2. **Method** - 5 training modules (Bask & Prime, Scramble, Forage & Haul, Sentinel, Bolt to Cover)
+2. **Dassie** - "Why the Hyrax?" section about the rock hyrax (the dassie) and why it inspires the training system
+3. **Method** - 5 training modules (Bask & Prime, Scramble, Forage & Haul, Sentinel, Bolt to Cover)
 3. **Workouts** - 3 signature formats (Outcrop Circuit, Bolt Ladder, Colony Session) + Outcrop Challenge
 4. **Testimonials** - 3 athlete quotes
 5. **Get Started** - Intake flow CTA + class format and event cards
 
 ### Programs Page (`/programs`)
-- 3 tiers: Pup (Free), Rock Runner ($5/mo), Sentinel ($20/mo)
+- 3 tiers: Pup (Free), Rock Runner ($5/mo), Iron Dassie ($20/mo)
+- Comparison chart with feature breakdown across all tiers
+- Events section with hosting info (events@hyraxfitness.com)
 - Each tier has "Get Started" button linking to intake flow
 
 ### Gallery Page (`/gallery`)
