@@ -1,3 +1,4 @@
+import { Link } from 'react-router-dom';
 import ScrollReveal from './ScrollReveal';
 import LazyImage from './LazyImage';
 import './GetStarted.css';
@@ -48,7 +49,7 @@ export default function GetStarted() {
                 </p>
               </div>
             </div>
-            <div className="card">
+            <Link to="/programs#events" className="card card-link">
               <div className="cardPad">
                 <strong>Want an event?</strong>
                 <LazyImage
@@ -57,10 +58,10 @@ export default function GetStarted() {
                   alt="Hyrax event hosting"
                 />
                 <p className="muted" style={{ margin: '8px 0 0' }}>
-                  Use the Outcrop Challenge as a repeatable test day, then scale loads and density by tier.
+                  Host a branded Hyrax event at your gym or find a competition near you. Get in touch to get started.
                 </p>
               </div>
-            </div>
+            </Link>
           </div>
         </ScrollReveal>
       </div>

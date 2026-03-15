@@ -1,6 +1,7 @@
 import { motion } from 'framer-motion';
 import { useInView } from 'react-intersection-observer';
 import ScrollReveal from './ScrollReveal';
+import LazyImage from './LazyImage';
 import './Programs.css';
 
 const tiers = [
@@ -281,6 +282,57 @@ export default function Programs() {
               </tfoot>
             </table>
           </motion.div>
+        </div>
+
+        {/* Events Section */}
+        <div className="events-section" id="events">
+          <ScrollReveal>
+            <div className="sectionHead" style={{ marginTop: 54 }}>
+              <div>
+                <h2>Hyrax Fitness Events</h2>
+                <p className="muted">
+                  Bring the Hyrax system to your community with branded events and competitions.
+                </p>
+              </div>
+              <span className="pill">Host or Compete</span>
+            </div>
+          </ScrollReveal>
+
+          <ScrollReveal>
+            <div className="events-band">
+              <div className="events-content">
+                <h3>Host Your Own Hyrax Event</h3>
+                <p>
+                  Whether you run a gym, coach a team, or organize community fitness days,
+                  you can bring the Hyrax experience to your crew. We provide the programming,
+                  branding, and support so you can focus on your athletes.
+                </p>
+                <ul className="events-list">
+                  <li>Ready-to-run event formats for groups of any size</li>
+                  <li>Official Hyrax branding and promotional materials</li>
+                  <li>Scalable workouts for mixed fitness levels</li>
+                  <li>Scoring templates and leaderboard tools</li>
+                </ul>
+                <p className="muted" style={{ marginTop: 14 }}>
+                  Interested in hosting or want to find an event near you? Reach out and
+                  we will help you get started.
+                </p>
+                <a
+                  className="btn primary"
+                  href="mailto:events@hyraxfitness.com"
+                  style={{ marginTop: 8, display: 'inline-block' }}
+                >
+                  Contact Us
+                </a>
+                <span className="events-email">events@hyraxfitness.com</span>
+              </div>
+              <LazyImage
+                src="/img/hyrax-event-hosting-800x600.jpg"
+                alt="Hyrax Fitness event with athletes competing outdoors"
+                className="events-image"
+              />
+            </div>
+          </ScrollReveal>
         </div>
       </div>
     </section>
