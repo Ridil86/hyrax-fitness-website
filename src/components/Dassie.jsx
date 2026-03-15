@@ -45,7 +45,7 @@ export default function Dassie() {
         <ScrollReveal>
           <div className="dassie-hero-band">
             <LazyImage
-              src="/img/hero-hyrax-on-outcrop-1600x900.jpg"
+              src="/img/the-dassie-1024x576.jpg"
               alt="Rock hyrax perched on a sun-warmed outcrop"
               className="dassie-hero-img"
             />
