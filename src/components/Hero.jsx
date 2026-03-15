@@ -51,7 +51,7 @@ export default function Hero() {
                 <motion.div className="heroPanel" variants={fadeUp}>
                   <p className="lead">
                     <span className="leadStrong">
-                      Hyrax Fitness is a start stop training system built around scrambling, hauling, vigilance, and short sprints.
+                      Hyrax Fitness is a start-stop training system built around scrambling, hauling, short sprints, and recovery.
                     </span>
                     <span className="leadSub">
                       Train in the gym or outdoors without the long grindy cardio.

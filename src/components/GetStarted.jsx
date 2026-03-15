@@ -15,10 +15,8 @@ export default function GetStarted() {
                 <p className="muted" style={{ margin: '0 0 6px' }}>
                   Take a quick assessment to discover your ideal Hyrax program.
                   We&rsquo;ll ask about your fitness background, goals, and preferences,
-                  then build a plan that fits your life.
-                </p>
-                <p className="muted small" style={{ margin: '0 0 16px' }}>
-                  It takes about 2 minutes. No commitment, no credit card.
+                  then build a plan that fits your life. It only takes about 2 minutes. 
+                  No commitment, no credit card required.
                 </p>
                 <a className="btn primary" href="#get-started">Get Started</a>
               </div>

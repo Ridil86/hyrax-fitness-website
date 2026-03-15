@@ -30,7 +30,7 @@ export default function Method() {
             <div>
               <h2>The Hyrax Method</h2>
               <p className="muted">
-                Five modules that mirror hyrax behavior: warming, scrambling, hauling, vigilance, and bolting to cover.
+                Five modules that mirror hyrax behavior: warming, scrambling, hauling, and bolting to cover.
                 Mix 3 to 5 modules per session for a complete training day.
               </p>
             </div>
