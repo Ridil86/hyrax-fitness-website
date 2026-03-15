@@ -1,0 +1,59 @@
+.workoutGrid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 16px;
+  margin-top: 16px;
+}
+
+.workout {
+  border-radius: 20px;
+  overflow: hidden;
+  border: 1px solid rgba(27, 18, 10, .10);
+  box-shadow: var(--shadow);
+  position: relative;
+  background: #000;
+  min-height: 300px;
+  transition: transform 0.3s ease;
+}
+.workout:hover {
+  transform: scale(1.02);
+}
+
+.workout img, .workout .lazy-img img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
+.workout-overlay {
+  position: absolute;
+  inset: 0;
+  background:
+    linear-gradient(0deg, rgba(27, 18, 10, .68), rgba(27, 18, 10, .08) 60%),
+    radial-gradient(480px 300px at 70% 10%, rgba(253, 185, 15, .18), transparent 60%);
+  pointer-events: none;
+  z-index: 1;
+}
+
+.workout .txt {
+  position: absolute;
+  inset: auto 16px 16px 16px;
+  z-index: 2;
+  color: #fff;
+}
+.workout .txt strong {
+  display: block;
+  font-size: 1.2rem;
+  letter-spacing: -.01em;
+}
+.workout .txt span {
+  display: block;
+  opacity: .86;
+  margin-top: 4px;
+  font-size: .93rem;
+}
+
+@media (max-width: 980px), (max-width: 1200px) and (orientation: portrait) {
+  .workoutGrid { grid-template-columns: 1fr; }
+}

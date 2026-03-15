@@ -1,0 +1,111 @@
+.moduleGrid {
+  display: grid;
+  grid-template-columns: repeat(5, 1fr);
+  gap: 14px;
+  margin-top: 16px;
+}
+
+.module {
+  border-radius: 18px;
+  border: 1px solid rgba(27, 18, 10, .10);
+  background: rgba(251, 247, 230, .70);
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  min-height: 240px;
+  box-shadow: var(--shadow-soft);
+  transition: transform 0.25s ease, box-shadow 0.25s ease;
+}
+.module:hover {
+  transform: translateY(-4px);
+  box-shadow: var(--shadow);
+}
+
+.module img, .module .lazy-img img {
+  width: 100%;
+  height: 108px;
+  object-fit: cover;
+  display: block;
+  filter: saturate(1.02);
+}
+
+.module .body {
+  padding: 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  height: 100%;
+}
+.module .body strong {
+  font-size: 1.05rem;
+  letter-spacing: -.01em;
+}
+.module .body p {
+  margin: 0;
+  color: rgba(27, 18, 10, .74);
+  font-size: .93rem;
+}
+
+.split {
+  display: grid;
+  grid-template-columns: 1.05fr .95fr;
+  gap: 18px;
+  align-items: stretch;
+}
+.split.reverse {
+  grid-template-columns: .95fr 1.05fr;
+}
+
+.mediaCard {
+  border-radius: calc(var(--radius) + 6px);
+  overflow: hidden;
+  border: 1px solid rgba(27, 18, 10, .10);
+  box-shadow: var(--shadow);
+  position: relative;
+  background: #000;
+  min-height: 380px;
+}
+.mediaCard img, .mediaCard .lazy-img img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+.mediaCard::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background:
+    linear-gradient(0deg, rgba(27, 18, 10, .58), rgba(27, 18, 10, .06) 60%),
+    radial-gradient(600px 420px at 60% 10%, rgba(242, 133, 1, .18), transparent 60%);
+  pointer-events: none;
+}
+
+.card {
+  border-radius: var(--radius);
+  border: 1px solid rgba(27, 18, 10, .10);
+  background: rgba(255, 255, 255, .55);
+  box-shadow: var(--shadow-soft);
+  overflow: hidden;
+}
+.card .cardImage {
+  width: 100%;
+  height: auto;
+  display: block;
+  border-radius: 14px;
+  border: 1px solid rgba(27, 18, 10, .10);
+  margin: 10px 0;
+}
+.cardPad { padding: 18px; }
+
+.grid2 {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 18px;
+}
+
+@media (max-width: 980px), (max-width: 1200px) and (orientation: portrait) {
+  .moduleGrid { grid-template-columns: repeat(2, 1fr); }
+  .split, .split.reverse { grid-template-columns: 1fr; }
+  .grid2 { grid-template-columns: 1fr; }
+}

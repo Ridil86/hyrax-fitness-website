@@ -1,0 +1,61 @@
+.ctaBand {
+  border-radius: calc(var(--radius) + 10px);
+  overflow: hidden;
+  border: 1px solid rgba(27, 18, 10, .10);
+  box-shadow: var(--shadow);
+  background:
+    radial-gradient(900px 520px at 10% 0%, rgba(253, 185, 15, .22), transparent 60%),
+    radial-gradient(900px 520px at 90% 20%, rgba(242, 133, 1, .20), transparent 55%),
+    linear-gradient(180deg, rgba(251, 247, 230, .94), rgba(255, 255, 255, .62));
+}
+
+.ctaBand .inner {
+  display: grid;
+  grid-template-columns: 1.1fr .9fr;
+  gap: 18px;
+  padding: 22px;
+  align-items: center;
+}
+
+.ctaBand img, .ctaBand .lazy-img img {
+  width: 100%;
+  height: 320px;
+  object-fit: cover;
+  border-radius: 22px;
+  border: 1px solid rgba(27, 18, 10, .10);
+  box-shadow: var(--shadow-soft);
+}
+
+.ctaBand form {
+  display: flex;
+  gap: 10px;
+  margin-top: 12px;
+  flex-wrap: wrap;
+}
+
+.ctaBand input[type="email"] {
+  flex: 1 1 220px;
+  padding: 12px 14px;
+  border-radius: 14px;
+  border: 1px solid rgba(27, 18, 10, .14);
+  background: rgba(255, 255, 255, .72);
+  font-size: 1rem;
+  font-family: inherit;
+  transition: border-color 0.2s, box-shadow 0.2s;
+}
+.ctaBand input[type="email"]:focus {
+  outline: none;
+  border-color: var(--sunset);
+  box-shadow: var(--ring);
+}
+
+.success-msg {
+  color: #2d7d46;
+  font-weight: 600;
+  margin: 8px 0 0;
+  font-size: 0.95rem;
+}
+
+@media (max-width: 980px), (max-width: 1200px) and (orientation: portrait) {
+  .ctaBand .inner { grid-template-columns: 1fr; }
+}
