@@ -1,12 +1,15 @@
 import { useState, useEffect } from 'react';
-import { Link, useLocation } from 'react-router-dom';
+import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
+import { useAuth } from '../context/AuthContext';
 import './Header.css';
 
 export default function Header() {
   const [menuOpen, setMenuOpen] = useState(false);
   const [scrolled, setScrolled] = useState(false);
+  const { isAuthenticated, isAdmin, signOut } = useAuth();
   const location = useLocation();
+  const navigate = useNavigate();
 
   useEffect(() => {
     const onScroll = () => setScrolled(window.scrollY > 20);
@@ -21,12 +24,23 @@ export default function Header() {
 
   const closeMenu = () => setMenuOpen(false);
 
+  const handleSignOut = async () => {
+    closeMenu();
+    await signOut();
+    navigate('/');
+  };
+
   const navLinks = [
     { to: '/#method', label: 'Method' },
     { to: '/programs', label: 'Programs' },
     { to: '/gallery', label: 'Gallery' },
     { to: '/faq', label: 'FAQ' },
   ];
+
+  // Add Admin link for admin users
+  if (isAdmin) {
+    navLinks.push({ to: '/admin', label: 'Admin' });
+  }
 
   return (
     <header className={`site-header ${scrolled ? 'scrolled' : ''}`}>
@@ -61,7 +75,11 @@ export default function Header() {
               ))}
             </nav>
             <div className="cta">
-              <Link className="btn primary" to="/#get-started">Get Started</Link>
+              {isAuthenticated ? (
+                <button className="btn ghost" onClick={handleSignOut}>Sign Out</button>
+              ) : (
+                <Link className="btn primary" to="/login">Sign In</Link>
+              )}
             </div>
           </div>
 
@@ -80,7 +98,11 @@ export default function Header() {
                   ))}
                 </nav>
                 <div className="cta">
-                  <Link className="btn primary" to="/#get-started" onClick={closeMenu}>Get Started</Link>
+                  {isAuthenticated ? (
+                    <button className="btn ghost" onClick={handleSignOut}>Sign Out</button>
+                  ) : (
+                    <Link className="btn primary" to="/login" onClick={closeMenu}>Sign In</Link>
+                  )}
                 </div>
               </motion.div>
             )}
