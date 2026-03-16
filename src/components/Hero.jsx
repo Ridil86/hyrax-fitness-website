@@ -1,4 +1,5 @@
 import { motion } from 'framer-motion';
+import { useContent } from '../hooks/useContent';
 import './Hero.css';
 
 const container = {
@@ -11,13 +12,23 @@ const fadeUp = {
   visible: { opacity: 1, y: 0, transition: { duration: 0.7, ease: 'easeOut' } },
 };
 
-const stats = [
-  { value: '30-45 min', label: 'Sessions' },
-  { value: '5', label: 'Modules' },
-  { value: '3 Tiers', label: 'Pup to Iron Dassie' },
-];
+// Fallback data while API loads (prevents empty hero on first paint)
+const fallback = {
+  headline: 'Train like a Hyrax',
+  leadStrong: 'Hyrax Fitness is a start-stop training system built around scrambling, hauling, short sprints, and recovery.',
+  leadSub: 'Train in the gym or outdoors without the long grindy cardio.',
+  ctaText: 'Get Started',
+  stats: [
+    { value: '30-45 min', label: 'Sessions' },
+    { value: '5', label: 'Modules' },
+    { value: '3 Tiers', label: 'Pup to Iron Dassie' },
+  ],
+};
 
 export default function Hero() {
+  const { data } = useContent('hero');
+  const d = data || fallback;
+
   return (
     <section className="hero" id="top">
       <div className="hero-bg">
@@ -46,24 +57,20 @@ export default function Hero() {
                   variants={fadeUp}
                 />
                 <motion.h1 className="heroHeadline" variants={fadeUp}>
-                  Train like a Hyrax
+                  {d.headline}
                 </motion.h1>
                 <motion.div className="heroPanel" variants={fadeUp}>
                   <p className="lead">
-                    <span className="leadStrong">
-                      Hyrax Fitness is a start-stop training system built around scrambling, hauling, short sprints, and recovery.
-                    </span>
-                    <span className="leadSub">
-                      Train in the gym or outdoors without the long grindy cardio.
-                    </span>
+                    <span className="leadStrong">{d.leadStrong}</span>
+                    <span className="leadSub">{d.leadSub}</span>
                   </p>
                   <div className="heroActions">
-                    <a className="btn primary" href="#get-started">Get Started</a>
+                    <a className="btn primary" href={d.ctaLink || '#get-started'}>{d.ctaText}</a>
                   </div>
                 </motion.div>
 
                 <motion.div className="stats" variants={fadeUp}>
-                  {stats.map((s, i) => (
+                  {(d.stats || []).map((s, i) => (
                     <div className="stat" key={i}>
                       <strong>{s.value}</strong>
                       <span>{s.label}</span>

@@ -2,34 +2,22 @@ import { motion } from 'framer-motion';
 import { useInView } from 'react-intersection-observer';
 import ScrollReveal from './ScrollReveal';
 import LazyImage from './LazyImage';
+import { useContent } from '../hooks/useContent';
 import './Workouts.css';
 
-const workouts = [
-  {
-    img: '/img/workout-outcrop-circuit-1200x900.jpg',
-    alt: 'Circuit training outdoors near rocks',
-    name: 'Outcrop Circuit',
-    desc: 'Stairs or step ups, carries, crawls, and scan freezes. Repeatable and dense.',
-  },
-  {
-    img: '/img/workout-bolt-ladder-1200x900.jpg',
-    alt: 'Short sprint training with cones',
-    name: 'Bolt Ladder',
-    desc: 'Every two minutes: burst, scramble, hold. High quality speed and power.',
-  },
-  {
-    img: '/img/workout-colony-session-1200x900.jpg',
-    alt: 'Partner training with sandbags',
-    name: 'Colony Session',
-    desc: 'Partner switches with carries and isometrics. Social, sweaty, and scalable.',
-  },
+const fallbackWorkouts = [
+  { img: '/img/workout-outcrop-circuit-1200x900.jpg', alt: 'Circuit training outdoors near rocks', name: 'Outcrop Circuit', desc: 'Stairs or step ups, carries, crawls, and scan freezes. Repeatable and dense.' },
+  { img: '/img/workout-bolt-ladder-1200x900.jpg', alt: 'Short sprint training with cones', name: 'Bolt Ladder', desc: 'Every two minutes: burst, scramble, hold. High quality speed and power.' },
+  { img: '/img/workout-colony-session-1200x900.jpg', alt: 'Partner training with sandbags', name: 'Colony Session', desc: 'Partner switches with carries and isometrics. Social, sweaty, and scalable.' },
 ];
-
-const roundDetails = ['60s steps or stairs', '40m carry', '20m crawl', '6 scan freeze cycles'];
-const scoreDetails = ['Total time', 'Carry load used', 'Freeze quality', 'Breath control'];
 
 export default function Workouts() {
   const { ref: gridRef, inView: gridInView } = useInView({ triggerOnce: true, threshold: 0.1 });
+  const { data } = useContent('workouts');
+  const d = data || {};
+  const workouts = d.workouts || fallbackWorkouts;
+  const roundDetails = d.roundDetails || ['60s steps or stairs', '40m carry', '20m crawl', '6 scan freeze cycles'];
+  const scoreDetails = d.scoreDetails || ['Total time', 'Carry load used', 'Freeze quality', 'Breath control'];
 
   return (
     <section id="workouts">
@@ -37,9 +25,9 @@ export default function Workouts() {
         <ScrollReveal>
           <div className="sectionHead">
             <div>
-              <h2>Signature Workouts</h2>
+              <h2>{d.heading || 'Signature Workouts'}</h2>
             </div>
-            <span className="pill">30 to 45 minutes</span>
+            <span className="pill">{d.pill || '30 to 45 minutes'}</span>
           </div>
         </ScrollReveal>
 
@@ -72,11 +60,10 @@ export default function Workouts() {
           <div className="split reverse">
             <div className="card">
               <div className="cardPad">
-                <span className="pill">Test Day</span>
-                <h3 style={{ margin: '12px 0 8px', fontSize: '1.35rem' }}>The Outcrop Challenge</h3>
+                <span className="pill">{d.challengePill || 'Test Day'}</span>
+                <h3 style={{ margin: '12px 0 8px', fontSize: '1.35rem' }}>{d.challengeHeading || 'The Outcrop Challenge'}</h3>
                 <p className="muted" style={{ margin: '0 0 12px' }}>
-                  A simple benchmark event: 6 rounds of scramble, haul, and bolt work. Track time to completion
-                  and keep movement quality clean.
+                  {d.challengeBody || 'A simple benchmark event: 6 rounds of scramble, haul, and bolt work. Track time to completion and keep movement quality clean.'}
                 </p>
                 <div className="grid2" aria-label="Challenge details">
                   <div className="card" style={{ boxShadow: 'none', background: 'rgba(251,247,230,.55)' }}>

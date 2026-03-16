@@ -1,0 +1,188 @@
+/* ── Content CMS Admin Styles ── */
+
+.content-tabs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-bottom: 20px;
+  border-bottom: 1px solid rgba(27, 18, 10, .08);
+  padding-bottom: 12px;
+}
+
+.content-tab {
+  padding: 8px 16px;
+  border: 1px solid rgba(27, 18, 10, .10);
+  border-radius: 10px;
+  background: none;
+  font: inherit;
+  font-size: .88rem;
+  font-weight: 600;
+  color: rgba(27, 18, 10, .5);
+  cursor: pointer;
+  transition: all .15s;
+}
+
+.content-tab:hover {
+  background: rgba(27, 18, 10, .04);
+}
+
+.content-tab.active {
+  background: var(--sunset);
+  color: #fff;
+  border-color: var(--sunset);
+}
+
+.content-save-msg {
+  padding: 8px 14px;
+  margin-bottom: 12px;
+  background: #ecfdf5;
+  border: 1px solid #a7f3d0;
+  border-radius: 10px;
+  color: #065f46;
+  font-size: .88rem;
+  text-align: center;
+}
+
+/* ── Editor ── */
+.content-editor {
+  padding: 20px;
+  background: rgba(255, 255, 255, .55);
+  border: 1px solid rgba(27, 18, 10, .08);
+  border-radius: var(--radius);
+}
+
+.content-subhead {
+  margin: 24px 0 12px;
+  font-size: 1rem;
+  color: var(--ink);
+  border-bottom: 1px solid rgba(27, 18, 10, .08);
+  padding-bottom: 6px;
+}
+
+.content-field {
+  margin-bottom: 14px;
+}
+
+.content-field label {
+  display: block;
+  font-size: .82rem;
+  font-weight: 600;
+  color: rgba(27, 18, 10, .55);
+  margin-bottom: 4px;
+  text-transform: uppercase;
+  letter-spacing: .03em;
+}
+
+.content-field input,
+.content-field textarea {
+  display: block;
+  width: 100%;
+  padding: 8px 12px;
+  border: 1px solid rgba(27, 18, 10, .12);
+  border-radius: 8px;
+  font: inherit;
+  font-size: .92rem;
+  background: #fff;
+  resize: vertical;
+}
+
+.content-field input:focus,
+.content-field textarea:focus {
+  outline: none;
+  border-color: var(--sunset);
+  box-shadow: var(--ring);
+}
+
+.content-inline-group {
+  display: flex;
+  gap: 8px;
+  align-items: flex-end;
+  margin-bottom: 6px;
+}
+
+.content-inline-group .content-field {
+  flex: 1;
+  margin-bottom: 0;
+}
+
+/* ── Cards for array items ── */
+.content-card {
+  padding: 16px;
+  margin-bottom: 12px;
+  background: rgba(251, 247, 230, .4);
+  border: 1px solid rgba(27, 18, 10, .08);
+  border-radius: 12px;
+}
+
+.content-card-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 12px;
+}
+
+.content-card-header strong {
+  font-size: .92rem;
+  color: var(--ink);
+}
+
+.content-remove-btn {
+  padding: 4px 10px;
+  background: none;
+  border: 1px solid rgba(185, 28, 28, .15);
+  border-radius: 6px;
+  font-size: .78rem;
+  color: #b91c1c;
+  cursor: pointer;
+  transition: background .15s;
+  flex-shrink: 0;
+}
+
+.content-remove-btn:hover {
+  background: #fef2f2;
+}
+
+.content-add-btn {
+  margin-top: 8px;
+  font-size: .88rem;
+}
+
+/* ── Image Upload ── */
+.content-upload-btn {
+  display: inline-block;
+  margin-top: 6px;
+  padding: 4px 12px;
+  border: 1px solid rgba(27, 18, 10, .12);
+  border-radius: 6px;
+  font-size: .82rem;
+  color: rgba(27, 18, 10, .6);
+  cursor: pointer;
+  transition: background .15s;
+}
+
+.content-upload-btn:hover {
+  background: rgba(27, 18, 10, .04);
+}
+
+/* ── Save Bar ── */
+.content-save-bar {
+  margin-top: 24px;
+  padding-top: 16px;
+  border-top: 1px solid rgba(27, 18, 10, .08);
+  display: flex;
+  justify-content: flex-end;
+}
+
+@media (max-width: 640px) {
+  .content-tabs {
+    gap: 4px;
+  }
+  .content-tab {
+    padding: 6px 10px;
+    font-size: .82rem;
+  }
+  .content-inline-group {
+    flex-direction: column;
+    align-items: stretch;
+  }
+}

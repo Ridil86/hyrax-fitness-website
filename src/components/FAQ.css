@@ -53,3 +53,38 @@
   margin: 10px 0 0;
   color: rgba(27, 18, 10, .76);
 }
+
+/* ── Loading skeleton ── */
+.faq-skeleton-item {
+  padding: 22px 14px;
+  border-radius: 18px;
+  border: 1px solid rgba(27, 18, 10, .06);
+  background: rgba(255, 255, 255, .35);
+  margin-bottom: 12px;
+}
+
+.faq-skeleton-line {
+  height: 18px;
+  border-radius: 9px;
+  background: linear-gradient(90deg, rgba(27,18,10,.06) 25%, rgba(27,18,10,.10) 50%, rgba(27,18,10,.06) 75%);
+  background-size: 200% 100%;
+  animation: faq-shimmer 1.5s infinite;
+}
+
+@keyframes faq-shimmer {
+  0% { background-position: 200% 0; }
+  100% { background-position: -200% 0; }
+}
+
+/* ── Error state ── */
+.faq-error {
+  text-align: center;
+  padding: 40px 20px;
+  border: 2px dashed rgba(27, 18, 10, .12);
+  border-radius: 18px;
+}
+
+.faq-error p {
+  margin: 0 0 14px;
+  color: rgba(27, 18, 10, .55);
+}

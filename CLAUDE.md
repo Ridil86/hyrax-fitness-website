@@ -1,7 +1,7 @@
 # Hyrax Fitness Website
 
 ## Project Overview
-Hyrax Fitness is a start-stop, scramble-and-carry training system inspired by the rock hyrax. This is the marketing/landing website built with React + Vite, with Cognito-based authentication and an admin dashboard.
+Hyrax Fitness is a start-stop, scramble-and-carry training system inspired by the rock hyrax. This is the marketing/landing website built with React + Vite, with Cognito-based authentication, an admin dashboard with CMS, FAQ manager, and user management.
 
 ## Tech Stack
 - **Framework**: React 19 + Vite 8
@@ -9,6 +9,9 @@ Hyrax Fitness is a start-stop, scramble-and-carry training system inspired by th
 - **Animations**: Framer Motion
 - **Scroll Detection**: react-intersection-observer
 - **Auth**: AWS Cognito (via aws-amplify v6)
+- **Backend API**: API Gateway (REST) + Lambda (Node.js)
+- **Database**: DynamoDB (single-table design)
+- **Storage**: S3 (admin image uploads via pre-signed URLs)
 - **Infrastructure**: AWS CDK (TypeScript) in `infra/` directory
 - **Styling**: CSS Modules (plain CSS files per component)
 - **Build Output**: `dist/` directory (static SPA)
@@ -20,18 +23,24 @@ src/
   main.jsx             # Entry point (imports amplifyConfig before App)
   amplifyConfig.js     # AWS Amplify/Cognito configuration
   context/
-    AuthContext.jsx    # React context: user state, groups, sign-in/up/out
+    AuthContext.jsx    # React context: user state, groups, sign-in/up/out, getIdToken
+  api/
+    client.js          # Base fetch wrapper (apiGet, apiPost, apiPut, apiDelete)
+    faq.js             # FAQ API functions (list, create, update, delete, reorder)
+    content.js         # Content API functions (get section, update section)
+    users.js           # Users API functions (list, getGroups, updateGroups)
+    upload.js          # S3 upload functions (getPresignedUrl, uploadFile)
   components/
     Header.jsx/.css    # Sticky nav with auth-aware CTA (Sign In / Sign Out / Admin link)
-    Hero.jsx/.css      # Full-screen hero with animated entrance
-    Method.jsx/.css    # 5 training modules grid
-    Workouts.jsx/.css  # Signature workouts cards
-    Dassie.jsx/.css    # "Why the Hyrax?" section about the rock hyrax / dassie
-    Programs.jsx/.css  # 3-tier pricing page (Pup, Rock Runner, Iron Dassie) + comparison chart + events
+    Hero.jsx/.css      # Full-screen hero with animated entrance (API-driven with fallbacks)
+    Method.jsx/.css    # 5 training modules grid (API-driven with fallbacks)
+    Workouts.jsx/.css  # Signature workouts cards (API-driven with fallbacks)
+    Dassie.jsx/.css    # "Why the Hyrax?" section (API-driven with fallbacks)
+    Programs.jsx/.css  # 3-tier pricing + comparison chart + events (API-driven with fallbacks)
     Gallery.jsx/.css   # Photo gallery page
-    Testimonials.jsx/.css  # 3 testimonial cards
-    FAQ.jsx/.css       # 10-question animated accordion page
-    GetStarted.jsx/.css    # CTA for intake flow + class format and event cards
+    Testimonials.jsx/.css  # 3 testimonial cards (API-driven with fallbacks)
+    FAQ.jsx/.css       # Animated accordion (API-driven with loading/error states)
+    GetStarted.jsx/.css    # CTA + class format and event cards (API-driven with fallbacks)
     Footer.jsx/.css    # Footer with route-aware links
     LazyImage.jsx      # Intersection-observer lazy image loader
     ScrollReveal.jsx   # Framer Motion scroll-reveal wrapper
@@ -43,42 +52,100 @@ src/
     ConfirmSignUp.jsx  # 6-digit verification code entry
     auth.css           # Shared auth page styles
     admin/
-      Dashboard.jsx    # Stats placeholder cards
-      Users.jsx        # "Coming in Phase 2" placeholder
-      Content.jsx      # "Coming in Phase 2" placeholder
-      FAQAdmin.jsx     # "Coming in Phase 2" placeholder
-      Merch.jsx        # "Coming in Phase 2" placeholder
-      admin.css        # Shared admin styles
+      Dashboard.jsx/.css   # Live stats (user count, FAQ count) + quick links
+      Users.jsx/.css       # Cognito user list, search, group management
+      Content.jsx/.css     # Tabbed content CMS for all site sections
+      FAQAdmin.jsx/.css    # FAQ CRUD with reorder
+      Merch.jsx            # "Future phase" placeholder
+      admin.css            # Shared admin styles
   hooks/
+    useContent.js      # Fetch content section with in-memory cache
+    useFaq.js          # Fetch FAQ list with in-memory cache
     useLazyImage.js    # Image load state hook
     useScrollReveal.js # IntersectionObserver hook
   styles/
     variables.css      # CSS custom properties (colors, shadows)
     global.css         # Global styles, button classes, section layout
 infra/                 # AWS CDK infrastructure (TypeScript)
-  bin/infra.ts         # CDK app entry point
-  lib/cognito-stack.ts # Cognito User Pool, Groups, App Client, Lambda trigger
-  lambda/post-confirmation/index.ts  # Auto-assigns users to Client group
-  package.json         # CDK dependencies
+  bin/infra.ts         # CDK app entry point (CognitoStack + BackendStack)
+  lib/
+    cognito-stack.ts   # Cognito User Pool, Groups, App Client, Lambda trigger
+    backend-stack.ts   # DynamoDB, S3, API Gateway, Lambda API
+  lambda/
+    post-confirmation/index.ts  # Auto-assigns users to Client group
+    api/
+      index.ts         # Lambda entry point with route dispatcher
+      routes/
+        faq.ts         # FAQ CRUD + reorder handlers
+        content.ts     # Content get/put handlers
+        users.ts       # Cognito user list + group management
+        upload.ts      # S3 pre-signed URL generator
+      utils/
+        response.ts    # Shared HTTP response helpers
+        auth.ts        # Extract/validate Cognito claims
+  scripts/
+    seed-content.ts    # Seed DynamoDB with content from JSON files
+    seed-data/         # JSON seed files (faq, hero, dassie, method, workouts, programs, testimonials, getstarted)
+  package.json         # CDK + Lambda dependencies
   tsconfig.json        # TypeScript config
   cdk.json             # CDK app config
 public/
   img/                 # All site images (25 files)
 ```
 
+## Backend Architecture
+
+### DynamoDB Table (`HyraxContent`)
+Single-table design with PK/SK pattern, PAY_PER_REQUEST billing.
+
+| PK | SK | Use |
+|----|-----|-----|
+| `FAQ` | `FAQ#001` | FAQ item (id, q, a, sortOrder) |
+| `CONTENT` | `hero` | Hero section data |
+| `CONTENT` | `dassie` | Dassie section data |
+| `CONTENT` | `method` | Method section data |
+| `CONTENT` | `workouts` | Workouts section data |
+| `CONTENT` | `programs` | Programs section data |
+| `CONTENT` | `testimonials` | Testimonials data |
+| `CONTENT` | `getstarted` | Get Started section data |
+
+### API Routes (API Gateway + Lambda)
+
+| Method | Path | Auth | Description |
+|--------|------|------|-------------|
+| `GET` | `/api/faq` | Public | List all FAQ items (sorted) |
+| `POST` | `/api/faq` | Admin | Create FAQ item |
+| `PUT` | `/api/faq/{id}` | Admin | Update FAQ item |
+| `DELETE` | `/api/faq/{id}` | Admin | Delete FAQ item |
+| `PUT` | `/api/faq/reorder` | Admin | Batch update sortOrder |
+| `GET` | `/api/content/{section}` | Public | Get content section |
+| `PUT` | `/api/content/{section}` | Admin | Update content section |
+| `GET` | `/api/users` | Admin | List Cognito users |
+| `GET` | `/api/users/{username}/groups` | Admin | Get user's groups |
+| `PUT` | `/api/users/{username}/groups` | Admin | Update user's groups |
+| `POST` | `/api/upload` | Admin | Get S3 pre-signed upload URL |
+
+### Content Data Pattern
+Public components use `useContent(section)` hook which fetches from `/api/content/{section}`. All components keep hardcoded fallback data so the site works even if the API is unreachable. The hook has an in-memory cache to avoid re-fetching within the same session.
+
+### S3 Media Bucket
+- Bucket: `hyrax-fitness-media-{account}` (private, CORS configured)
+- Admin uploads images via pre-signed URLs from `/api/upload`
+- Uploaded files go under `uploads/` prefix with UUID keys
+
 ## Routing Architecture
 - **`/`** (Home): Hero -> Dassie -> Method -> Workouts -> Testimonials -> GetStarted
 - **`/programs`**: Programs page (3 pricing tiers)
 - **`/gallery`**: Photo gallery page
-- **`/faq`**: FAQ page (10 Q&As)
+- **`/faq`**: FAQ page (API-driven)
 - **`/login`**: Sign-in page
 - **`/register`**: Registration page
 - **`/confirm`**: Email verification code page
-- **`/admin`**: Admin dashboard (protected, requires Admin group)
-- **`/admin/users`**: User management (Phase 2)
-- **`/admin/content`**: CMS (Phase 2)
-- **`/admin/faq`**: FAQ manager (Phase 2)
-- **`/admin/merch`**: Merchandise manager (Phase 2)
+- **`/admin`**: Admin dashboard with live stats
+- **`/admin/users`**: User management (search, group toggles)
+- **`/admin/content`**: Content CMS (tabbed editor for all sections)
+- **`/admin/faq`**: FAQ manager (CRUD + reorder)
+- **`/admin/merch`**: Merchandise manager (future phase)
 
 ### Navigation Pattern
 - Page routes use `<Link to="/programs">` from react-router-dom
@@ -102,11 +169,13 @@ public/
 - **Post-confirmation Lambda**: Auto-assigns new users to Client group
 - **Frontend**: aws-amplify v6, React Context (AuthContext)
 - **Token Groups**: Extracted from `cognito:groups` claim in access token
+- **API Auth**: ID token passed as `Authorization` header for admin API routes
 
 ### Environment Variables (Vite)
 - `VITE_COGNITO_USER_POOL_ID` - Cognito User Pool ID
 - `VITE_COGNITO_CLIENT_ID` - Cognito App Client ID
 - `VITE_AWS_REGION` - AWS Region (us-east-1)
+- `VITE_API_URL` - API Gateway base URL (e.g., https://xxxxxxxxxx.execute-api.us-east-1.amazonaws.com/prod)
 - Local dev: `.env.local` (gitignored), Production: Amplify Console env vars
 
 ## Design System
@@ -122,10 +191,17 @@ npm run build    # Production build to dist/
 npm run preview  # Preview production build locally
 
 # CDK commands (from infra/ directory)
-cd infra && npx cdk synth    # Synthesize CloudFormation template
-cd infra && MSYS_NO_PATHCONV=1 npx cdk deploy --profile hyrax-fitness   # Deploy stack
-cd infra && MSYS_NO_PATHCONV=1 npx cdk diff --profile hyrax-fitness     # Preview changes
+cd infra && npx cdk synth                                                    # Synthesize both stacks
+cd infra && MSYS_NO_PATHCONV=1 npx cdk deploy --all --profile hyrax-fitness  # Deploy all stacks
+cd infra && MSYS_NO_PATHCONV=1 npx cdk diff --profile hyrax-fitness          # Preview changes
+
+# Seed DynamoDB with content
+cd infra && MSYS_NO_PATHCONV=1 npx tsx scripts/seed-content.ts --profile hyrax-fitness
 ```
+
+## CDK Stacks
+1. **HyraxFitnessCognito** - Cognito User Pool, Groups, App Client, post-confirmation Lambda
+2. **HyraxFitnessBackend** - DynamoDB table, S3 bucket, API Gateway, Lambda API
 
 ## Deployment
 - **Hosting**: AWS Amplify
@@ -142,7 +218,6 @@ cd infra && MSYS_NO_PATHCONV=1 npx cdk diff --profile hyrax-fitness     # Previe
 - **Permissions**: AdministratorAccess-Amplify, AmazonRoute53FullAccess, HyraxCDKDeployPolicy
 - **Account ID**: 867259842081
 - **DNS**: Route53 Hosted Zone Z0983470RKHLQIR2UU8U
-- **CDK Stack**: HyraxFitnessCognito (Cognito User Pool + Lambda trigger)
 
 ### Useful AWS Commands
 ```bash
@@ -172,9 +247,9 @@ Note: On Windows with Git Bash, always prefix AWS CLI commands with `MSYS_NO_PAT
 1. **Hero** - Full-screen with logo, tagline, "Get Started" CTA, and stats
 2. **Dassie** - "Why the Hyrax?" section about the rock hyrax (the dassie) and why it inspires the training system
 3. **Method** - 5 training modules (Bask & Prime, Scramble, Forage & Haul, Sentinel, Bolt to Cover)
-3. **Workouts** - 3 signature formats (Outcrop Circuit, Bolt Ladder, Colony Session) + Outcrop Challenge
-4. **Testimonials** - 3 athlete quotes
-5. **Get Started** - Intake flow CTA + class format and event cards
+4. **Workouts** - 3 signature formats (Outcrop Circuit, Bolt Ladder, Colony Session) + Outcrop Challenge
+5. **Testimonials** - 3 athlete quotes
+6. **Get Started** - Intake flow CTA + class format and event cards
 
 ### Programs Page (`/programs`)
 - 3 tiers: Pup (Free), Rock Runner ($5/mo), Iron Dassie ($20/mo)
@@ -186,13 +261,18 @@ Note: On Windows with Git Bash, always prefix AWS CLI commands with `MSYS_NO_PAT
 - 5-image masonry grid
 
 ### FAQ Page (`/faq`)
-- 10 questions with animated accordion
+- API-driven animated accordion
 - Covers: getting started, who it's for, progression, plan differences, limitations, cancellation
 
 ## Key Features
 - Multi-page SPA with React Router (BrowserRouter)
 - Cognito authentication with email/password and RBAC (Admin/Client groups)
-- Admin dashboard with sidebar layout and nested routes
+- API-driven content with DynamoDB storage and in-memory caching
+- Admin dashboard with live stats, quick links
+- Admin FAQ Manager with CRUD and drag-to-reorder
+- Admin Content CMS with tabbed editors for all site sections
+- Admin User Management with search, group assignment
+- S3 image uploads from Content CMS via pre-signed URLs
 - Lazy-loaded pages/sections via React.lazy() + Suspense
 - Lazy-loaded images via IntersectionObserver
 - Scroll-reveal animations via Framer Motion
@@ -202,12 +282,18 @@ Note: On Windows with Git Bash, always prefix AWS CLI commands with `MSYS_NO_PAT
 - Responsive: desktop, tablet, and mobile layouts
 - SPA rewrite rule configured in Amplify for client-side routing
 
-## Phase 2 (Future Work)
-- DynamoDB for storing site content, user data, FAQ, merchandise
-- S3 bucket for media/content library
+## Phase 2 Deployment Steps
+Before deploying Phase 2 backend:
+
+1. **Update IAM Policy**: Add DynamoDB, S3, and API Gateway permissions to `HyraxCDKDeployPolicy` on `hyraxfitness-admin`
+2. **CDK Deploy**: `cd infra && MSYS_NO_PATHCONV=1 npx cdk deploy --all --profile hyrax-fitness`
+3. **Seed DynamoDB**: `cd infra && MSYS_NO_PATHCONV=1 npx tsx scripts/seed-content.ts --profile hyrax-fitness`
+4. **Set VITE_API_URL**: Add the API Gateway URL (from CDK output) as env var in Amplify Console
+5. **Trigger Build**: Commit and push to master, or trigger manually via Amplify
+
+## Future Work
 - SES for production email (verification, notifications)
-- Admin CMS tools: edit site content, manage FAQ, manage merchandise
-- User management in admin dashboard
+- Merchandise management in admin dashboard
 - Intake questionnaire flow (health, activity level, age, sex, diet)
 - Connect program tier CTAs to intake system
 - Federated login (Google, Facebook)

@@ -1,0 +1,12 @@
+{
+  "headline": "Train like a Hyrax",
+  "leadStrong": "Hyrax Fitness is a start-stop training system built around scrambling, hauling, short sprints, and recovery.",
+  "leadSub": "Train in the gym or outdoors without the long grindy cardio.",
+  "ctaText": "Get Started",
+  "ctaLink": "#get-started",
+  "stats": [
+    { "value": "30-45 min", "label": "Sessions" },
+    { "value": "5", "label": "Modules" },
+    { "value": "3 Tiers", "label": "Pup to Iron Dassie" }
+  ]
+}

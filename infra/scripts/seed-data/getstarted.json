@@ -1,0 +1,14 @@
+{
+  "pill": "Start here",
+  "heading": "Find your training path",
+  "body": "Take a quick assessment to discover your ideal Hyrax program. We'll ask about your fitness background, goals, and preferences, then build a plan that fits your life. It only takes about 2 minutes. No commitment, no credit card required.",
+  "ctaText": "Get Started",
+  "classFormatTitle": "Need a class format?",
+  "classFormatBody": "Run a 45 minute Hyrax class with a short bask warmup, one scramble block, one haul block, and a bolt finisher.",
+  "classFormatImg": "/img/short-class-promo-800x600.jpg",
+  "classFormatAlt": "Short class format promo",
+  "eventCardTitle": "Want an event?",
+  "eventCardBody": "Host a branded Hyrax event at your gym or find a competition near you. Get in touch to get started.",
+  "eventCardImg": "/img/hyrax-event-hosting-800x600.jpg",
+  "eventCardAlt": "Hyrax event hosting"
+}

@@ -1,0 +1,29 @@
+{
+  "heading": "Signature Workouts",
+  "pill": "30 to 45 minutes",
+  "workouts": [
+    {
+      "img": "/img/workout-outcrop-circuit-1200x900.jpg",
+      "alt": "Circuit training outdoors near rocks",
+      "name": "Outcrop Circuit",
+      "desc": "Stairs or step ups, carries, crawls, and scan freezes. Repeatable and dense."
+    },
+    {
+      "img": "/img/workout-bolt-ladder-1200x900.jpg",
+      "alt": "Short sprint training with cones",
+      "name": "Bolt Ladder",
+      "desc": "Every two minutes: burst, scramble, hold. High quality speed and power."
+    },
+    {
+      "img": "/img/workout-colony-session-1200x900.jpg",
+      "alt": "Partner training with sandbags",
+      "name": "Colony Session",
+      "desc": "Partner switches with carries and isometrics. Social, sweaty, and scalable."
+    }
+  ],
+  "challengePill": "Test Day",
+  "challengeHeading": "The Outcrop Challenge",
+  "challengeBody": "A simple benchmark event: 6 rounds of scramble, haul, and bolt work. Track time to completion and keep movement quality clean.",
+  "roundDetails": ["60s steps or stairs", "40m carry", "20m crawl", "6 scan freeze cycles"],
+  "scoreDetails": ["Total time", "Carry load used", "Freeze quality", "Breath control"]
+}

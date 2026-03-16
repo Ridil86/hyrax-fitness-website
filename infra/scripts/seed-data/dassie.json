@@ -1,0 +1,32 @@
+{
+  "heading": "Why the Hyrax?",
+  "subheading": "The rock hyrax, known as \"the dassie\" in South Africa, is one of nature's most underestimated athletes. Small but mighty, it is the blueprint behind everything we train.",
+  "pill": "The Dassie",
+  "heroTitle": "Power in a Small Package",
+  "heroBody": [
+    "The rock hyrax is the closest living relative of the elephant, one of the most powerful animals on the planet. But where the elephant relies on sheer mass, the hyrax trades size for agility. It can scale near-vertical cliff faces, launch across gaps in loose rock, and perform acrobatic feats that seem impossible for a creature built on the same genetic foundation as a five-ton heavyweight.",
+    "And when the burst is over, it does something most athletes forget to do. It stops. It finds a warm ledge, lowers its heart rate, and recovers completely before the next effort. Calm, cool, composed. That balance between explosive output and deliberate rest is the core of Hyrax Fitness."
+  ],
+  "traits": [
+    {
+      "icon": "\ud83d\udc18",
+      "title": "Closest Cousin to the Elephant",
+      "text": "Despite its compact size, the rock hyrax shares more DNA with the African elephant than almost any other living mammal. Raw power runs in the bloodline."
+    },
+    {
+      "icon": "\ud83e\uddd7",
+      "title": "Built for the Vertical",
+      "text": "Rubbery, sweat-moistened pads on its feet give the hyrax suction-like grip on sheer rock. It scales cliffs that would stop animals ten times its size."
+    },
+    {
+      "icon": "\u26a1",
+      "title": "Agile Under Pressure",
+      "text": "Explosive leaps, tight direction changes, and acrobatic scrambles across loose stone. The hyrax moves with precision and speed when it counts."
+    },
+    {
+      "icon": "\ud83e\uddd8",
+      "title": "Calm and Composed",
+      "text": "Between bursts of activity, the hyrax baskes on warm rock with a steady pulse and relaxed posture. Recovery is not optional. It is part of the system."
+    }
+  ]
+}

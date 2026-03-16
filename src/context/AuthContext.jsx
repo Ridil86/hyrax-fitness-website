@@ -84,6 +84,16 @@ export function AuthProvider({ children }) {
     setGroups([]);
   };
 
+  // Get the current ID token for API Authorization header
+  const getIdToken = useCallback(async () => {
+    try {
+      const session = await fetchAuthSession();
+      return session.tokens?.idToken?.toString() || null;
+    } catch {
+      return null;
+    }
+  }, []);
+
   const value = {
     user,
     groups,
@@ -94,6 +104,7 @@ export function AuthProvider({ children }) {
     signUp,
     confirmSignUp,
     signOut,
+    getIdToken,
   };
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

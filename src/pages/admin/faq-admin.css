@@ -1,0 +1,262 @@
+/* ── FAQ Admin Styles ── */
+
+.faq-admin-actions {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  margin-bottom: 18px;
+}
+
+.faq-admin-count {
+  font-size: .88rem;
+  color: rgba(27, 18, 10, .45);
+}
+
+.faq-admin-error {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12px 16px;
+  margin-bottom: 16px;
+  background: #fef2f2;
+  border: 1px solid #fecaca;
+  border-radius: 10px;
+  color: #991b1b;
+  font-size: .92rem;
+}
+
+.faq-admin-error button {
+  background: none;
+  border: none;
+  color: #991b1b;
+  cursor: pointer;
+  font-weight: 600;
+  font-size: .85rem;
+}
+
+.faq-admin-saving {
+  padding: 8px 14px;
+  margin-bottom: 12px;
+  background: #fef9c3;
+  border: 1px solid #fde68a;
+  border-radius: 10px;
+  color: #92400e;
+  font-size: .88rem;
+  text-align: center;
+}
+
+.faq-admin-loading {
+  text-align: center;
+  padding: 60px 20px;
+  color: rgba(27, 18, 10, .45);
+  font-size: .95rem;
+}
+
+/* ── Add / Edit Form ── */
+.faq-admin-form,
+.faq-admin-edit {
+  padding: 20px;
+  margin-bottom: 18px;
+  background: rgba(255, 255, 255, .65);
+  border: 1px solid rgba(27, 18, 10, .08);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow-soft);
+}
+
+.faq-admin-form label,
+.faq-admin-edit label {
+  display: block;
+  font-size: .88rem;
+  font-weight: 600;
+  color: rgba(27, 18, 10, .6);
+  margin-bottom: 12px;
+}
+
+.faq-admin-form input,
+.faq-admin-form textarea,
+.faq-admin-edit input,
+.faq-admin-edit textarea {
+  display: block;
+  width: 100%;
+  margin-top: 6px;
+  padding: 10px 14px;
+  border: 1px solid rgba(27, 18, 10, .15);
+  border-radius: 10px;
+  font: inherit;
+  font-size: .95rem;
+  background: #fff;
+  resize: vertical;
+}
+
+.faq-admin-form input:focus,
+.faq-admin-form textarea:focus,
+.faq-admin-edit input:focus,
+.faq-admin-edit textarea:focus {
+  outline: none;
+  border-color: var(--sunset);
+  box-shadow: var(--ring);
+}
+
+.faq-admin-form-actions {
+  display: flex;
+  gap: 10px;
+  margin-top: 14px;
+}
+
+/* ── FAQ List ── */
+.faq-admin-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.faq-admin-item {
+  display: flex;
+  flex-direction: column;
+  padding: 16px 18px;
+  background: rgba(255, 255, 255, .55);
+  border: 1px solid rgba(27, 18, 10, .08);
+  border-radius: 14px;
+  transition: border-color .15s;
+}
+
+.faq-admin-item:hover {
+  border-color: rgba(27, 18, 10, .15);
+}
+
+.faq-admin-item.editing {
+  border-color: var(--sunset);
+  background: rgba(255, 255, 255, .8);
+}
+
+.faq-admin-item-content {
+  display: flex;
+  gap: 14px;
+  cursor: pointer;
+}
+
+.faq-admin-order {
+  flex-shrink: 0;
+  width: 30px;
+  height: 30px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(27, 18, 10, .06);
+  border-radius: 8px;
+  font-size: .82rem;
+  font-weight: 700;
+  color: rgba(27, 18, 10, .4);
+  margin-top: 2px;
+}
+
+.faq-admin-item-content strong {
+  display: block;
+  font-size: .95rem;
+  margin-bottom: 4px;
+  color: var(--ink);
+}
+
+.faq-admin-answer {
+  margin: 0;
+  font-size: .88rem;
+  color: rgba(27, 18, 10, .55);
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.faq-admin-item-actions {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-top: 10px;
+  padding-top: 10px;
+  border-top: 1px solid rgba(27, 18, 10, .06);
+}
+
+.faq-move-btn {
+  padding: 4px 8px;
+  background: none;
+  border: 1px solid rgba(27, 18, 10, .12);
+  border-radius: 6px;
+  font-size: .75rem;
+  cursor: pointer;
+  color: rgba(27, 18, 10, .5);
+  transition: background .15s;
+}
+
+.faq-move-btn:hover:not(:disabled) {
+  background: rgba(27, 18, 10, .06);
+}
+
+.faq-move-btn:disabled {
+  opacity: .3;
+  cursor: not-allowed;
+}
+
+.faq-edit-btn,
+.faq-delete-btn {
+  padding: 4px 12px;
+  background: none;
+  border: 1px solid rgba(27, 18, 10, .12);
+  border-radius: 6px;
+  font-size: .82rem;
+  cursor: pointer;
+  color: rgba(27, 18, 10, .6);
+  transition: background .15s;
+}
+
+.faq-edit-btn:hover {
+  background: rgba(27, 18, 10, .06);
+}
+
+.faq-delete-btn {
+  margin-left: auto;
+  color: #b91c1c;
+  border-color: rgba(185, 28, 28, .15);
+}
+
+.faq-delete-btn:hover {
+  background: #fef2f2;
+}
+
+.faq-delete-confirm {
+  margin-left: auto;
+  font-size: .85rem;
+  color: #b91c1c;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.faq-delete-yes,
+.faq-delete-no {
+  padding: 3px 10px;
+  border: none;
+  border-radius: 6px;
+  font-size: .82rem;
+  cursor: pointer;
+  font-weight: 600;
+}
+
+.faq-delete-yes {
+  background: #b91c1c;
+  color: #fff;
+}
+
+.faq-delete-no {
+  background: rgba(27, 18, 10, .08);
+  color: var(--ink);
+}
+
+@media (max-width: 640px) {
+  .faq-admin-item-content {
+    flex-direction: column;
+    gap: 8px;
+  }
+  .faq-admin-item-actions {
+    flex-wrap: wrap;
+  }
+}

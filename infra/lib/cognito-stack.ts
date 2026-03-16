@@ -7,6 +7,9 @@ import { Runtime } from 'aws-cdk-lib/aws-lambda';
 import { Construct } from 'constructs';
 
 export class CognitoStack extends cdk.Stack {
+  public readonly userPoolId: string;
+  public readonly userPoolArn: string;
+
   constructor(scope: Construct, id: string, props?: cdk.StackProps) {
     super(scope, id, props);
 
@@ -31,6 +34,10 @@ export class CognitoStack extends cdk.Stack {
       accountRecovery: cognito.AccountRecovery.EMAIL_ONLY,
       removalPolicy: cdk.RemovalPolicy.RETAIN,
     });
+
+    // Expose for cross-stack references
+    this.userPoolId = userPool.userPoolId;
+    this.userPoolArn = userPool.userPoolArn;
 
     // ── Groups ──
     new cognito.CfnUserPoolGroup(this, 'AdminGroup', {

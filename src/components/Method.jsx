@@ -2,9 +2,10 @@ import { motion } from 'framer-motion';
 import { useInView } from 'react-intersection-observer';
 import ScrollReveal from './ScrollReveal';
 import LazyImage from './LazyImage';
+import { useContent } from '../hooks/useContent';
 import './Method.css';
 
-const modules = [
+const fallbackModules = [
   { img: '/img/module-bask-prime-800x600.jpg', alt: 'Warm sunrise light on rocks', name: 'Bask and Prime', desc: 'Breathing, mobility, and isometrics to switch on without burning matches.' },
   { img: '/img/module-scramble-800x600.jpg', alt: 'Athlete stepping and balancing on rocks', name: 'Scramble', desc: 'Climb, crawl, and footwork for confident movement on uneven terrain.' },
   { img: '/img/module-forage-haul-800x600.jpg', alt: 'Farmer carry training outdoors', name: 'Forage and Haul', desc: 'Loaded carries and repeated pickups to build grip, trunk, and leg stamina.' },
@@ -12,7 +13,7 @@ const modules = [
   { img: '/img/module-bolt-cover-800x600.jpg', alt: 'Short sprint between cones on trail', name: 'Bolt to Cover', desc: '5 to 15 second bursts with recovery, repeated for high quality power.' },
 ];
 
-const bullets = [
+const fallbackBullets = [
   'Every session includes at least one carry and one scramble element.',
   'Work happens in forage bouts of 20 to 90 seconds.',
   'Breathing and composure are trained explicitly with Sentinel freezes.',
@@ -21,6 +22,10 @@ const bullets = [
 
 export default function Method() {
   const { ref: gridRef, inView: gridInView } = useInView({ triggerOnce: true, threshold: 0.1 });
+  const { data } = useContent('method');
+  const d = data || {};
+  const modules = d.modules || fallbackModules;
+  const bullets = d.bullets || fallbackBullets;
 
   return (
     <section id="method">
@@ -28,13 +33,12 @@ export default function Method() {
         <ScrollReveal>
           <div className="sectionHead">
             <div>
-              <h2>The Hyrax Method</h2>
+              <h2>{d.heading || 'The Hyrax Method'}</h2>
               <p className="muted">
-                Five modules that mirror hyrax behavior: warming, scrambling, hauling, and bolting to cover.
-                Mix 3 to 5 modules per session for a complete training day.
+                {d.subheading || 'Five modules that mirror hyrax behavior: warming, scrambling, hauling, and bolting to cover. Mix 3 to 5 modules per session for a complete training day.'}
               </p>
             </div>
-            <span className="pill">5 modules</span>
+            <span className="pill">{d.pill || '5 modules'}</span>
           </div>
         </ScrollReveal>
 
@@ -70,11 +74,10 @@ export default function Method() {
 
             <div className="card">
               <div className="cardPad">
-                <span className="pill">Real-World Utility</span>
-                <h3 style={{ margin: '12px 0 8px', fontSize: '1.35rem' }}>What makes it Hyrax</h3>
+                <span className="pill">{d.splitPill || 'Real-World Utility'}</span>
+                <h3 style={{ margin: '12px 0 8px', fontSize: '1.35rem' }}>{d.splitHeading || 'What makes it Hyrax'}</h3>
                 <p className="muted" style={{ margin: '0 0 12px' }}>
-                  Hyrax Fitness avoids long steady blocks. It is built around repeatable micro efforts, efficient mechanics,
-                  and deliberate recovery.
+                  {d.splitBody || 'Hyrax Fitness avoids long steady blocks. It is built around repeatable micro efforts, efficient mechanics, and deliberate recovery.'}
                 </p>
                 <ul className="muted" style={{ margin: 0, paddingLeft: 18 }}>
                   {bullets.map((b, i) => <li key={i}>{b}</li>)}
