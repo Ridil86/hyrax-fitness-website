@@ -49,26 +49,29 @@ export class CognitoStack extends cdk.Stack {
 
     // ── Post-Confirmation Lambda Trigger ──
     // Auto-bundles TypeScript with esbuild via NodejsFunction
+    // Note: No environment variables needed - the event provides userPoolId
     const postConfirmationFn = new NodejsFunction(this, 'PostConfirmationFn', {
       functionName: 'hyrax-post-confirmation',
       runtime: Runtime.NODEJS_20_X,
       entry: path.join(__dirname, '..', 'lambda', 'post-confirmation', 'index.ts'),
       handler: 'handler',
-      environment: {
-        USER_POOL_ID: userPool.userPoolId,
-      },
       timeout: cdk.Duration.seconds(10),
       bundling: {
         minify: true,
         sourceMap: false,
+        forceDockerBundling: false,
       },
     });
 
     // Grant the Lambda permission to add users to groups
+    // Use a constructed ARN to avoid circular dependency
+    // (UserPool -> Lambda trigger, Lambda policy -> UserPool ARN)
     postConfirmationFn.addToRolePolicy(
       new iam.PolicyStatement({
         actions: ['cognito-idp:AdminAddUserToGroup'],
-        resources: [userPool.userPoolArn],
+        resources: [
+          `arn:aws:cognito-idp:${this.region}:${this.account}:userpool/*`,
+        ],
       })
     );
 
