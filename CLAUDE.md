@@ -46,16 +46,24 @@ src/
     ScrollReveal.jsx   # Framer Motion scroll-reveal wrapper
     ProtectedRoute.jsx # Route guard checking auth + group membership
     AdminLayout.jsx/.css   # Admin sidebar nav + Outlet wrapper
+    PortalLayout.jsx/.css  # Client portal sidebar nav + Outlet wrapper
   pages/
     Login.jsx          # Email/password sign-in (handles NEW_PASSWORD_REQUIRED challenge)
     Register.jsx       # Registration with name, email, password
     ConfirmSignUp.jsx  # 6-digit verification code entry
+    WorkoutLibrary.jsx # Browse workout library (within portal)
+    WorkoutDetail.jsx  # Single workout detail + PDF download
     auth.css           # Shared auth page styles
+    portal/
+      PortalDashboard.jsx/.css  # Client portal home with profile card + quick links
+      PortalProfile.jsx/.css    # Edit user name, view email
+      PortalSettings.jsx/.css   # Notification preferences (placeholder)
     admin/
-      Dashboard.jsx/.css   # Live stats (user count, FAQ count) + quick links
+      Dashboard.jsx/.css   # Live stats (user, FAQ, workout counts) + quick links
       Users.jsx/.css       # Cognito user list, search, group management
       Content.jsx/.css     # Tabbed content CMS for all site sections
       FAQAdmin.jsx/.css    # FAQ CRUD with reorder
+      WorkoutAdmin.jsx/.css # Workout library CRUD + PDF preview
       Merch.jsx            # "Future phase" placeholder
       admin.css            # Shared admin styles
   hooks/
@@ -111,6 +119,7 @@ Single-table design with PK/SK pattern, PAY_PER_REQUEST billing.
 | `CONTENT` | `testimonials` | Testimonials data |
 | `CONTENT` | `getstarted` | Get Started section data |
 | `WORKOUT` | `WORKOUT#<id>` | Workout item (title, description, category, difficulty, duration, equipment[], exercises[], imageUrl, status, sortOrder) |
+| `USER#<sub>` | `PROFILE` | User profile (email, givenName, familyName, tier, source, createdAt) |
 
 ### API Routes (API Gateway + Lambda)
 
@@ -132,6 +141,9 @@ Single-table design with PK/SK pattern, PAY_PER_REQUEST billing.
 | `POST` | `/api/workouts` | Admin | Create workout |
 | `PUT` | `/api/workouts/{id}` | Admin | Update workout |
 | `DELETE` | `/api/workouts/{id}` | Admin | Delete workout |
+| `GET` | `/api/profile` | Authenticated | Get current user's profile |
+| `POST` | `/api/profile` | Authenticated | Create profile (Google users) |
+| `PUT` | `/api/profile` | Authenticated | Update profile (name fields) |
 
 ### Content Data Pattern
 Public components use `useContent(section)` hook which fetches from `/api/content/{section}`. All components keep hardcoded fallback data so the site works even if the API is unreachable. The hook has an in-memory cache to avoid re-fetching within the same session.
@@ -146,12 +158,15 @@ Public components use `useContent(section)` hook which fetches from `/api/conten
 - **`/programs`**: Programs page (3 pricing tiers)
 - **`/gallery`**: Photo gallery page
 - **`/faq`**: FAQ page (API-driven)
-- **`/workouts`**: Workout library (browse all published workouts)
-- **`/workouts/:id`**: Single workout detail + PDF download
 - **`/login`**: Sign-in page
 - **`/register`**: Registration page
 - **`/confirm`**: Email verification code page
-- **`/admin`**: Admin dashboard with live stats
+- **`/portal`**: Client portal dashboard (authenticated, sidebar layout)
+- **`/portal/workouts`**: Workout library (browse workouts, auth-gated)
+- **`/portal/workouts/:id`**: Single workout detail + PDF download
+- **`/portal/profile`**: Edit user profile (name)
+- **`/portal/settings`**: Notification preferences (placeholder)
+- **`/admin`**: Admin dashboard with live stats + workout count
 - **`/admin/users`**: User management (search, group toggles)
 - **`/admin/content`**: Content CMS (tabbed editor for all sections)
 - **`/admin/faq`**: FAQ manager (CRUD + reorder)
@@ -168,10 +183,13 @@ Public components use `useContent(section)` hook which fetches from `/api/conten
 
 ### Auth-Aware Navigation
 - Header CTA changes: "Sign In" when logged out, "Sign Out" when logged in
+- "Portal" nav link appears for authenticated users
 - "Admin" nav link only appears for users in the Admin Cognito group
+- `/portal/*` routes are protected by `ProtectedRoute` (any authenticated user)
 - `/admin/*` routes are protected by `ProtectedRoute` requiring Admin group
 - Unauthenticated users redirected to `/login`
 - Non-admin users redirected to `/` from admin routes
+- Workouts nav link points to `/portal/workouts` (requires auth)
 
 ## Authentication Architecture
 - **Provider**: Amazon Cognito User Pool (`hyrax-fitness-users`)
@@ -213,6 +231,9 @@ cd infra && MSYS_NO_PATHCONV=1 npx tsx scripts/seed-content.ts --profile hyrax-f
 ## CDK Stacks
 1. **HyraxFitnessCognito** - Cognito User Pool, Groups, App Client, post-confirmation Lambda
 2. **HyraxFitnessBackend** - DynamoDB table, S3 bucket, API Gateway, Lambda API
+
+### Lambda Permission Strategy
+The API Gateway integration uses an imported function reference (`fromFunctionArn`) instead of the real Lambda construct. This prevents CDK from creating per-method `AWS::Lambda::Permission` resources (which would exceed the 20KB resource-based policy limit). A single broad permission (`api.arnForExecuteApi('*', '/*', '*')`) grants API Gateway invoke access to all routes.
 
 ## Deployment
 - **Hosting**: AWS Amplify
