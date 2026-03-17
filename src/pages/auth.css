@@ -148,6 +148,58 @@
   font-weight: 600;
 }
 
+/* ── Divider (or) ── */
+.auth-divider {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  margin: 20px 0 16px;
+}
+
+.auth-divider::before,
+.auth-divider::after {
+  content: '';
+  flex: 1;
+  height: 1px;
+  background: rgba(27, 18, 10, .12);
+}
+
+.auth-divider span {
+  font-size: .82rem;
+  color: var(--rock);
+  font-weight: 500;
+  text-transform: lowercase;
+}
+
+/* ── Google sign-in button ── */
+.auth-google-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  width: 100%;
+  padding: 11px 20px;
+  font-size: .93rem;
+  font-weight: 500;
+  font-family: inherit;
+  color: var(--ink);
+  background: #fff;
+  border: 1px solid rgba(27, 18, 10, .18);
+  border-radius: 12px;
+  cursor: pointer;
+  transition: background .15s, border-color .15s, box-shadow .15s;
+}
+
+.auth-google-btn:hover {
+  background: #f8f8f8;
+  border-color: rgba(27, 18, 10, .28);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, .06);
+}
+
+.auth-google-btn:active {
+  background: #f0f0f0;
+}
+
 @media (max-width: 480px) {
   .auth-card {
     padding: 28px 22px;

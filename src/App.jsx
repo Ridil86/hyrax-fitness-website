@@ -7,6 +7,7 @@ import Hero from './components/Hero';
 import Footer from './components/Footer';
 import ProtectedRoute from './components/ProtectedRoute';
 import ErrorBoundary from './components/ErrorBoundary';
+import GoogleOAuthHandler from './components/GoogleOAuthHandler';
 import './styles/global.css';
 
 const Dassie = lazy(() => import('./components/Dassie'));
@@ -84,6 +85,7 @@ function ScrollManager() {
 function HomePage() {
   return (
     <>
+      <GoogleOAuthHandler />
       <Hero />
       <LazySection><Dassie /></LazySection>
       <LazySection><Method /></LazySection>

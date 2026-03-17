@@ -235,6 +235,57 @@
   text-decoration: underline;
 }
 
+/* ── Divider (or) ── */
+.wizard-divider {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  margin: 22px 0 18px;
+}
+
+.wizard-divider::before,
+.wizard-divider::after {
+  content: '';
+  flex: 1;
+  height: 1px;
+  background: rgba(27, 18, 10, .12);
+}
+
+.wizard-divider span {
+  font-size: .82rem;
+  color: var(--rock);
+  font-weight: 500;
+  text-transform: lowercase;
+}
+
+/* ── Google sign-in button ── */
+.google-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  width: 100%;
+  padding: 11px 20px;
+  font-size: .93rem;
+  font-weight: 500;
+  color: var(--ink);
+  background: #fff;
+  border: 1px solid rgba(27, 18, 10, .18);
+  border-radius: 10px;
+  cursor: pointer;
+  transition: background .15s, border-color .15s, box-shadow .15s;
+}
+
+.google-btn:hover {
+  background: #f8f8f8;
+  border-color: rgba(27, 18, 10, .28);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, .06);
+}
+
+.google-btn:active {
+  background: #f0f0f0;
+}
+
 /* ── Responsive ── */
 @media (max-width: 520px) {
   .wizard-card {

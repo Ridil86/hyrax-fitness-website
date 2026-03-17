@@ -4,9 +4,11 @@ import {
   signUp as amplifySignUp,
   signOut as amplifySignOut,
   confirmSignUp as amplifyConfirmSignUp,
+  signInWithRedirect,
   getCurrentUser,
   fetchAuthSession,
 } from 'aws-amplify/auth';
+import { Hub } from 'aws-amplify/utils';
 
 const AuthContext = createContext(null);
 
@@ -29,23 +31,48 @@ export function AuthProvider({ children }) {
     }
   }, []);
 
+  // Refresh user state after sign-in (used by both direct and OAuth flows)
+  const refreshUser = useCallback(async () => {
+    try {
+      const currentUser = await getCurrentUser();
+      setUser(currentUser);
+      const userGroups = await extractGroups();
+      setGroups(userGroups);
+    } catch {
+      setUser(null);
+      setGroups([]);
+    }
+  }, [extractGroups]);
+
   // Check for existing session on mount
   useEffect(() => {
     (async () => {
       try {
-        const currentUser = await getCurrentUser();
-        setUser(currentUser);
-        const userGroups = await extractGroups();
-        setGroups(userGroups);
+        await refreshUser();
       } catch {
         // Not signed in
-        setUser(null);
-        setGroups([]);
       } finally {
         setLoading(false);
       }
     })();
-  }, [extractGroups]);
+  }, [refreshUser]);
+
+  // Listen for OAuth redirect completion (Google sign-in)
+  useEffect(() => {
+    const unsubscribe = Hub.listen('auth', async ({ payload }) => {
+      if (payload.event === 'signInWithRedirect') {
+        // OAuth redirect completed successfully
+        await refreshUser();
+        setLoading(false);
+      }
+      if (payload.event === 'signInWithRedirect_failure') {
+        console.error('OAuth redirect failed:', payload.data);
+        setLoading(false);
+      }
+    });
+
+    return unsubscribe;
+  }, [refreshUser]);
 
   const signIn = async (email, password) => {
     const result = await amplifySignIn({ username: email, password });
@@ -84,6 +111,11 @@ export function AuthProvider({ children }) {
     setGroups([]);
   };
 
+  // Sign in with Google via Cognito Hosted UI redirect
+  const signInWithGoogle = () => {
+    signInWithRedirect({ provider: 'Google' });
+  };
+
   // Get the current ID token for API Authorization header
   const getIdToken = useCallback(async () => {
     try {
@@ -104,6 +136,7 @@ export function AuthProvider({ children }) {
     signUp,
     confirmSignUp,
     signOut,
+    signInWithGoogle,
     getIdToken,
   };
 

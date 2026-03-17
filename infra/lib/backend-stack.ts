@@ -209,6 +209,10 @@ export class BackendStack extends cdk.Stack {
       authorizer,
       authorizationType: apigateway.AuthorizationType.COGNITO,
     });
+    profileResource.addMethod('POST', lambdaIntegration, {
+      authorizer,
+      authorizationType: apigateway.AuthorizationType.COGNITO,
+    });
 
     // Audit routes (POST is public for consent logging, GET is admin-only)
     const auditResource = apiResource.addResource('audit');

@@ -16,7 +16,7 @@ const SUNSET = '#F28501';
 const SUNRISE = '#FDB90F';
 const EARTH = '#654C2B';
 
-const LOGO_URL = 'https://hyraxfitness.com/img/hyrax-logo.svg';
+const LOGO_URL = 'https://hyraxfitness.com/img/hyrax-fitness-mark-64x64.png';
 const SITE_URL = 'https://hyraxfitness.com';
 
 // ── Shared wrapper ──
@@ -32,7 +32,7 @@ function wrap(body: string): string {
         <!-- Header gradient -->
         <tr>
           <td style="background:linear-gradient(135deg,${SUNSET},${SUNRISE});padding:28px 32px;text-align:center;">
-            <img src="${LOGO_URL}" alt="Hyrax Fitness" width="140" style="display:inline-block;" />
+            <img src="${LOGO_URL}" alt="Hyrax Fitness" width="48" height="48" style="display:inline-block;" />
           </td>
         </tr>
         <!-- Body -->
@@ -44,7 +44,7 @@ function wrap(body: string): string {
         <!-- Footer -->
         <tr>
           <td style="padding:20px 32px;background:${PAPER};border-top:1px solid ${SAND};text-align:center;font-size:12px;color:${EARTH};">
-            &copy; ${new Date().getFullYear()} Hyrax Fitness &mdash;
+            &copy; ${new Date().getFullYear()} Hyrax Fitness |
             <a href="${SITE_URL}" style="color:${SUNSET};text-decoration:none;">hyraxfitness.com</a>
           </td>
         </tr>
@@ -95,20 +95,27 @@ export function invitationEmail(): string {
 
 export function welcomeEmail(): string {
   return wrap(`
-    <h2 style="margin:0 0 8px;font-size:20px;color:${INK};">Welcome to the pack!</h2>
-    <p style="margin:0 0 16px;">Your Hyrax Fitness account has been created. You are one step away from getting started with your training journey.</p>
+    <h2 style="margin:0 0 8px;font-size:20px;color:${INK};">Welcome to the colony!</h2>
+    <p style="margin:0 0 16px;">Your Hyrax Fitness account has been created. You're one step away from getting started with your training journey.</p>
 
     <p style="margin:0 0 20px;text-align:center;">
-      <a href="${SITE_URL}/welcome?email={username}&amp;code={####}" style="display:inline-block;padding:14px 32px;background:${SUNSET};color:#ffffff;text-decoration:none;border-radius:10px;font-weight:600;font-size:16px;">Set Up Your Account</a>
+      <a href="${SITE_URL}/welcome?email={username}&amp;code={####}" style="display:inline-block;padding:14px 32px;background:${SUNSET};color:#ffffff;text-decoration:none;border-radius:10px;font-weight:600;font-size:16px;">Finish Setting Up Your Account</a>
     </p>
 
     <div style="margin:20px 0;padding:16px 20px;background:${PAPER};border-radius:12px;border:1px solid ${SAND};">
-      <p style="margin:0 0 10px;font-weight:600;font-size:14px;color:${INK};">What you get with Hyrax Fitness:</p>
+      <p style="margin:0 0 10px;font-weight:600;font-size:14px;color:${INK};">Look forward to:</p>
       <table role="presentation" cellpadding="0" cellspacing="0" style="font-size:13px;color:${EARTH};line-height:1.8;">
-        <tr><td style="padding-right:8px;">&#9670;</td><td><strong>5 Training Modules</strong> covering scramble, haul, sprint, recovery, and warmup</td></tr>
-        <tr><td style="padding-right:8px;">&#9670;</td><td><strong>3 Signature Workouts</strong> designed for any fitness level</td></tr>
-        <tr><td style="padding-right:8px;">&#9670;</td><td><strong>Pup Tier Access</strong> with workout videos, PDF guides, and community access</td></tr>
+        <tr><td style="padding-right:8px;">&#9670;</td><td><strong>Training Modules</strong> covering scramble, haul, sprint, recovery</td></tr>
+        <tr><td style="padding-right:8px;">&#9670;</td><td><strong>Signature Workouts</strong> designed for any fitness level</td></tr>
+        <tr><td style="padding-right:8px;">&#9670;</td><td><strong>Pup Tier Access</strong>Free workout videos, PDF guides, and community access</td></tr>
         <tr><td style="padding-right:8px;">&#9670;</td><td><strong>Progress Tracking</strong> to measure your improvement over time</td></tr>
+      </table>
+      <p style="margin:0 0 10px;font-weight:600;font-size:14px;color:${INK};">Upgrade for:</p>
+      <table role="presentation" cellpadding="0" cellspacing="0" style="font-size:13px;color:${EARTH};line-height:1.8;">
+        <tr><td style="padding-right:8px;">&#9670;</td><td><strong>Customized Workouts</strong>workouts designed just for you!</td></tr>
+        <tr><td style="padding-right:8px;">&#9670;</td><td><strong>Nutrition Plans</strong>Meal plans tailored to your needs.</td></tr>
+        <tr><td style="padding-right:8px;">&#9670;</td><td><strong>Progress Tracking</strong> to measure your improvement over time</td></tr>
+        <tr><td style="padding-right:8px;">&#9670;</td><td><strong>And much more!</strong></td></tr>
       </table>
     </div>
 

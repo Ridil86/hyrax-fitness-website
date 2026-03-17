@@ -6,11 +6,16 @@ import { NodejsFunction } from 'aws-cdk-lib/aws-lambda-nodejs';
 import { Runtime } from 'aws-cdk-lib/aws-lambda';
 import { Construct } from 'constructs';
 
+interface CognitoStackProps extends cdk.StackProps {
+  googleClientId: string;
+  googleClientSecret: string;
+}
+
 export class CognitoStack extends cdk.Stack {
   public readonly userPoolId: string;
   public readonly userPoolArn: string;
 
-  constructor(scope: Construct, id: string, props?: cdk.StackProps) {
+  constructor(scope: Construct, id: string, props: CognitoStackProps) {
     super(scope, id, props);
 
     // ── Cognito User Pool ──
@@ -38,6 +43,24 @@ export class CognitoStack extends cdk.Stack {
     // Expose for cross-stack references
     this.userPoolId = userPool.userPoolId;
     this.userPoolArn = userPool.userPoolArn;
+
+    // ── Cognito Hosted-UI Domain ──
+    userPool.addDomain('HyraxCognitoDomain', {
+      cognitoDomain: { domainPrefix: 'hyrax-fitness' },
+    });
+
+    // ── Google Identity Provider ──
+    const googleProvider = new cognito.UserPoolIdentityProviderGoogle(this, 'GoogleProvider', {
+      userPool,
+      clientId: props.googleClientId,
+      clientSecretValue: cdk.SecretValue.unsafePlainText(props.googleClientSecret),
+      scopes: ['openid', 'email', 'profile'],
+      attributeMapping: {
+        email: cognito.ProviderAttribute.GOOGLE_EMAIL,
+        givenName: cognito.ProviderAttribute.GOOGLE_GIVEN_NAME,
+        familyName: cognito.ProviderAttribute.GOOGLE_FAMILY_NAME,
+      },
+    });
 
     // ── Groups ──
     new cognito.CfnUserPoolGroup(this, 'AdminGroup', {
@@ -108,7 +131,7 @@ export class CognitoStack extends cdk.Stack {
       customMessageFn
     );
 
-    // ── App Client (SPA - no secret) ──
+    // ── App Client (SPA - no secret, OAuth + SRP) ──
     const appClient = userPool.addClient('HyraxWebAppClient', {
       userPoolClientName: 'hyrax-web-app',
       generateSecret: false,
@@ -116,7 +139,28 @@ export class CognitoStack extends cdk.Stack {
         userSrp: true,
       },
       preventUserExistenceErrors: true,
+      oAuth: {
+        flows: { authorizationCodeGrant: true },
+        scopes: [
+          cognito.OAuthScope.OPENID,
+          cognito.OAuthScope.EMAIL,
+          cognito.OAuthScope.PROFILE,
+        ],
+        callbackUrls: [
+          'https://hyraxfitness.com/',
+          'http://localhost:5173/',
+        ],
+        logoutUrls: [
+          'https://hyraxfitness.com/',
+          'http://localhost:5173/',
+        ],
+      },
+      supportedIdentityProviders: [
+        cognito.UserPoolClientIdentityProvider.COGNITO,
+        cognito.UserPoolClientIdentityProvider.GOOGLE,
+      ],
     });
+    appClient.node.addDependency(googleProvider);
 
     // ── Stack Outputs ──
     new cdk.CfnOutput(this, 'UserPoolId', {
@@ -132,6 +176,11 @@ export class CognitoStack extends cdk.Stack {
     new cdk.CfnOutput(this, 'UserPoolArn', {
       value: userPool.userPoolArn,
       description: 'Cognito User Pool ARN',
+    });
+
+    new cdk.CfnOutput(this, 'CognitoDomain', {
+      value: 'hyrax-fitness.auth.us-east-1.amazoncognito.com',
+      description: 'Cognito Hosted UI Domain',
     });
   }
 }

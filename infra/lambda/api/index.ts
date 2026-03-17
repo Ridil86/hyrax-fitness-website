@@ -9,7 +9,7 @@ import { listUsers, getUserGroups, updateUserGroups, deleteUser, setUserStatus }
 import { getUploadUrl } from './routes/upload';
 import { logAuditEvent, listAuditLogs, getAuditStats } from './routes/audit';
 import { createAccount } from './routes/signup';
-import { getProfile } from './routes/profile';
+import { getProfile, createProfile } from './routes/profile';
 import { notFound, serverError } from './utils/response';
 
 export const handler = async (
@@ -58,8 +58,9 @@ export const handler = async (
     }
 
     // ── Profile Route (authenticated) ──
-    if (path === '/api/profile' && method === 'GET') {
-      return getProfile(event);
+    if (path === '/api/profile') {
+      if (method === 'GET') return getProfile(event);
+      if (method === 'POST') return createProfile(event);
     }
 
     // ── Users Routes ──

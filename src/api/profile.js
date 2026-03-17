@@ -1,4 +1,4 @@
-import { apiGet } from './client';
+import { apiGet, apiPost } from './client';
 
 /**
  * Fetch the current user's profile from DynamoDB (authenticated).
@@ -6,4 +6,14 @@ import { apiGet } from './client';
  */
 export function fetchProfile(token) {
   return apiGet('/api/profile', token);
+}
+
+/**
+ * Create a profile for a Google-authenticated user (authenticated).
+ * Called after the user accepts Terms of Use and Privacy Policy.
+ * @param {string} token - Cognito ID token
+ * @param {{ termsAccepted: boolean, privacyAccepted: boolean }} data
+ */
+export function createProfile(token, data) {
+  return apiPost('/api/profile', data, token);
 }

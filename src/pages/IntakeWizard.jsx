@@ -1,7 +1,10 @@
-import { useState } from 'react';
-import { Link } from 'react-router-dom';
+import { useState, useEffect } from 'react';
+import { Link, useSearchParams, useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
+import { useAuth } from '../context/AuthContext';
 import { createAccount } from '../api/signup';
+import { createProfile } from '../api/profile';
+import GoogleIcon from '../components/GoogleIcon';
 import './intake-wizard.css';
 
 const TOTAL_STEPS = 3;
@@ -39,7 +42,14 @@ function CheckIcon() {
 }
 
 export default function IntakeWizard() {
-  const [step, setStep] = useState(1);
+  const [searchParams] = useSearchParams();
+  const navigate = useNavigate();
+  const { isAuthenticated, signInWithGoogle, getIdToken, loading: authLoading } = useAuth();
+
+  // Detect if this is a Google user coming back from OAuth (step 3 only)
+  const isGoogleUser = searchParams.get('google') === '1';
+
+  const [step, setStep] = useState(isGoogleUser ? 3 : 1);
   const [direction, setDirection] = useState(1);
   const [givenName, setGivenName] = useState('');
   const [familyName, setFamilyName] = useState('');
@@ -48,6 +58,14 @@ export default function IntakeWizard() {
   const [privacyAccepted, setPrivacyAccepted] = useState(false);
   const [error, setError] = useState('');
   const [submitting, setSubmitting] = useState(false);
+
+  // If Google user lands here but is not authenticated yet, wait for auth
+  useEffect(() => {
+    if (isGoogleUser && !authLoading && !isAuthenticated) {
+      // Not authenticated - redirect to home (auth may have failed)
+      navigate('/', { replace: true });
+    }
+  }, [isGoogleUser, authLoading, isAuthenticated, navigate]);
 
   const goNext = () => {
     setDirection(1);
@@ -61,6 +79,11 @@ export default function IntakeWizard() {
     setError('');
   };
 
+  const handleGoogleSignIn = () => {
+    sessionStorage.setItem('hyrax-google-intent', 'signup');
+    signInWithGoogle();
+  };
+
   const handleSubmit = async () => {
     if (!termsAccepted || !privacyAccepted) {
       setError('Please accept both the Terms of Use and Privacy Policy.');
@@ -71,15 +94,27 @@ export default function IntakeWizard() {
     setSubmitting(true);
 
     try {
-      await createAccount({
-        givenName,
-        familyName,
-        email,
-        termsAccepted: true,
-        privacyAccepted: true,
-      });
-      setDirection(1);
-      setStep(4); // success step
+      if (isGoogleUser) {
+        // Google user: create profile via authenticated endpoint
+        const token = await getIdToken();
+        await createProfile(token, {
+          termsAccepted: true,
+          privacyAccepted: true,
+        });
+        // Navigate to portal
+        navigate('/portal', { replace: true });
+      } else {
+        // Normal user: create account via public signup endpoint
+        await createAccount({
+          givenName,
+          familyName,
+          email,
+          termsAccepted: true,
+          privacyAccepted: true,
+        });
+        setDirection(1);
+        setStep(4); // success step
+      }
     } catch (err) {
       setError(err.message || 'Failed to create account. Please try again.');
     } finally {
@@ -145,6 +180,19 @@ export default function IntakeWizard() {
                   Next
                 </button>
               </div>
+
+              <div className="wizard-divider">
+                <span>or</span>
+              </div>
+
+              <button
+                type="button"
+                className="google-btn"
+                onClick={handleGoogleSignIn}
+              >
+                <GoogleIcon />
+                <span>Continue with Google</span>
+              </button>
             </motion.div>
           )}
 
@@ -188,6 +236,19 @@ export default function IntakeWizard() {
                   Next
                 </button>
               </div>
+
+              <div className="wizard-divider">
+                <span>or</span>
+              </div>
+
+              <button
+                type="button"
+                className="google-btn"
+                onClick={handleGoogleSignIn}
+              >
+                <GoogleIcon />
+                <span>Continue with Google</span>
+              </button>
             </motion.div>
           )}
 
@@ -204,7 +265,7 @@ export default function IntakeWizard() {
             >
               <h2>Almost there!</h2>
               <p className="wizard-subtitle">
-                Please review and accept our policies to create your account.
+                Please review and accept our policies to {isGoogleUser ? 'continue' : 'create your account'}.
               </p>
 
               {error && <div className="wizard-error">{error}</div>}
@@ -238,19 +299,23 @@ export default function IntakeWizard() {
               </label>
 
               <div className="wizard-actions">
-                <button
-                  className="btn wizard-back"
-                  onClick={goBack}
-                  disabled={submitting}
-                >
-                  Back
-                </button>
+                {!isGoogleUser && (
+                  <button
+                    className="btn wizard-back"
+                    onClick={goBack}
+                    disabled={submitting}
+                  >
+                    Back
+                  </button>
+                )}
                 <button
                   className="btn primary"
                   onClick={handleSubmit}
                   disabled={submitting || !termsAccepted || !privacyAccepted}
                 >
-                  {submitting ? 'Creating Account...' : 'Create My Account'}
+                  {submitting
+                    ? (isGoogleUser ? 'Setting up...' : 'Creating Account...')
+                    : (isGoogleUser ? 'Accept & Continue' : 'Create My Account')}
                 </button>
               </div>
             </motion.div>

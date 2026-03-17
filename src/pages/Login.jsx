@@ -1,10 +1,11 @@
 import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
+import GoogleIcon from '../components/GoogleIcon';
 import './auth.css';
 
 export default function Login() {
-  const { signIn } = useAuth();
+  const { signIn, signInWithGoogle } = useAuth();
   const navigate = useNavigate();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -131,8 +132,25 @@ export default function Login() {
             {submitting ? 'Signing In...' : 'Sign In'}
           </button>
         </form>
+
+        <div className="auth-divider">
+          <span>or</span>
+        </div>
+
+        <button
+          type="button"
+          className="auth-google-btn"
+          onClick={() => {
+            sessionStorage.setItem('hyrax-google-intent', 'login');
+            signInWithGoogle();
+          }}
+        >
+          <GoogleIcon />
+          <span>Login with Google</span>
+        </button>
+
         <p className="auth-links">
-          Don't have an account? <Link to="/register">Register</Link>
+          Don't have an account? <Link to="/get-started">Get Started</Link>
         </p>
       </div>
     </div>

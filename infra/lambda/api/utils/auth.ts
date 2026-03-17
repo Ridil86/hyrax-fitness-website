@@ -4,6 +4,9 @@ export interface CognitoClaims {
   sub: string;
   email: string;
   groups: string[];
+  given_name?: string;
+  family_name?: string;
+  [key: string]: unknown;
 }
 
 /**
@@ -23,6 +26,8 @@ export function extractClaims(event: APIGatewayProxyEvent): CognitoClaims | null
     sub: claims.sub || '',
     email: claims.email || '',
     groups,
+    given_name: claims.given_name || undefined,
+    family_name: claims.family_name || undefined,
   };
 }
 
