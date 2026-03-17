@@ -51,14 +51,14 @@
 
 /* Sections */
 .legal-section {
-  margin-bottom: 32px;
+  margin-bottom: 18px;
 }
 
 .legal-subheading {
   font-size: 1.25rem;
   color: var(--ink);
-  margin: 0 0 12px;
-  padding-top: 8px;
+  margin: 0 0 8px;
+  padding-top: 4px;
 }
 
 .legal-section p {
