@@ -47,7 +47,10 @@ const CookiePolicy = lazy(() => import('./pages/CookiePolicy'));
 // Intake + Client portal
 const IntakeWizard = lazy(() => import('./pages/IntakeWizard'));
 const Welcome = lazy(() => import('./pages/Welcome'));
-const Portal = lazy(() => import('./pages/Portal'));
+const PortalLayout = lazy(() => import('./components/PortalLayout'));
+const PortalDashboard = lazy(() => import('./pages/portal/PortalDashboard'));
+const PortalProfile = lazy(() => import('./pages/portal/PortalProfile'));
+const PortalSettings = lazy(() => import('./pages/portal/PortalSettings'));
 
 // Cookie consent
 const CookieConsent = lazy(() => import('./components/CookieConsent'));
@@ -114,9 +117,6 @@ export default function App() {
             <Route path="/programs" element={<LazySection><Programs /></LazySection>} />
             <Route path="/gallery" element={<LazySection><Gallery /></LazySection>} />
             <Route path="/faq" element={<LazySection><FAQ /></LazySection>} />
-            <Route path="/workouts" element={<LazySection><WorkoutLibrary /></LazySection>} />
-            <Route path="/workouts/:id" element={<LazySection><WorkoutDetail /></LazySection>} />
-
             {/* Legal routes */}
             <Route path="/terms" element={<LazySection><TermsOfUse /></LazySection>} />
             <Route path="/privacy" element={<LazySection><PrivacyPolicy /></LazySection>} />
@@ -134,9 +134,15 @@ export default function App() {
             {/* Client portal (any authenticated user) */}
             <Route path="/portal" element={
               <ProtectedRoute>
-                <LazySection><Portal /></LazySection>
+                <LazySection><PortalLayout /></LazySection>
               </ProtectedRoute>
-            } />
+            }>
+              <Route index element={<LazySection><PortalDashboard /></LazySection>} />
+              <Route path="workouts" element={<LazySection><WorkoutLibrary /></LazySection>} />
+              <Route path="workouts/:id" element={<LazySection><WorkoutDetail /></LazySection>} />
+              <Route path="profile" element={<LazySection><PortalProfile /></LazySection>} />
+              <Route path="settings" element={<LazySection><PortalSettings /></LazySection>} />
+            </Route>
 
             {/* Admin routes (protected, requires Admin group) */}
             <Route path="/admin" element={

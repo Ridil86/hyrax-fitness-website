@@ -9,7 +9,7 @@ import { listUsers, getUserGroups, updateUserGroups, deleteUser, setUserStatus }
 import { getUploadUrl } from './routes/upload';
 import { logAuditEvent, listAuditLogs, getAuditStats } from './routes/audit';
 import { createAccount } from './routes/signup';
-import { getProfile, createProfile } from './routes/profile';
+import { getProfile, createProfile, updateProfile } from './routes/profile';
 import { listWorkouts, getWorkout, createWorkout, updateWorkout, deleteWorkout } from './routes/workouts';
 import { notFound, serverError } from './utils/response';
 
@@ -62,6 +62,7 @@ export const handler = async (
     if (path === '/api/profile') {
       if (method === 'GET') return getProfile(event);
       if (method === 'POST') return createProfile(event);
+      if (method === 'PUT') return updateProfile(event);
     }
 
     // ── Users Routes ──

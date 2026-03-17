@@ -1,0 +1,113 @@
+/* ── Portal Settings ── */
+
+.portal-settings-card {
+  background: #fff;
+  border-radius: var(--radius);
+  box-shadow: var(--shadow-soft);
+  padding: 28px;
+  margin-bottom: 20px;
+}
+
+.portal-settings-card h3 {
+  font-size: 1rem;
+  margin: 0 0 8px;
+  color: var(--ink);
+}
+
+.portal-settings-note {
+  font-size: .85rem;
+  color: var(--rock);
+  margin: 0 0 20px;
+  padding-bottom: 14px;
+  border-bottom: 1px solid rgba(27, 18, 10, .08);
+}
+
+.portal-settings-coming {
+  font-size: .88rem;
+  color: var(--rock);
+  margin: 0;
+}
+
+/* ── Toggle rows ── */
+.portal-settings-toggles {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.portal-toggle {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 14px 0;
+  border-bottom: 1px solid rgba(27, 18, 10, .06);
+  cursor: pointer;
+}
+
+.portal-toggle:last-child {
+  border-bottom: none;
+}
+
+.portal-toggle-info {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.portal-toggle-info strong {
+  font-size: .92rem;
+  color: var(--ink);
+}
+
+.portal-toggle-info span {
+  font-size: .82rem;
+  color: var(--rock);
+}
+
+/* ── Toggle switch ── */
+.portal-toggle-switch {
+  position: relative;
+  width: 44px;
+  height: 24px;
+  flex-shrink: 0;
+}
+
+.portal-toggle-switch input {
+  opacity: 0;
+  width: 0;
+  height: 0;
+  position: absolute;
+}
+
+.portal-toggle-slider {
+  position: absolute;
+  inset: 0;
+  background: rgba(27, 18, 10, .15);
+  border-radius: 999px;
+  transition: background .2s;
+}
+
+.portal-toggle-slider::before {
+  content: '';
+  position: absolute;
+  height: 18px;
+  width: 18px;
+  left: 3px;
+  bottom: 3px;
+  background: #fff;
+  border-radius: 50%;
+  transition: transform .2s;
+}
+
+.portal-toggle-switch input:checked + .portal-toggle-slider {
+  background: var(--sunset);
+}
+
+.portal-toggle-switch input:checked + .portal-toggle-slider::before {
+  transform: translateX(20px);
+}
+
+.portal-toggle-switch input:focus-visible + .portal-toggle-slider {
+  box-shadow: var(--ring);
+}

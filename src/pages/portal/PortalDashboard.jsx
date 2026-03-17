@@ -1,8 +1,8 @@
 import { useState, useEffect } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
-import { useAuth } from '../context/AuthContext';
-import { fetchProfile } from '../api/profile';
-import './portal.css';
+import { Link } from 'react-router-dom';
+import { useAuth } from '../../context/AuthContext';
+import { fetchProfile } from '../../api/profile';
+import './portal-dashboard.css';
 
 function tierClass(tier) {
   if (!tier) return 'pup';
@@ -25,9 +25,8 @@ function formatDate(iso) {
   }
 }
 
-export default function Portal() {
-  const { user, signOut, getIdToken } = useAuth();
-  const navigate = useNavigate();
+export default function PortalDashboard() {
+  const { user, getIdToken } = useAuth();
   const [profile, setProfile] = useState(null);
   const [loading, setLoading] = useState(true);
 
@@ -52,11 +51,6 @@ export default function Portal() {
     return () => { cancelled = true; };
   }, [getIdToken]);
 
-  const handleSignOut = async () => {
-    await signOut();
-    navigate('/');
-  };
-
   // Get display name from profile or user object
   const givenName = profile?.givenName || user?.signInDetails?.loginId?.split('@')[0] || '';
   const familyName = profile?.familyName || '';
@@ -68,9 +62,9 @@ export default function Portal() {
 
   if (loading) {
     return (
-      <div className="portal-page">
+      <div>
         <div className="portal-header">
-          <h1>My Portal</h1>
+          <h1>Dashboard</h1>
           <p>Loading your profile...</p>
         </div>
         <div className="portal-skeleton">
@@ -82,7 +76,7 @@ export default function Portal() {
   }
 
   return (
-    <div className="portal-page">
+    <div>
       <div className="portal-header">
         <h1>Welcome back, {givenName || 'there'}!</h1>
         <p>Your Hyrax Fitness dashboard</p>
@@ -125,34 +119,27 @@ export default function Portal() {
       <div className="portal-card">
         <h3>Quick Links</h3>
         <div className="portal-links">
-          <Link to="/workouts" className="portal-link">
+          <Link to="/portal/workouts" className="portal-link">
             <span className="portal-link-icon">&#128170;</span>
             Workout Library
           </Link>
-          <Link to="/programs" className="portal-link">
+          <Link to="/portal/profile" className="portal-link">
+            <span className="portal-link-icon">&#128100;</span>
+            Edit Profile
+          </Link>
+          <Link to="/portal/settings" className="portal-link">
             <span className="portal-link-icon">&#9881;</span>
+            Settings
+          </Link>
+          <Link to="/programs" className="portal-link">
+            <span className="portal-link-icon">&#11088;</span>
             Explore Programs
-          </Link>
-          <Link to="/terms" className="portal-link">
-            <span className="portal-link-icon">&#128196;</span>
-            Terms of Use
-          </Link>
-          <Link to="/privacy" className="portal-link">
-            <span className="portal-link-icon">&#128274;</span>
-            Privacy Policy
           </Link>
           <Link to="/faq" className="portal-link">
             <span className="portal-link-icon">&#10067;</span>
             FAQ
           </Link>
         </div>
-      </div>
-
-      {/* Sign Out */}
-      <div className="portal-signout">
-        <button className="btn ghost" onClick={handleSignOut}>
-          Sign Out
-        </button>
       </div>
     </div>
   );

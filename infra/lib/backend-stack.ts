@@ -3,6 +3,7 @@ import * as dynamodb from 'aws-cdk-lib/aws-dynamodb';
 import * as s3 from 'aws-cdk-lib/aws-s3';
 import * as apigateway from 'aws-cdk-lib/aws-apigateway';
 import * as iam from 'aws-cdk-lib/aws-iam';
+import * as lambda from 'aws-cdk-lib/aws-lambda';
 import * as path from 'path';
 import { NodejsFunction } from 'aws-cdk-lib/aws-lambda-nodejs';
 import { Runtime } from 'aws-cdk-lib/aws-lambda';
@@ -125,7 +126,19 @@ export class BackendStack extends cdk.Stack {
       }
     );
 
-    const lambdaIntegration = new apigateway.LambdaIntegration(apiFn);
+    // Use an imported function reference for the integration to prevent CDK
+    // from creating per-method Lambda permissions (which exceed the 20KB
+    // resource-based policy limit). A single broad permission is added below.
+    const apiFnRef = lambda.Function.fromFunctionArn(
+      this, 'HyraxApiFnRef', apiFn.functionArn
+    );
+    const lambdaIntegration = new apigateway.LambdaIntegration(apiFnRef);
+
+    // Single broad permission for API Gateway to invoke Lambda
+    apiFn.addPermission('ApiGatewayInvoke', {
+      principal: new iam.ServicePrincipal('apigateway.amazonaws.com'),
+      sourceArn: api.arnForExecuteApi('*', '/*', '*'),
+    });
 
     // ── API Routes ──
     const apiResource = api.root.addResource('api');
@@ -229,6 +242,10 @@ export class BackendStack extends cdk.Stack {
       authorizationType: apigateway.AuthorizationType.COGNITO,
     });
     profileResource.addMethod('POST', lambdaIntegration, {
+      authorizer,
+      authorizationType: apigateway.AuthorizationType.COGNITO,
+    });
+    profileResource.addMethod('PUT', lambdaIntegration, {
       authorizer,
       authorizationType: apigateway.AuthorizationType.COGNITO,
     });

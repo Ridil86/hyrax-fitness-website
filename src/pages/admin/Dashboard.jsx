@@ -3,12 +3,13 @@ import { Link } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import { fetchUsers } from '../../api/users';
 import { fetchFaqs } from '../../api/faq';
+import { fetchWorkouts } from '../../api/workouts';
 import './admin.css';
 import './dashboard.css';
 
 export default function Dashboard() {
   const { getIdToken } = useAuth();
-  const [stats, setStats] = useState({ users: null, faq: null });
+  const [stats, setStats] = useState({ users: null, faq: null, workouts: null });
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -17,9 +18,10 @@ export default function Dashboard() {
     async function loadStats() {
       try {
         const token = await getIdToken();
-        const [usersResult, faqResult] = await Promise.allSettled([
+        const [usersResult, faqResult, workoutsResult] = await Promise.allSettled([
           fetchUsers({ limit: 1 }, token),
           fetchFaqs(),
+          fetchWorkouts(token),
         ]);
 
         if (cancelled) return;
@@ -32,7 +34,11 @@ export default function Dashboard() {
           ? (faqResult.value || []).length
           : null;
 
-        setStats({ users: userCount, faq: faqCount });
+        const workoutCount = workoutsResult.status === 'fulfilled'
+          ? (workoutsResult.value || []).length
+          : null;
+
+        setStats({ users: userCount, faq: faqCount, workouts: workoutCount });
       } catch {
         // Stats load is best-effort
       } finally {
@@ -89,6 +95,12 @@ export default function Dashboard() {
             {loading ? <span className="stat-loading" /> : (stats.faq ?? '--')}
           </div>
         </div>
+        <div className="admin-stat-card">
+          <div className="stat-label">Workouts</div>
+          <div className="stat-value">
+            {loading ? <span className="stat-loading" /> : (stats.workouts ?? '--')}
+          </div>
+        </div>
       </div>
 
       <div className="dashboard-links">
@@ -113,6 +125,13 @@ export default function Dashboard() {
             <div>
               <strong>Content CMS</strong>
               <p>Edit site content, text, and images for all sections</p>
+            </div>
+          </Link>
+          <Link to="/admin/workouts" className="dashboard-link-card">
+            <span className="dashboard-link-icon">&#128170;</span>
+            <div>
+              <strong>Workout Library</strong>
+              <p>Create and manage workout regimens for the content library</p>
             </div>
           </Link>
           <Link to="/admin/audit" className="dashboard-link-card">

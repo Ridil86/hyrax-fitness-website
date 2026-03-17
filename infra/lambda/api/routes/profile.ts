@@ -1,5 +1,5 @@
 import { DynamoDBClient } from '@aws-sdk/client-dynamodb';
-import { DynamoDBDocumentClient, GetCommand, PutCommand } from '@aws-sdk/lib-dynamodb';
+import { DynamoDBDocumentClient, GetCommand, PutCommand, UpdateCommand } from '@aws-sdk/lib-dynamodb';
 import type { APIGatewayProxyEvent, APIGatewayProxyResult } from 'aws-lambda';
 import { success, created, badRequest, forbidden, serverError } from '../utils/response';
 import { extractClaims } from '../utils/auth';
@@ -149,5 +149,67 @@ export async function createProfile(
   } catch (error) {
     console.error('createProfile error:', error);
     return serverError('Failed to create profile');
+  }
+}
+
+/**
+ * PUT /api/profile - Update the current user's profile (AUTHENTICATED)
+ */
+export async function updateProfile(
+  event: APIGatewayProxyEvent
+): Promise<APIGatewayProxyResult> {
+  const claims = extractClaims(event);
+  if (!claims?.sub) {
+    return forbidden('Authentication required');
+  }
+
+  try {
+    const body = JSON.parse(event.body || '{}');
+    const { givenName, familyName } = body;
+
+    const now = new Date().toISOString();
+
+    const expressionParts: string[] = [];
+    const expressionValues: Record<string, string> = {};
+    const expressionNames: Record<string, string> = {};
+
+    if (givenName !== undefined) {
+      expressionParts.push('#gn = :gn');
+      expressionValues[':gn'] = givenName;
+      expressionNames['#gn'] = 'givenName';
+    }
+
+    if (familyName !== undefined) {
+      expressionParts.push('#fn = :fn');
+      expressionValues[':fn'] = familyName;
+      expressionNames['#fn'] = 'familyName';
+    }
+
+    if (expressionParts.length === 0) {
+      return badRequest('No fields to update');
+    }
+
+    expressionParts.push('#ua = :ua');
+    expressionValues[':ua'] = now;
+    expressionNames['#ua'] = 'updatedAt';
+
+    const result = await client.send(
+      new UpdateCommand({
+        TableName: TABLE_NAME,
+        Key: {
+          pk: `USER#${claims.sub}`,
+          sk: 'PROFILE',
+        },
+        UpdateExpression: `SET ${expressionParts.join(', ')}`,
+        ExpressionAttributeValues: expressionValues,
+        ExpressionAttributeNames: expressionNames,
+        ReturnValues: 'ALL_NEW',
+      })
+    );
+
+    return success(result.Attributes);
+  } catch (error) {
+    console.error('updateProfile error:', error);
+    return serverError('Failed to update profile');
   }
 }

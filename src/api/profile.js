@@ -1,4 +1,4 @@
-import { apiGet, apiPost } from './client';
+import { apiGet, apiPost, apiPut } from './client';
 
 /**
  * Fetch the current user's profile from DynamoDB (authenticated).
@@ -16,4 +16,13 @@ export function fetchProfile(token) {
  */
 export function createProfile(token, data) {
   return apiPost('/api/profile', data, token);
+}
+
+/**
+ * Update the current user's profile (authenticated).
+ * @param {string} token - Cognito ID token
+ * @param {{ givenName?: string, familyName?: string }} data
+ */
+export function updateProfile(token, data) {
+  return apiPut('/api/profile', data, token);
 }

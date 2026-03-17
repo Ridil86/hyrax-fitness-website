@@ -145,7 +145,7 @@ export default function WorkoutLibrary() {
                 transition={{ duration: 0.35 }}
               >
                 <Link
-                  to={`/workouts/${workout.id}`}
+                  to={`/portal/workouts/${workout.id}`}
                   className="workout-card-link"
                 >
                   <article className="workout-card">

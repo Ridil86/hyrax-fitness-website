@@ -58,7 +58,7 @@ export default function WorkoutDetail() {
           <div className="workout-detail-error">
             <h2>Workout Not Found</h2>
             <p>{error || 'This workout may have been removed or is not yet published.'}</p>
-            <Link to="/workouts" className="btn primary">
+            <Link to="/portal/workouts" className="btn primary">
               Back to Library
             </Link>
           </div>
@@ -81,7 +81,7 @@ export default function WorkoutDetail() {
         }
       >
         <div className="wrap">
-          <Link to="/workouts" className="workout-detail-back">
+          <Link to="/portal/workouts" className="workout-detail-back">
             &#8592; Back to Library
           </Link>
 

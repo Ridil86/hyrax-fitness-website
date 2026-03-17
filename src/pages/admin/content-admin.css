@@ -93,6 +93,25 @@
   box-shadow: var(--ring);
 }
 
+.content-field select {
+  display: block;
+  width: 100%;
+  padding: 8px 14px;
+  border: 1px solid rgba(27, 18, 10, .12);
+  border-radius: 10px;
+  font: inherit;
+  font-size: .92rem;
+  background: #fff;
+  color: var(--ink);
+  cursor: pointer;
+}
+
+.content-field select:focus {
+  outline: none;
+  border-color: var(--sunset);
+  box-shadow: var(--ring);
+}
+
 .content-inline-group {
   display: flex;
   gap: 8px;

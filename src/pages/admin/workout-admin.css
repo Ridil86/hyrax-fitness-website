@@ -152,6 +152,11 @@
   border-bottom: 1px solid rgba(27, 18, 10, .06);
 }
 
+.workout-editor-section .content-subhead {
+  font-size: 1.05rem;
+  font-weight: 650;
+}
+
 .workout-editor-row {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
@@ -181,8 +186,14 @@
   padding: 16px;
   border-radius: 12px;
   border: 1px solid rgba(27, 18, 10, .08);
+  border-left: 3px solid rgba(242, 133, 1, .25);
   background: rgba(255, 255, 255, .5);
   margin-bottom: 12px;
+  transition: border-left-color .15s;
+}
+
+.workout-exercise-card:hover {
+  border-left-color: var(--sunset);
 }
 
 .workout-exercise-header {
@@ -210,6 +221,17 @@
   flex: 1;
   font-weight: 600;
   font-size: .95rem;
+  border: 1px solid transparent;
+  border-radius: 8px;
+  padding: 4px 8px;
+  background: transparent;
+  transition: border-color .15s;
+}
+
+.workout-exercise-name:focus {
+  border-color: rgba(27, 18, 10, .12);
+  outline: none;
+  box-shadow: var(--ring);
 }
 
 .workout-exercise-controls {
