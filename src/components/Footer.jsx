@@ -9,7 +9,7 @@ const footerLinks = {
     { to: '/faq', label: 'FAQ' },
   ],
   Resources: [
-    { to: '/#get-started', label: 'Get Started' },
+    { to: '/get-started', label: 'Get Started' },
     { to: '/#testimonials', label: 'Testimonials' },
   ],
   Legal: [

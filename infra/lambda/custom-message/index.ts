@@ -2,6 +2,7 @@ import type { CustomMessageTriggerEvent } from 'aws-lambda';
 import {
   verificationEmail,
   invitationEmail,
+  welcomeEmail,
   forgotPasswordEmail,
 } from './templates';
 
@@ -18,11 +19,18 @@ export const handler = async (
       event.response.emailMessage = verificationEmail();
       break;
 
-    // ── Admin-created user invitation ──
+    // ── Admin-created user (intake wizard or admin invitation) ──
     case 'CustomMessage_AdminCreateUser':
-      event.response.emailSubject =
-        "You're invited to Hyrax Fitness";
-      event.response.emailMessage = invitationEmail();
+      if (event.request.clientMetadata?.source === 'intake') {
+        // Intake wizard welcome email with magic link
+        event.response.emailSubject = 'Welcome to Hyrax Fitness!';
+        event.response.emailMessage = welcomeEmail();
+      } else {
+        // Admin-created invitation
+        event.response.emailSubject =
+          "You're invited to Hyrax Fitness";
+        event.response.emailMessage = invitationEmail();
+      }
       break;
 
     // ── Forgot password ──

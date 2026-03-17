@@ -1,4 +1,4 @@
-import { apiGet, apiPut } from './client';
+import { apiGet, apiPut, apiDelete } from './client';
 
 export function fetchUsers({ limit, paginationToken, filter } = {}, authToken) {
   const params = new URLSearchParams();
@@ -18,6 +18,18 @@ export function updateUserGroups(username, groups, token) {
   return apiPut(
     `/api/users/${encodeURIComponent(username)}/groups`,
     { groups },
+    token
+  );
+}
+
+export function deleteUser(username, token) {
+  return apiDelete(`/api/users/${encodeURIComponent(username)}`, token);
+}
+
+export function freezeUser(username, enabled, token) {
+  return apiPut(
+    `/api/users/${encodeURIComponent(username)}/status`,
+    { enabled },
     token
   );
 }

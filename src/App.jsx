@@ -6,6 +6,7 @@ import Header from './components/Header';
 import Hero from './components/Hero';
 import Footer from './components/Footer';
 import ProtectedRoute from './components/ProtectedRoute';
+import ErrorBoundary from './components/ErrorBoundary';
 import './styles/global.css';
 
 const Dassie = lazy(() => import('./components/Dassie'));
@@ -37,6 +38,11 @@ const TermsOfUse = lazy(() => import('./pages/TermsOfUse'));
 const PrivacyPolicy = lazy(() => import('./pages/PrivacyPolicy'));
 const CookiePolicy = lazy(() => import('./pages/CookiePolicy'));
 
+// Intake + Client portal
+const IntakeWizard = lazy(() => import('./pages/IntakeWizard'));
+const Welcome = lazy(() => import('./pages/Welcome'));
+const Portal = lazy(() => import('./pages/Portal'));
+
 // Cookie consent
 const CookieConsent = lazy(() => import('./components/CookieConsent'));
 
@@ -45,6 +51,14 @@ function SectionLoader() {
     <div style={{ minHeight: 200, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
       <div className="section-spinner" />
     </div>
+  );
+}
+
+function LazySection({ children }) {
+  return (
+    <ErrorBoundary>
+      <Suspense fallback={<SectionLoader />}>{children}</Suspense>
+    </ErrorBoundary>
   );
 }
 
@@ -71,21 +85,11 @@ function HomePage() {
   return (
     <>
       <Hero />
-      <Suspense fallback={<SectionLoader />}>
-        <Dassie />
-      </Suspense>
-      <Suspense fallback={<SectionLoader />}>
-        <Method />
-      </Suspense>
-      <Suspense fallback={<SectionLoader />}>
-        <Workouts />
-      </Suspense>
-      <Suspense fallback={<SectionLoader />}>
-        <Testimonials />
-      </Suspense>
-      <Suspense fallback={<SectionLoader />}>
-        <GetStarted />
-      </Suspense>
+      <LazySection><Dassie /></LazySection>
+      <LazySection><Method /></LazySection>
+      <LazySection><Workouts /></LazySection>
+      <LazySection><Testimonials /></LazySection>
+      <LazySection><GetStarted /></LazySection>
     </>
   );
 }
@@ -100,51 +104,44 @@ export default function App() {
         <main>
           <Routes>
             <Route path="/" element={<HomePage />} />
-            <Route path="/programs" element={
-              <Suspense fallback={<SectionLoader />}><Programs /></Suspense>
-            } />
-            <Route path="/gallery" element={
-              <Suspense fallback={<SectionLoader />}><Gallery /></Suspense>
-            } />
-            <Route path="/faq" element={
-              <Suspense fallback={<SectionLoader />}><FAQ /></Suspense>
-            } />
+            <Route path="/programs" element={<LazySection><Programs /></LazySection>} />
+            <Route path="/gallery" element={<LazySection><Gallery /></LazySection>} />
+            <Route path="/faq" element={<LazySection><FAQ /></LazySection>} />
 
             {/* Legal routes */}
-            <Route path="/terms" element={
-              <Suspense fallback={<SectionLoader />}><TermsOfUse /></Suspense>
-            } />
-            <Route path="/privacy" element={
-              <Suspense fallback={<SectionLoader />}><PrivacyPolicy /></Suspense>
-            } />
-            <Route path="/cookie-policy" element={
-              <Suspense fallback={<SectionLoader />}><CookiePolicy /></Suspense>
-            } />
+            <Route path="/terms" element={<LazySection><TermsOfUse /></LazySection>} />
+            <Route path="/privacy" element={<LazySection><PrivacyPolicy /></LazySection>} />
+            <Route path="/cookie-policy" element={<LazySection><CookiePolicy /></LazySection>} />
 
             {/* Auth routes */}
-            <Route path="/login" element={
-              <Suspense fallback={<SectionLoader />}><Login /></Suspense>
-            } />
-            <Route path="/register" element={
-              <Suspense fallback={<SectionLoader />}><Register /></Suspense>
-            } />
-            <Route path="/confirm" element={
-              <Suspense fallback={<SectionLoader />}><ConfirmSignUp /></Suspense>
+            <Route path="/login" element={<LazySection><Login /></LazySection>} />
+            <Route path="/register" element={<LazySection><Register /></LazySection>} />
+            <Route path="/confirm" element={<LazySection><ConfirmSignUp /></LazySection>} />
+
+            {/* Intake wizard + welcome */}
+            <Route path="/get-started" element={<LazySection><IntakeWizard /></LazySection>} />
+            <Route path="/welcome" element={<LazySection><Welcome /></LazySection>} />
+
+            {/* Client portal (any authenticated user) */}
+            <Route path="/portal" element={
+              <ProtectedRoute>
+                <LazySection><Portal /></LazySection>
+              </ProtectedRoute>
             } />
 
             {/* Admin routes (protected, requires Admin group) */}
             <Route path="/admin" element={
               <ProtectedRoute requiredGroup="Admin">
-                <Suspense fallback={<SectionLoader />}><AdminLayout /></Suspense>
+                <LazySection><AdminLayout /></LazySection>
               </ProtectedRoute>
             }>
-              <Route index element={<Suspense fallback={<SectionLoader />}><Dashboard /></Suspense>} />
-              <Route path="users" element={<Suspense fallback={<SectionLoader />}><Users /></Suspense>} />
-              <Route path="users/:username" element={<Suspense fallback={<SectionLoader />}><UserProfile /></Suspense>} />
-              <Route path="content" element={<Suspense fallback={<SectionLoader />}><Content /></Suspense>} />
-              <Route path="faq" element={<Suspense fallback={<SectionLoader />}><FAQAdmin /></Suspense>} />
-              <Route path="audit" element={<Suspense fallback={<SectionLoader />}><AuditLog /></Suspense>} />
-              <Route path="merch" element={<Suspense fallback={<SectionLoader />}><Merch /></Suspense>} />
+              <Route index element={<LazySection><Dashboard /></LazySection>} />
+              <Route path="users" element={<LazySection><Users /></LazySection>} />
+              <Route path="users/:username" element={<LazySection><UserProfile /></LazySection>} />
+              <Route path="content" element={<LazySection><Content /></LazySection>} />
+              <Route path="faq" element={<LazySection><FAQAdmin /></LazySection>} />
+              <Route path="audit" element={<LazySection><AuditLog /></LazySection>} />
+              <Route path="merch" element={<LazySection><Merch /></LazySection>} />
             </Route>
           </Routes>
         </main>

@@ -91,6 +91,31 @@ export function invitationEmail(): string {
   `);
 }
 
+// ── Template: Intake Wizard Welcome Email (magic link) ──
+
+export function welcomeEmail(): string {
+  return wrap(`
+    <h2 style="margin:0 0 8px;font-size:20px;color:${INK};">Welcome to the pack!</h2>
+    <p style="margin:0 0 16px;">Your Hyrax Fitness account has been created. You are one step away from getting started with your training journey.</p>
+
+    <p style="margin:0 0 20px;text-align:center;">
+      <a href="${SITE_URL}/welcome?email={username}&amp;code={####}" style="display:inline-block;padding:14px 32px;background:${SUNSET};color:#ffffff;text-decoration:none;border-radius:10px;font-weight:600;font-size:16px;">Set Up Your Account</a>
+    </p>
+
+    <div style="margin:20px 0;padding:16px 20px;background:${PAPER};border-radius:12px;border:1px solid ${SAND};">
+      <p style="margin:0 0 10px;font-weight:600;font-size:14px;color:${INK};">What you get with Hyrax Fitness:</p>
+      <table role="presentation" cellpadding="0" cellspacing="0" style="font-size:13px;color:${EARTH};line-height:1.8;">
+        <tr><td style="padding-right:8px;">&#9670;</td><td><strong>5 Training Modules</strong> covering scramble, haul, sprint, recovery, and warmup</td></tr>
+        <tr><td style="padding-right:8px;">&#9670;</td><td><strong>3 Signature Workouts</strong> designed for any fitness level</td></tr>
+        <tr><td style="padding-right:8px;">&#9670;</td><td><strong>Pup Tier Access</strong> with workout videos, PDF guides, and community access</td></tr>
+        <tr><td style="padding-right:8px;">&#9670;</td><td><strong>Progress Tracking</strong> to measure your improvement over time</td></tr>
+      </table>
+    </div>
+
+    <p style="margin:0;font-size:13px;color:${EARTH};">This link expires in 7 days. If you did not create an account, you can safely ignore this email.</p>
+  `);
+}
+
 // ── Template: Forgot Password ──
 
 export function forgotPasswordEmail(): string {

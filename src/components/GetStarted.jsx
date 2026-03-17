@@ -20,7 +20,7 @@ export default function GetStarted() {
                 <p className="muted" style={{ margin: '0 0 6px' }}>
                   {d.body || 'Take a quick assessment to discover your ideal Hyrax program. We\u2019ll ask about your fitness background, goals, and preferences, then build a plan that fits your life. It only takes about 2 minutes. No commitment, no credit card required.'}
                 </p>
-                <a className="btn primary" href="#get-started">{d.ctaText || 'Get Started'}</a>
+                <Link className="btn primary" to="/get-started">{d.ctaText || 'Get Started'}</Link>
               </div>
 
               <LazyImage

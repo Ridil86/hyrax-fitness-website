@@ -1,3 +1,4 @@
+import { Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { useContent } from '../hooks/useContent';
 import './Hero.css';
@@ -65,7 +66,7 @@ export default function Hero() {
                     <span className="leadSub">{d.leadSub}</span>
                   </p>
                   <div className="heroActions">
-                    <a className="btn primary" href={d.ctaLink || '#get-started'}>{d.ctaText}</a>
+                    <Link className="btn primary" to="/get-started">{d.ctaText}</Link>
                   </div>
                 </motion.div>
 

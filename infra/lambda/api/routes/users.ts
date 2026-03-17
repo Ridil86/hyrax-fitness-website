@@ -4,13 +4,21 @@ import {
   AdminListGroupsForUserCommand,
   AdminAddUserToGroupCommand,
   AdminRemoveUserFromGroupCommand,
+  AdminGetUserCommand,
+  AdminDeleteUserCommand,
+  AdminDisableUserCommand,
+  AdminEnableUserCommand,
 } from '@aws-sdk/client-cognito-identity-provider';
+import { DynamoDBClient } from '@aws-sdk/client-dynamodb';
+import { DynamoDBDocumentClient, DeleteCommand } from '@aws-sdk/lib-dynamodb';
 import type { APIGatewayProxyEvent, APIGatewayProxyResult } from 'aws-lambda';
-import { success, badRequest, serverError } from '../utils/response';
+import { success, badRequest, notFound, serverError } from '../utils/response';
 import { isAdmin } from '../utils/auth';
 
 const cognito = new CognitoIdentityProviderClient({});
+const ddb = DynamoDBDocumentClient.from(new DynamoDBClient({}));
 const USER_POOL_ID = process.env.USER_POOL_ID!;
+const TABLE_NAME = process.env.TABLE_NAME!;
 
 /**
  * GET /api/users - List Cognito users
@@ -191,5 +199,109 @@ export async function updateUserGroups(
   } catch (error) {
     console.error('updateUserGroups error:', error);
     return serverError('Failed to update user groups');
+  }
+}
+
+/**
+ * DELETE /api/users/{username} - Delete a user (ADMIN)
+ * Removes from Cognito and cleans up DynamoDB profile
+ */
+export async function deleteUser(
+  event: APIGatewayProxyEvent
+): Promise<APIGatewayProxyResult> {
+  if (!isAdmin(event)) return badRequest('Admin access required');
+
+  const username = event.pathParameters?.username;
+  if (!username) return badRequest('Username is required');
+
+  const decodedUsername = decodeURIComponent(username);
+
+  try {
+    // Get user's sub from Cognito before deleting
+    let sub = '';
+    try {
+      const userResult = await cognito.send(
+        new AdminGetUserCommand({
+          UserPoolId: USER_POOL_ID,
+          Username: decodedUsername,
+        })
+      );
+      sub =
+        userResult.UserAttributes?.find((a) => a.Name === 'sub')?.Value || '';
+    } catch (err: any) {
+      if (err.name === 'UserNotFoundException') {
+        return notFound('User not found');
+      }
+      throw err;
+    }
+
+    // Delete from Cognito
+    await cognito.send(
+      new AdminDeleteUserCommand({
+        UserPoolId: USER_POOL_ID,
+        Username: decodedUsername,
+      })
+    );
+
+    // Clean up DynamoDB profile if sub was found
+    if (sub) {
+      await ddb.send(
+        new DeleteCommand({
+          TableName: TABLE_NAME,
+          Key: { pk: `USER#${sub}`, sk: 'PROFILE' },
+        })
+      );
+    }
+
+    return success({ deleted: true, username: decodedUsername });
+  } catch (error) {
+    console.error('deleteUser error:', error);
+    return serverError('Failed to delete user');
+  }
+}
+
+/**
+ * PUT /api/users/{username}/status - Enable or disable a user (ADMIN)
+ * Body: { enabled: boolean }
+ */
+export async function setUserStatus(
+  event: APIGatewayProxyEvent
+): Promise<APIGatewayProxyResult> {
+  if (!isAdmin(event)) return badRequest('Admin access required');
+
+  const username = event.pathParameters?.username;
+  if (!username) return badRequest('Username is required');
+
+  try {
+    const body = JSON.parse(event.body || '{}');
+    if (typeof body.enabled !== 'boolean') {
+      return badRequest('enabled (boolean) is required');
+    }
+
+    const decodedUsername = decodeURIComponent(username);
+
+    if (body.enabled) {
+      await cognito.send(
+        new AdminEnableUserCommand({
+          UserPoolId: USER_POOL_ID,
+          Username: decodedUsername,
+        })
+      );
+    } else {
+      await cognito.send(
+        new AdminDisableUserCommand({
+          UserPoolId: USER_POOL_ID,
+          Username: decodedUsername,
+        })
+      );
+    }
+
+    return success({ username: decodedUsername, enabled: body.enabled });
+  } catch (error: any) {
+    if (error.name === 'UserNotFoundException') {
+      return notFound('User not found');
+    }
+    console.error('setUserStatus error:', error);
+    return serverError('Failed to update user status');
   }
 }

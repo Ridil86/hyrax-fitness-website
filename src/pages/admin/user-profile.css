@@ -132,6 +132,173 @@
   font-size: .92rem;
 }
 
+/* ── Account Status Section (freeze/unfreeze) ── */
+
+.profile-status-section {
+  padding: 20px 24px;
+  border-top: 1px solid rgba(27, 18, 10, .06);
+}
+
+.profile-status-section h3 {
+  margin: 0 0 12px;
+  font-size: .95rem;
+  color: var(--ink);
+}
+
+.profile-status-row {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+}
+
+.profile-status-badge {
+  display: inline-block;
+  padding: 3px 10px;
+  border-radius: 999px;
+  font-size: .78rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: .03em;
+}
+
+.profile-status-badge.enabled {
+  background: rgba(22, 163, 74, .1);
+  color: #15803d;
+  border: 1px solid rgba(22, 163, 74, .18);
+}
+
+.profile-status-badge.disabled {
+  background: rgba(220, 38, 38, .08);
+  color: #991b1b;
+  border: 1px solid rgba(220, 38, 38, .15);
+}
+
+.profile-freeze-btn {
+  padding: 6px 16px;
+  font-size: .85rem;
+  font-weight: 600;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: opacity .12s;
+}
+
+.profile-freeze-btn:disabled {
+  opacity: .55;
+  cursor: not-allowed;
+}
+
+.profile-freeze-btn.freeze {
+  background: rgba(220, 38, 38, .06);
+  border: 1px solid rgba(220, 38, 38, .2);
+  color: #991b1b;
+}
+
+.profile-freeze-btn.unfreeze {
+  background: rgba(22, 163, 74, .06);
+  border: 1px solid rgba(22, 163, 74, .2);
+  color: #15803d;
+}
+
+/* ── Danger Zone (delete) ── */
+
+.profile-danger-zone {
+  padding: 20px 24px;
+  border-top: 2px solid rgba(220, 38, 38, .15);
+  background: rgba(220, 38, 38, .02);
+}
+
+.profile-danger-zone h3 {
+  margin: 0 0 8px;
+  font-size: .95rem;
+  color: #991b1b;
+}
+
+.profile-danger-zone p {
+  margin: 0 0 14px;
+  font-size: .85rem;
+  color: var(--rock);
+  line-height: 1.5;
+}
+
+.profile-delete-btn {
+  padding: 8px 20px;
+  font-size: .88rem;
+  font-weight: 600;
+  border-radius: 8px;
+  border: 1px solid rgba(220, 38, 38, .3);
+  background: rgba(220, 38, 38, .06);
+  color: #991b1b;
+  cursor: pointer;
+  transition: background .12s;
+}
+
+.profile-delete-btn:hover:not(:disabled) {
+  background: rgba(220, 38, 38, .12);
+}
+
+.profile-delete-btn:disabled {
+  opacity: .55;
+  cursor: not-allowed;
+}
+
+/* ── Confirm dialog ── */
+
+.profile-confirm-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, .4);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+  padding: 16px;
+}
+
+.profile-confirm-dialog {
+  background: #fff;
+  border-radius: var(--radius);
+  box-shadow: var(--shadow);
+  max-width: 420px;
+  width: 100%;
+  padding: 28px 24px;
+}
+
+.profile-confirm-dialog h3 {
+  margin: 0 0 10px;
+  font-size: 1.1rem;
+  color: var(--ink);
+}
+
+.profile-confirm-dialog p {
+  margin: 0 0 20px;
+  font-size: .9rem;
+  color: var(--rock);
+  line-height: 1.5;
+}
+
+.profile-confirm-actions {
+  display: flex;
+  gap: 10px;
+  justify-content: flex-end;
+}
+
+.profile-confirm-actions .btn {
+  padding: 8px 20px;
+  font-size: .88rem;
+}
+
+/* ── Action feedback ── */
+
+.profile-action-error {
+  margin-top: 10px;
+  padding: 8px 12px;
+  background: #fef2f2;
+  border: 1px solid #fecaca;
+  border-radius: 8px;
+  color: #991b1b;
+  font-size: .85rem;
+}
+
 /* ── Responsive ── */
 
 @media (max-width: 640px) {

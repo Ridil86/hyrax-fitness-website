@@ -1,0 +1,248 @@
+/* ── Intake Wizard ── */
+.wizard-page {
+  min-height: 80vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 40px 16px;
+}
+
+.wizard-card {
+  width: 100%;
+  max-width: 460px;
+  background: #fff;
+  border-radius: var(--radius);
+  box-shadow: var(--shadow-soft);
+  padding: 36px 32px;
+  position: relative;
+  overflow: hidden;
+}
+
+/* ── Progress bar ── */
+.wizard-progress {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 28px;
+}
+
+.wizard-progress-step {
+  flex: 1;
+  height: 4px;
+  border-radius: 2px;
+  background: rgba(27, 18, 10, .08);
+  transition: background .3s ease;
+}
+
+.wizard-progress-step.active {
+  background: var(--sunset);
+}
+
+.wizard-progress-step.done {
+  background: #16a34a;
+}
+
+.wizard-step-label {
+  font-size: .78rem;
+  color: var(--rock);
+  font-weight: 500;
+  text-align: right;
+  flex-shrink: 0;
+}
+
+/* ── Step content ── */
+.wizard-step h2 {
+  font-size: 1.35rem;
+  margin: 0 0 6px;
+  color: var(--ink);
+}
+
+.wizard-step p.wizard-subtitle {
+  margin: 0 0 22px;
+  color: var(--rock);
+  font-size: .92rem;
+  line-height: 1.5;
+}
+
+/* ── Fields ── */
+.wizard-field {
+  margin-bottom: 16px;
+}
+
+.wizard-field label {
+  display: block;
+  font-size: .85rem;
+  font-weight: 500;
+  color: var(--earth);
+  margin-bottom: 6px;
+}
+
+.wizard-field input[type="text"],
+.wizard-field input[type="email"] {
+  width: 100%;
+  padding: 11px 14px;
+  font-size: .95rem;
+  border: 1px solid rgba(27, 18, 10, .15);
+  border-radius: 10px;
+  background: #fff;
+  color: var(--ink);
+  transition: border-color .2s, box-shadow .2s;
+  box-sizing: border-box;
+}
+
+.wizard-field input:focus {
+  outline: none;
+  border-color: var(--sunset);
+  box-shadow: 0 0 0 3px rgba(242, 133, 1, .12);
+}
+
+.wizard-name-row {
+  display: flex;
+  gap: 12px;
+}
+
+.wizard-name-row .wizard-field {
+  flex: 1;
+}
+
+/* ── Checkboxes (policy acceptance) ── */
+.wizard-checkbox {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  margin-bottom: 14px;
+  cursor: pointer;
+}
+
+.wizard-checkbox input[type="checkbox"] {
+  margin-top: 3px;
+  width: 18px;
+  height: 18px;
+  accent-color: var(--sunset);
+  cursor: pointer;
+  flex-shrink: 0;
+}
+
+.wizard-checkbox span {
+  font-size: .9rem;
+  color: var(--ink);
+  line-height: 1.5;
+}
+
+.wizard-checkbox a {
+  color: var(--sunset);
+  font-weight: 500;
+  text-decoration: none;
+}
+
+.wizard-checkbox a:hover {
+  text-decoration: underline;
+}
+
+/* ── Buttons ── */
+.wizard-actions {
+  display: flex;
+  gap: 10px;
+  margin-top: 24px;
+}
+
+.wizard-actions .btn {
+  flex: 1;
+  padding: 12px 20px;
+  font-size: .95rem;
+  font-weight: 600;
+  border-radius: 10px;
+  cursor: pointer;
+  transition: opacity .15s;
+}
+
+.wizard-actions .btn:disabled {
+  opacity: .55;
+  cursor: not-allowed;
+}
+
+.wizard-back {
+  background: transparent;
+  border: 1px solid rgba(27, 18, 10, .15);
+  color: var(--earth);
+}
+
+.wizard-back:hover:not(:disabled) {
+  background: rgba(27, 18, 10, .03);
+}
+
+/* ── Error ── */
+.wizard-error {
+  padding: 10px 14px;
+  background: #fef2f2;
+  border: 1px solid #fecaca;
+  border-radius: 10px;
+  color: #991b1b;
+  font-size: .88rem;
+  margin-bottom: 16px;
+}
+
+/* ── Success step ── */
+.wizard-success {
+  text-align: center;
+  padding: 20px 0;
+}
+
+.wizard-success-icon {
+  width: 64px;
+  height: 64px;
+  border-radius: 50%;
+  background: #dcfce7;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin: 0 auto 20px;
+}
+
+.wizard-success-icon svg {
+  width: 32px;
+  height: 32px;
+  color: #16a34a;
+}
+
+.wizard-success h2 {
+  font-size: 1.3rem;
+  margin: 0 0 10px;
+}
+
+.wizard-success p {
+  color: var(--rock);
+  font-size: .92rem;
+  margin: 0 0 8px;
+  line-height: 1.5;
+}
+
+.wizard-success .wizard-email-highlight {
+  font-weight: 600;
+  color: var(--ink);
+}
+
+.wizard-success-link {
+  display: inline-block;
+  margin-top: 20px;
+  color: var(--sunset);
+  font-weight: 500;
+  text-decoration: none;
+  font-size: .9rem;
+}
+
+.wizard-success-link:hover {
+  text-decoration: underline;
+}
+
+/* ── Responsive ── */
+@media (max-width: 520px) {
+  .wizard-card {
+    padding: 28px 20px;
+  }
+
+  .wizard-name-row {
+    flex-direction: column;
+    gap: 0;
+  }
+}

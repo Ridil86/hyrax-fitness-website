@@ -90,6 +90,18 @@
   border: 1px solid rgba(217, 119, 6, .18);
 }
 
+.audit-event.terms {
+  background: rgba(37, 99, 235, .1);
+  color: #1d4ed8;
+  border: 1px solid rgba(37, 99, 235, .18);
+}
+
+.audit-event.privacy {
+  background: rgba(124, 58, 237, .1);
+  color: #6d28d9;
+  border: 1px solid rgba(124, 58, 237, .18);
+}
+
 /* ── User agent cell ── */
 .audit-ua-cell {
   max-width: 220px;

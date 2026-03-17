@@ -5,9 +5,11 @@ import type {
 } from 'aws-lambda';
 import { listFaq, createFaq, updateFaq, deleteFaq, reorderFaq } from './routes/faq';
 import { getContent, updateContent } from './routes/content';
-import { listUsers, getUserGroups, updateUserGroups } from './routes/users';
+import { listUsers, getUserGroups, updateUserGroups, deleteUser, setUserStatus } from './routes/users';
 import { getUploadUrl } from './routes/upload';
 import { logAuditEvent, listAuditLogs, getAuditStats } from './routes/audit';
+import { createAccount } from './routes/signup';
+import { getProfile } from './routes/profile';
 import { notFound, serverError } from './utils/response';
 
 export const handler = async (
@@ -50,9 +52,31 @@ export const handler = async (
       if (method === 'PUT') return updateContent(event);
     }
 
+    // ── Signup Route (public) ──
+    if (path === '/api/signup' && method === 'POST') {
+      return createAccount(event);
+    }
+
+    // ── Profile Route (authenticated) ──
+    if (path === '/api/profile' && method === 'GET') {
+      return getProfile(event);
+    }
+
     // ── Users Routes ──
     if (path === '/api/users' && method === 'GET') {
       return listUsers(event);
+    }
+
+    // /api/users/{username}/status
+    const userStatusMatch = path.match(
+      /^\/api\/users\/([^/]+)\/status$/
+    );
+    if (userStatusMatch) {
+      event.pathParameters = {
+        ...event.pathParameters,
+        username: userStatusMatch[1],
+      };
+      if (method === 'PUT') return setUserStatus(event);
     }
 
     // /api/users/{username}/groups
@@ -66,6 +90,16 @@ export const handler = async (
       };
       if (method === 'GET') return getUserGroups(event);
       if (method === 'PUT') return updateUserGroups(event);
+    }
+
+    // /api/users/{username} DELETE
+    const userDeleteMatch = path.match(/^\/api\/users\/([^/]+)$/);
+    if (userDeleteMatch && method === 'DELETE') {
+      event.pathParameters = {
+        ...event.pathParameters,
+        username: userDeleteMatch[1],
+      };
+      return deleteUser(event);
     }
 
     // ── Upload Route ──

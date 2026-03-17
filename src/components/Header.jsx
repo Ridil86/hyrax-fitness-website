@@ -37,6 +37,11 @@ export default function Header() {
     { to: '/faq', label: 'FAQ' },
   ];
 
+  // Add Portal link for authenticated users
+  if (isAuthenticated) {
+    navLinks.push({ to: '/portal', label: 'Portal' });
+  }
+
   // Add Admin link for admin users
   if (isAdmin) {
     navLinks.push({ to: '/admin', label: 'Admin' });

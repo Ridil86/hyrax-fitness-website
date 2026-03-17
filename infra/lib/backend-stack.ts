@@ -81,6 +81,10 @@ export class BackendStack extends cdk.Stack {
           'cognito-idp:AdminListGroupsForUser',
           'cognito-idp:AdminAddUserToGroup',
           'cognito-idp:AdminRemoveUserFromGroup',
+          'cognito-idp:AdminCreateUser',
+          'cognito-idp:AdminDeleteUser',
+          'cognito-idp:AdminDisableUser',
+          'cognito-idp:AdminEnableUser',
         ],
         resources: [props.userPoolArn],
       })
@@ -167,6 +171,11 @@ export class BackendStack extends cdk.Stack {
     });
 
     const userItem = usersResource.addResource('{username}');
+    userItem.addMethod('DELETE', lambdaIntegration, {
+      authorizer,
+      authorizationType: apigateway.AuthorizationType.COGNITO,
+    });
+
     const userGroups = userItem.addResource('groups');
     userGroups.addMethod('GET', lambdaIntegration, {
       authorizer,
@@ -177,9 +186,26 @@ export class BackendStack extends cdk.Stack {
       authorizationType: apigateway.AuthorizationType.COGNITO,
     });
 
+    const userStatus = userItem.addResource('status');
+    userStatus.addMethod('PUT', lambdaIntegration, {
+      authorizer,
+      authorizationType: apigateway.AuthorizationType.COGNITO,
+    });
+
     // Upload route (admin-only)
     const uploadResource = apiResource.addResource('upload');
     uploadResource.addMethod('POST', lambdaIntegration, {
+      authorizer,
+      authorizationType: apigateway.AuthorizationType.COGNITO,
+    });
+
+    // Signup route (public - intake wizard)
+    const signupResource = apiResource.addResource('signup');
+    signupResource.addMethod('POST', lambdaIntegration); // Public
+
+    // Profile route (authenticated, any group)
+    const profileResource = apiResource.addResource('profile');
+    profileResource.addMethod('GET', lambdaIntegration, {
       authorizer,
       authorizationType: apigateway.AuthorizationType.COGNITO,
     });

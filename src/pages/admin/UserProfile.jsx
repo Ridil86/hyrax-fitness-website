@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
-import { useParams, useLocation, Link } from 'react-router-dom';
+import { useParams, useLocation, Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
-import { fetchUsers, fetchUserGroups, updateUserGroups } from '../../api/users';
+import { fetchUsers, fetchUserGroups, updateUserGroups, deleteUser, freezeUser } from '../../api/users';
 import './admin.css';
 import './users-admin.css';
 import './user-profile.css';
@@ -10,6 +10,7 @@ export default function UserProfile() {
   const { username } = useParams();
   const { state } = useLocation();
   const { getIdToken } = useAuth();
+  const navigate = useNavigate();
 
   const [user, setUser] = useState(state?.user || null);
   const [groups, setGroups] = useState([]);
@@ -17,6 +18,10 @@ export default function UserProfile() {
   const [error, setError] = useState(null);
   const [savingGroups, setSavingGroups] = useState(false);
   const [groupError, setGroupError] = useState(null);
+  const [freezing, setFreezing] = useState(false);
+  const [deleting, setDeleting] = useState(false);
+  const [confirmDelete, setConfirmDelete] = useState(false);
+  const [actionError, setActionError] = useState(null);
 
   const decodedUsername = decodeURIComponent(username);
 
@@ -73,6 +78,35 @@ export default function UserProfile() {
     loadGroups();
     return () => { cancelled = true; };
   }, [decodedUsername, getIdToken, user]);
+
+  const handleFreeze = async () => {
+    setFreezing(true);
+    setActionError(null);
+    try {
+      const token = await getIdToken();
+      const newEnabled = !user.enabled;
+      await freezeUser(decodedUsername, newEnabled, token);
+      setUser(prev => ({ ...prev, enabled: newEnabled }));
+    } catch (err) {
+      setActionError(err.message || 'Failed to update user status');
+    } finally {
+      setFreezing(false);
+    }
+  };
+
+  const handleDelete = async () => {
+    setDeleting(true);
+    setActionError(null);
+    try {
+      const token = await getIdToken();
+      await deleteUser(decodedUsername, token);
+      navigate('/admin/users');
+    } catch (err) {
+      setActionError(err.message || 'Failed to delete user');
+      setDeleting(false);
+      setConfirmDelete(false);
+    }
+  };
 
   const handleToggleGroup = async (group) => {
     setSavingGroups(true);
@@ -210,7 +244,57 @@ export default function UserProfile() {
           </div>
           {groupError && <div className="users-group-error">{groupError}</div>}
         </div>
+
+        <div className="profile-status-section">
+          <h3>Account Status</h3>
+          <div className="profile-status-row">
+            <span className={`profile-status-badge ${user.enabled ? 'enabled' : 'disabled'}`}>
+              {user.enabled ? 'Active' : 'Frozen'}
+            </span>
+            <button
+              className={`profile-freeze-btn ${user.enabled ? 'freeze' : 'unfreeze'}`}
+              onClick={handleFreeze}
+              disabled={freezing}
+            >
+              {freezing ? 'Updating...' : user.enabled ? 'Freeze Account' : 'Unfreeze Account'}
+            </button>
+          </div>
+          <p className="muted small" style={{ marginTop: 6 }}>
+            {user.enabled
+              ? 'Freezing prevents this user from signing in.'
+              : 'This account is frozen. The user cannot sign in until unfrozen.'}
+          </p>
+        </div>
+
+        {actionError && <div className="profile-action-error">{actionError}</div>}
+
+        <div className="profile-danger-zone">
+          <h3>Danger Zone</h3>
+          <p className="muted small">Permanently delete this user from Cognito and remove their profile data. This action cannot be undone.</p>
+          <button
+            className="profile-delete-btn"
+            onClick={() => setConfirmDelete(true)}
+            disabled={deleting}
+          >
+            Delete User
+          </button>
+        </div>
       </div>
+
+      {confirmDelete && (
+        <div className="profile-confirm-overlay" onClick={() => !deleting && setConfirmDelete(false)}>
+          <div className="profile-confirm-dialog" onClick={e => e.stopPropagation()}>
+            <h3>Delete User</h3>
+            <p>Are you sure you want to permanently delete <strong>{fullName}</strong> ({user.email})? This will remove their Cognito account and all profile data.</p>
+            <div className="profile-confirm-actions">
+              <button className="btn" onClick={() => setConfirmDelete(false)} disabled={deleting}>Cancel</button>
+              <button className="profile-delete-btn" onClick={handleDelete} disabled={deleting}>
+                {deleting ? 'Deleting...' : 'Yes, Delete'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

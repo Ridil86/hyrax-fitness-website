@@ -1,3 +1,4 @@
+import { Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { useInView } from 'react-intersection-observer';
 import ScrollReveal from './ScrollReveal';
@@ -93,7 +94,7 @@ export default function Programs() {
                   {(tier.features || []).map((f, j) => <li key={j}>{f}</li>)}
                 </ul>
                 <div className="actions">
-                  <a className={tier.ctaClass || 'btn primary'} href="/#get-started">{tier.cta || 'Get Started'}</a>
+                  <Link className={tier.ctaClass || 'btn primary'} to="/get-started">{tier.cta || 'Get Started'}</Link>
                 </div>
               </div>
             </motion.article>
@@ -137,13 +138,13 @@ export default function Programs() {
                 <tr>
                   <td className="compare-feature-col" />
                   <td className="compare-plan-col">
-                    <a className="btn primary compare-cta" href="/#get-started">Get Started</a>
+                    <Link className="btn primary compare-cta" to="/get-started">Get Started</Link>
                   </td>
                   <td className="compare-plan-col featured">
-                    <a className="btn primary compare-cta" href="/#get-started">Get Started</a>
+                    <Link className="btn primary compare-cta" to="/get-started">Get Started</Link>
                   </td>
                   <td className="compare-plan-col">
-                    <a className="btn primary compare-cta" href="/#get-started">Get Started</a>
+                    <Link className="btn primary compare-cta" to="/get-started">Get Started</Link>
                   </td>
                 </tr>
               </tfoot>

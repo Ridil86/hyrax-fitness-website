@@ -8,6 +8,8 @@ const EVENT_FILTERS = [
   { value: '', label: 'All Events' },
   { value: 'COOKIE_ACCEPT', label: 'Cookie Accept' },
   { value: 'COOKIE_REJECT', label: 'Cookie Reject' },
+  { value: 'TERMS_ACCEPT', label: 'Terms Accept' },
+  { value: 'PRIVACY_ACCEPT', label: 'Privacy Accept' },
 ];
 
 const PAGE_SIZE = 50;
@@ -26,12 +28,16 @@ function formatDate(iso) {
 function eventBadgeClass(eventType) {
   if (eventType === 'COOKIE_ACCEPT') return 'audit-event accept';
   if (eventType === 'COOKIE_REJECT') return 'audit-event reject';
+  if (eventType === 'TERMS_ACCEPT') return 'audit-event terms';
+  if (eventType === 'PRIVACY_ACCEPT') return 'audit-event privacy';
   return 'audit-event';
 }
 
 function eventLabel(eventType) {
   if (eventType === 'COOKIE_ACCEPT') return 'Accept';
   if (eventType === 'COOKIE_REJECT') return 'Reject';
+  if (eventType === 'TERMS_ACCEPT') return 'Terms';
+  if (eventType === 'PRIVACY_ACCEPT') return 'Privacy';
   return eventType;
 }
 
@@ -182,7 +188,7 @@ export default function AuditLog() {
                       {eventLabel(log.eventType)}
                     </span>
                   </td>
-                  <td>{log.consentValue || '--'}</td>
+                  <td>{log.consentValue || log.metadata?.email || '--'}</td>
                   <td className="audit-col-ua audit-ua-cell" title={log.userAgent || ''}>
                     {log.userAgent || '--'}
                   </td>
