@@ -16,7 +16,7 @@ const SUNSET = '#F28501';
 const SUNRISE = '#FDB90F';
 const EARTH = '#654C2B';
 
-const LOGO_URL = 'https://hyraxfitness.com/img/hyrax-fitness-mark-64x64.png';
+const LOGO_URL = 'https://hyraxfitness.com/img/hyrax-fitness-logo-512x512.png';
 const SITE_URL = 'https://hyraxfitness.com';
 
 // ── Shared wrapper ──
@@ -31,8 +31,8 @@ function wrap(body: string): string {
       <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="max-width:520px;background:#ffffff;border-radius:18px;overflow:hidden;box-shadow:0 10px 28px rgba(27,18,10,.12);">
         <!-- Header gradient -->
         <tr>
-          <td style="background:linear-gradient(135deg,${SUNSET},${SUNRISE});padding:28px 32px;text-align:center;">
-            <img src="${LOGO_URL}" alt="Hyrax Fitness" width="48" height="48" style="display:inline-block;" />
+          <td style="background:linear-gradient(135deg,${SUNSET},${SUNRISE});padding:24px 32px;text-align:center;">
+            <img src="${LOGO_URL}" alt="Hyrax Fitness" style="display:block;width:100%;max-width:456px;height:auto;margin:0 auto;" />
           </td>
         </tr>
         <!-- Body -->
@@ -103,19 +103,21 @@ export function welcomeEmail(): string {
     </p>
 
     <div style="margin:20px 0;padding:16px 20px;background:${PAPER};border-radius:12px;border:1px solid ${SAND};">
-      <p style="margin:0 0 10px;font-weight:600;font-size:14px;color:${INK};">Look forward to:</p>
+      <p style="margin:0 0 10px;font-weight:600;font-size:14px;color:${INK};">You can now access:</p>
       <table role="presentation" cellpadding="0" cellspacing="0" style="font-size:13px;color:${EARTH};line-height:1.8;">
-        <tr><td style="padding-right:8px;">&#9670;</td><td><strong>Training Modules</strong> covering scramble, haul, sprint, recovery</td></tr>
+        <tr><td style="padding-right:8px;">&#9670;</td><td><strong>Training Modules</strong>: Scramble, Haul, Sprint, Recover</td></tr>
         <tr><td style="padding-right:8px;">&#9670;</td><td><strong>Signature Workouts</strong> designed for any fitness level</td></tr>
-        <tr><td style="padding-right:8px;">&#9670;</td><td><strong>Pup Tier Access</strong>Free workout videos, PDF guides, and community access</td></tr>
-        <tr><td style="padding-right:8px;">&#9670;</td><td><strong>Progress Tracking</strong> to measure your improvement over time</td></tr>
+        <tr><td style="padding-right:8px;">&#9670;</td><td><strong>Free Workout Videos</strong> with professional trainers</td></tr>
+        <tr><td style="padding-right:8px;">&#9670;</td><td><strong>Downloadable Workouts</strong> you can print and take with you.</td></tr>
+        <tr><td style="padding-right:8px;">&#9670;</td><td><strong>Community Acces</strong> to stay updated</td></tr>
       </table>
-      <p style="margin:0 0 10px;font-weight:600;font-size:14px;color:${INK};">Upgrade for:</p>
+      <br>
+      <p style="margin:0 0 10px;font-weight:600;font-size:14px;color:${INK};">Upgrade to receive:</p>
       <table role="presentation" cellpadding="0" cellspacing="0" style="font-size:13px;color:${EARTH};line-height:1.8;">
-        <tr><td style="padding-right:8px;">&#9670;</td><td><strong>Customized Workouts</strong>workouts designed just for you!</td></tr>
-        <tr><td style="padding-right:8px;">&#9670;</td><td><strong>Nutrition Plans</strong>Meal plans tailored to your needs.</td></tr>
+        <tr><td style="padding-right:8px;">&#9670;</td><td><strong>Customized Workouts</strong> designed just for you!</td></tr>
+        <tr><td style="padding-right:8px;">&#9670;</td><td><strong>Nutrition Plans</strong> tailored to your needs.</td></tr>
         <tr><td style="padding-right:8px;">&#9670;</td><td><strong>Progress Tracking</strong> to measure your improvement over time</td></tr>
-        <tr><td style="padding-right:8px;">&#9670;</td><td><strong>And much more!</strong></td></tr>
+        <tr><td style="padding-right:8px;">&#9670;</td><td><strong>And Much More!</strong></td></tr>
       </table>
     </div>
 
