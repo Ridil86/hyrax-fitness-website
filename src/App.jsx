@@ -33,6 +33,11 @@ const FAQAdmin = lazy(() => import('./pages/admin/FAQAdmin'));
 const Merch = lazy(() => import('./pages/admin/Merch'));
 const UserProfile = lazy(() => import('./pages/admin/UserProfile'));
 const AuditLog = lazy(() => import('./pages/admin/AuditLog'));
+const WorkoutAdmin = lazy(() => import('./pages/admin/WorkoutAdmin'));
+
+// Workout library pages
+const WorkoutLibrary = lazy(() => import('./pages/WorkoutLibrary'));
+const WorkoutDetail = lazy(() => import('./pages/WorkoutDetail'));
 
 // Legal pages
 const TermsOfUse = lazy(() => import('./pages/TermsOfUse'));
@@ -109,6 +114,8 @@ export default function App() {
             <Route path="/programs" element={<LazySection><Programs /></LazySection>} />
             <Route path="/gallery" element={<LazySection><Gallery /></LazySection>} />
             <Route path="/faq" element={<LazySection><FAQ /></LazySection>} />
+            <Route path="/workouts" element={<LazySection><WorkoutLibrary /></LazySection>} />
+            <Route path="/workouts/:id" element={<LazySection><WorkoutDetail /></LazySection>} />
 
             {/* Legal routes */}
             <Route path="/terms" element={<LazySection><TermsOfUse /></LazySection>} />
@@ -143,6 +150,7 @@ export default function App() {
               <Route path="content" element={<LazySection><Content /></LazySection>} />
               <Route path="faq" element={<LazySection><FAQAdmin /></LazySection>} />
               <Route path="audit" element={<LazySection><AuditLog /></LazySection>} />
+              <Route path="workouts" element={<LazySection><WorkoutAdmin /></LazySection>} />
               <Route path="merch" element={<LazySection><Merch /></LazySection>} />
             </Route>
           </Routes>

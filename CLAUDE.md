@@ -61,6 +61,7 @@ src/
   hooks/
     useContent.js      # Fetch content section with in-memory cache
     useFaq.js          # Fetch FAQ list with in-memory cache
+    useWorkouts.js     # Fetch workout library with in-memory cache
     useLazyImage.js    # Image load state hook
     useScrollReveal.js # IntersectionObserver hook
   styles/
@@ -80,6 +81,7 @@ infra/                 # AWS CDK infrastructure (TypeScript)
         content.ts     # Content get/put handlers
         users.ts       # Cognito user list + group management
         upload.ts      # S3 pre-signed URL generator
+        workouts.ts    # Workout library CRUD handlers
       utils/
         response.ts    # Shared HTTP response helpers
         auth.ts        # Extract/validate Cognito claims
@@ -108,6 +110,7 @@ Single-table design with PK/SK pattern, PAY_PER_REQUEST billing.
 | `CONTENT` | `programs` | Programs section data |
 | `CONTENT` | `testimonials` | Testimonials data |
 | `CONTENT` | `getstarted` | Get Started section data |
+| `WORKOUT` | `WORKOUT#<id>` | Workout item (title, description, category, difficulty, duration, equipment[], exercises[], imageUrl, status, sortOrder) |
 
 ### API Routes (API Gateway + Lambda)
 
@@ -124,6 +127,11 @@ Single-table design with PK/SK pattern, PAY_PER_REQUEST billing.
 | `GET` | `/api/users/{username}/groups` | Admin | Get user's groups |
 | `PUT` | `/api/users/{username}/groups` | Admin | Update user's groups |
 | `POST` | `/api/upload` | Admin | Get S3 pre-signed upload URL |
+| `GET` | `/api/workouts` | Public | List workouts (published only; admin sees all) |
+| `GET` | `/api/workouts/{id}` | Public | Get single workout (published only; admin sees all) |
+| `POST` | `/api/workouts` | Admin | Create workout |
+| `PUT` | `/api/workouts/{id}` | Admin | Update workout |
+| `DELETE` | `/api/workouts/{id}` | Admin | Delete workout |
 
 ### Content Data Pattern
 Public components use `useContent(section)` hook which fetches from `/api/content/{section}`. All components keep hardcoded fallback data so the site works even if the API is unreachable. The hook has an in-memory cache to avoid re-fetching within the same session.
@@ -138,6 +146,8 @@ Public components use `useContent(section)` hook which fetches from `/api/conten
 - **`/programs`**: Programs page (3 pricing tiers)
 - **`/gallery`**: Photo gallery page
 - **`/faq`**: FAQ page (API-driven)
+- **`/workouts`**: Workout library (browse all published workouts)
+- **`/workouts/:id`**: Single workout detail + PDF download
 - **`/login`**: Sign-in page
 - **`/register`**: Registration page
 - **`/confirm`**: Email verification code page
@@ -145,6 +155,7 @@ Public components use `useContent(section)` hook which fetches from `/api/conten
 - **`/admin/users`**: User management (search, group toggles)
 - **`/admin/content`**: Content CMS (tabbed editor for all sections)
 - **`/admin/faq`**: FAQ manager (CRUD + reorder)
+- **`/admin/workouts`**: Workout library manager (CRUD + PDF preview)
 - **`/admin/merch`**: Merchandise manager (future phase)
 
 ### Navigation Pattern

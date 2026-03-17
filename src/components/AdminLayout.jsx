@@ -7,6 +7,7 @@ const navItems = [
   { to: '/admin/users', label: 'Users', icon: '\u263A' },     // smiley
   { to: '/admin/content', label: 'Content', icon: '\u270E' }, // pencil
   { to: '/admin/faq', label: 'FAQ', icon: '?' },
+  { to: '/admin/workouts', label: 'Workouts', icon: '\u270A' },
   { to: '/admin/merch', label: 'Merch', icon: '\u2605' },      // star
   { to: '/admin/audit', label: 'Audit Log', icon: '\u2691' },  // flag
 ];

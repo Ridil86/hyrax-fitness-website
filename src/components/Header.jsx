@@ -35,6 +35,7 @@ export default function Header() {
     { to: '/programs', label: 'Programs' },
     { to: '/gallery', label: 'Gallery' },
     { to: '/faq', label: 'FAQ' },
+    { to: '/workouts', label: 'Workouts' },
   ];
 
   // Add Portal link for authenticated users

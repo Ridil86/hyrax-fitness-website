@@ -30,6 +30,7 @@ export async function getUploadUrl(
       'image/webp',
       'image/gif',
       'image/svg+xml',
+      'application/pdf',
     ];
     if (!allowedTypes.includes(body.contentType)) {
       return badRequest(

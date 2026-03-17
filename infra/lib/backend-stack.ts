@@ -192,6 +192,25 @@ export class BackendStack extends cdk.Stack {
       authorizationType: apigateway.AuthorizationType.COGNITO,
     });
 
+    // Workout routes
+    const workoutsResource = apiResource.addResource('workouts');
+    workoutsResource.addMethod('GET', lambdaIntegration); // Public (filters in handler)
+    workoutsResource.addMethod('POST', lambdaIntegration, {
+      authorizer,
+      authorizationType: apigateway.AuthorizationType.COGNITO,
+    });
+
+    const workoutItem = workoutsResource.addResource('{id}');
+    workoutItem.addMethod('GET', lambdaIntegration); // Public (filters in handler)
+    workoutItem.addMethod('PUT', lambdaIntegration, {
+      authorizer,
+      authorizationType: apigateway.AuthorizationType.COGNITO,
+    });
+    workoutItem.addMethod('DELETE', lambdaIntegration, {
+      authorizer,
+      authorizationType: apigateway.AuthorizationType.COGNITO,
+    });
+
     // Upload route (admin-only)
     const uploadResource = apiResource.addResource('upload');
     uploadResource.addMethod('POST', lambdaIntegration, {

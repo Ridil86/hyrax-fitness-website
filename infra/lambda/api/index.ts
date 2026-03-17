@@ -10,6 +10,7 @@ import { getUploadUrl } from './routes/upload';
 import { logAuditEvent, listAuditLogs, getAuditStats } from './routes/audit';
 import { createAccount } from './routes/signup';
 import { getProfile, createProfile } from './routes/profile';
+import { listWorkouts, getWorkout, createWorkout, updateWorkout, deleteWorkout } from './routes/workouts';
 import { notFound, serverError } from './utils/response';
 
 export const handler = async (
@@ -101,6 +102,21 @@ export const handler = async (
         username: userDeleteMatch[1],
       };
       return deleteUser(event);
+    }
+
+    // ── Workout Routes ──
+    if (path === '/api/workouts') {
+      if (method === 'GET') return listWorkouts(event);
+      if (method === 'POST') return createWorkout(event);
+    }
+
+    // /api/workouts/{id}
+    const workoutMatch = path.match(/^\/api\/workouts\/([^/]+)$/);
+    if (workoutMatch) {
+      event.pathParameters = { ...event.pathParameters, id: workoutMatch[1] };
+      if (method === 'GET') return getWorkout(event);
+      if (method === 'PUT') return updateWorkout(event);
+      if (method === 'DELETE') return deleteWorkout(event);
     }
 
     // ── Upload Route ──

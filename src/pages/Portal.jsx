@@ -125,6 +125,10 @@ export default function Portal() {
       <div className="portal-card">
         <h3>Quick Links</h3>
         <div className="portal-links">
+          <Link to="/workouts" className="portal-link">
+            <span className="portal-link-icon">&#128170;</span>
+            Workout Library
+          </Link>
           <Link to="/programs" className="portal-link">
             <span className="portal-link-icon">&#9881;</span>
             Explore Programs
