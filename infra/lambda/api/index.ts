@@ -7,6 +7,7 @@ import { listFaq, createFaq, updateFaq, deleteFaq, reorderFaq } from './routes/f
 import { getContent, updateContent } from './routes/content';
 import { listUsers, getUserGroups, updateUserGroups } from './routes/users';
 import { getUploadUrl } from './routes/upload';
+import { logAuditEvent, listAuditLogs, getAuditStats } from './routes/audit';
 import { notFound, serverError } from './utils/response';
 
 export const handler = async (
@@ -70,6 +71,17 @@ export const handler = async (
     // ── Upload Route ──
     if (path === '/api/upload' && method === 'POST') {
       return getUploadUrl(event);
+    }
+
+    // ── Audit Routes ──
+    // Stats must match before the general /api/audit path
+    if (path === '/api/audit/stats' && method === 'GET') {
+      return getAuditStats(event);
+    }
+
+    if (path === '/api/audit') {
+      if (method === 'POST') return logAuditEvent(event);
+      if (method === 'GET') return listAuditLogs(event);
     }
 
     return notFound(`No route found for ${method} ${path}`);

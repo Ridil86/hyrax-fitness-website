@@ -115,6 +115,13 @@ export default function Dashboard() {
               <p>Edit site content, text, and images for all sections</p>
             </div>
           </Link>
+          <Link to="/admin/audit" className="dashboard-link-card">
+            <span className="dashboard-link-icon">&#9873;</span>
+            <div>
+              <strong>Audit Log</strong>
+              <p>View compliance events and cookie consent tracking</p>
+            </div>
+          </Link>
         </div>
       </div>
     </div>

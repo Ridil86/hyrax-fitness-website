@@ -184,6 +184,20 @@ export class BackendStack extends cdk.Stack {
       authorizationType: apigateway.AuthorizationType.COGNITO,
     });
 
+    // Audit routes (POST is public for consent logging, GET is admin-only)
+    const auditResource = apiResource.addResource('audit');
+    auditResource.addMethod('POST', lambdaIntegration); // Public
+    auditResource.addMethod('GET', lambdaIntegration, {
+      authorizer,
+      authorizationType: apigateway.AuthorizationType.COGNITO,
+    });
+
+    const auditStats = auditResource.addResource('stats');
+    auditStats.addMethod('GET', lambdaIntegration, {
+      authorizer,
+      authorizationType: apigateway.AuthorizationType.COGNITO,
+    });
+
     // ── Stack Outputs ──
     new cdk.CfnOutput(this, 'ApiUrl', {
       value: api.url,

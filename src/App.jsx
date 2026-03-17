@@ -1,6 +1,7 @@
 import { lazy, Suspense, useEffect } from 'react';
 import { BrowserRouter, Routes, Route, useLocation } from 'react-router-dom';
 import { AuthProvider } from './context/AuthContext';
+import { CookieConsentProvider } from './context/CookieConsentContext';
 import Header from './components/Header';
 import Hero from './components/Hero';
 import Footer from './components/Footer';
@@ -29,6 +30,15 @@ const Content = lazy(() => import('./pages/admin/Content'));
 const FAQAdmin = lazy(() => import('./pages/admin/FAQAdmin'));
 const Merch = lazy(() => import('./pages/admin/Merch'));
 const UserProfile = lazy(() => import('./pages/admin/UserProfile'));
+const AuditLog = lazy(() => import('./pages/admin/AuditLog'));
+
+// Legal pages
+const TermsOfUse = lazy(() => import('./pages/TermsOfUse'));
+const PrivacyPolicy = lazy(() => import('./pages/PrivacyPolicy'));
+const CookiePolicy = lazy(() => import('./pages/CookiePolicy'));
+
+// Cookie consent
+const CookieConsent = lazy(() => import('./components/CookieConsent'));
 
 function SectionLoader() {
   return (
@@ -84,6 +94,7 @@ export default function App() {
   return (
     <BrowserRouter>
       <AuthProvider>
+        <CookieConsentProvider>
         <ScrollManager />
         <Header />
         <main>
@@ -97,6 +108,17 @@ export default function App() {
             } />
             <Route path="/faq" element={
               <Suspense fallback={<SectionLoader />}><FAQ /></Suspense>
+            } />
+
+            {/* Legal routes */}
+            <Route path="/terms" element={
+              <Suspense fallback={<SectionLoader />}><TermsOfUse /></Suspense>
+            } />
+            <Route path="/privacy" element={
+              <Suspense fallback={<SectionLoader />}><PrivacyPolicy /></Suspense>
+            } />
+            <Route path="/cookie-policy" element={
+              <Suspense fallback={<SectionLoader />}><CookiePolicy /></Suspense>
             } />
 
             {/* Auth routes */}
@@ -121,11 +143,14 @@ export default function App() {
               <Route path="users/:username" element={<Suspense fallback={<SectionLoader />}><UserProfile /></Suspense>} />
               <Route path="content" element={<Suspense fallback={<SectionLoader />}><Content /></Suspense>} />
               <Route path="faq" element={<Suspense fallback={<SectionLoader />}><FAQAdmin /></Suspense>} />
+              <Route path="audit" element={<Suspense fallback={<SectionLoader />}><AuditLog /></Suspense>} />
               <Route path="merch" element={<Suspense fallback={<SectionLoader />}><Merch /></Suspense>} />
             </Route>
           </Routes>
         </main>
         <Footer />
+        <Suspense fallback={null}><CookieConsent /></Suspense>
+        </CookieConsentProvider>
       </AuthProvider>
     </BrowserRouter>
   );

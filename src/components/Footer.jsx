@@ -12,14 +12,14 @@ const footerLinks = {
     { to: '/#get-started', label: 'Get Started' },
     { to: '/#testimonials', label: 'Testimonials' },
   ],
+  Legal: [
+    { to: '/terms', label: 'Terms of Use' },
+    { to: '/privacy', label: 'Privacy Policy' },
+    { to: '/cookie-policy', label: 'Cookie Policy' },
+  ],
 };
 
 export default function Footer() {
-  const scrollToTop = (e) => {
-    e.preventDefault();
-    window.scrollTo({ top: 0, behavior: 'smooth' });
-  };
-
   return (
     <footer>
       <div className="wrap">
@@ -43,10 +43,6 @@ export default function Footer() {
                 ))}
               </div>
             ))}
-            <div>
-              <h4>More</h4>
-              <a href="#" onClick={scrollToTop}>Back to Top</a>
-            </div>
           </div>
         </div>
 
