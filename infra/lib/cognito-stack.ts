@@ -77,6 +77,39 @@ export class CognitoStack extends cdk.Stack {
       precedence: 10,
     });
 
+    // ── Pre Sign-up Lambda Trigger ──
+    // Handles Google account linking and duplicate email prevention
+    const preSignUpFn = new NodejsFunction(this, 'PreSignUpFn', {
+      functionName: 'hyrax-pre-signup',
+      runtime: Runtime.NODEJS_20_X,
+      entry: path.join(__dirname, '..', 'lambda', 'pre-signup', 'index.ts'),
+      handler: 'handler',
+      timeout: cdk.Duration.seconds(10),
+      bundling: {
+        minify: true,
+        sourceMap: false,
+        forceDockerBundling: false,
+      },
+    });
+
+    preSignUpFn.addToRolePolicy(
+      new iam.PolicyStatement({
+        actions: [
+          'cognito-idp:ListUsers',
+          'cognito-idp:AdminLinkProviderForUser',
+          'cognito-idp:AdminAddUserToGroup',
+        ],
+        resources: [
+          `arn:aws:cognito-idp:${this.region}:${this.account}:userpool/*`,
+        ],
+      })
+    );
+
+    userPool.addTrigger(
+      cognito.UserPoolOperation.PRE_SIGN_UP,
+      preSignUpFn
+    );
+
     // ── Post-Confirmation Lambda Trigger ──
     // Auto-bundles TypeScript with esbuild via NodejsFunction
     // Note: No environment variables needed - the event provides userPoolId

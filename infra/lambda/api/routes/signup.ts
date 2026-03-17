@@ -2,6 +2,7 @@ import {
   CognitoIdentityProviderClient,
   AdminCreateUserCommand,
   AdminAddUserToGroupCommand,
+  ListUsersCommand,
 } from '@aws-sdk/client-cognito-identity-provider';
 import { DynamoDBClient } from '@aws-sdk/client-dynamodb';
 import { DynamoDBDocumentClient, PutCommand } from '@aws-sdk/lib-dynamodb';
@@ -51,6 +52,33 @@ export async function createAccount(
 
     if (!termsAccepted || !privacyAccepted) {
       return badRequest('You must accept the Terms of Use and Privacy Policy');
+    }
+
+    // Check if a user with this email already exists (e.g. Google-federated)
+    const existingUsers = await cognito.send(
+      new ListUsersCommand({
+        UserPoolId: USER_POOL_ID,
+        Filter: `email = "${email}"`,
+        Limit: 5,
+      })
+    );
+
+    if (existingUsers.Users && existingUsers.Users.length > 0) {
+      const hasGoogleUser = existingUsers.Users.some(
+        (u) =>
+          u.UserStatus === 'EXTERNAL_PROVIDER' ||
+          u.Username?.startsWith('Google_') ||
+          u.Username?.startsWith('google_')
+      );
+
+      if (hasGoogleUser) {
+        return badRequest(
+          'An account with this email already exists via Google. Please sign in with Google instead.'
+        );
+      }
+
+      // Native user already exists
+      return badRequest('An account with this email already exists');
     }
 
     const tempPassword = generateTempPassword();
