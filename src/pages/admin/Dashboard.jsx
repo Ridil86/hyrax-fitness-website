@@ -25,7 +25,7 @@ export default function Dashboard() {
         if (cancelled) return;
 
         const userCount = usersResult.status === 'fulfilled'
-          ? (usersResult.value.users || []).length + (usersResult.value.paginationToken ? '+' : '')
+          ? (usersResult.value.users || []).length + (usersResult.value.nextToken ? '+' : '')
           : null;
 
         const faqCount = faqResult.status === 'fulfilled'
@@ -54,7 +54,7 @@ export default function Dashboard() {
         const result = await fetchUsers({ limit: 60 }, token);
         if (cancelled) return;
         const count = (result.users || []).length;
-        const display = result.paginationToken ? `${count}+` : String(count);
+        const display = result.nextToken ? `${count}+` : String(count);
         setStats(prev => ({ ...prev, users: display }));
       } catch {
         // best-effort

@@ -88,6 +88,26 @@ export class CognitoStack extends cdk.Stack {
       postConfirmationFn
     );
 
+    // ── Custom Message Lambda Trigger ──
+    // Branded HTML emails for verification, invitation, and forgot-password
+    const customMessageFn = new NodejsFunction(this, 'CustomMessageFn', {
+      functionName: 'hyrax-custom-message',
+      runtime: Runtime.NODEJS_20_X,
+      entry: path.join(__dirname, '..', 'lambda', 'custom-message', 'index.ts'),
+      handler: 'handler',
+      timeout: cdk.Duration.seconds(10),
+      bundling: {
+        minify: true,
+        sourceMap: false,
+        forceDockerBundling: false,
+      },
+    });
+
+    userPool.addTrigger(
+      cognito.UserPoolOperation.CUSTOM_MESSAGE,
+      customMessageFn
+    );
+
     // ── App Client (SPA - no secret) ──
     const appClient = userPool.addClient('HyraxWebAppClient', {
       userPoolClientName: 'hyrax-web-app',

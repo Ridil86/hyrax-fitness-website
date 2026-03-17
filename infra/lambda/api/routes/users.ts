@@ -41,25 +41,43 @@ export async function listUsers(
 
     const result = await cognito.send(new ListUsersCommand(params));
 
-    const users = (result.Users || []).map((user) => {
-      const attrs: Record<string, string> = {};
-      (user.Attributes || []).forEach((attr) => {
-        if (attr.Name && attr.Value) {
-          attrs[attr.Name] = attr.Value;
-        }
-      });
+    // Map users and fetch groups in parallel
+    const users = await Promise.all(
+      (result.Users || []).map(async (user) => {
+        const attrs: Record<string, string> = {};
+        (user.Attributes || []).forEach((attr) => {
+          if (attr.Name && attr.Value) {
+            attrs[attr.Name] = attr.Value;
+          }
+        });
 
-      return {
-        username: user.Username,
-        email: attrs.email || '',
-        givenName: attrs.given_name || '',
-        familyName: attrs.family_name || '',
-        status: user.UserStatus,
-        enabled: user.Enabled,
-        createdAt: user.UserCreateDate?.toISOString(),
-        lastModified: user.UserLastModifiedDate?.toISOString(),
-      };
-    });
+        // Fetch groups for this user
+        let groups: string[] = [];
+        try {
+          const groupsResult = await cognito.send(
+            new AdminListGroupsForUserCommand({
+              UserPoolId: USER_POOL_ID,
+              Username: user.Username!,
+            })
+          );
+          groups = (groupsResult.Groups || []).map((g) => g.GroupName!);
+        } catch (err) {
+          console.error(`Failed to fetch groups for ${user.Username}:`, err);
+        }
+
+        return {
+          username: user.Username,
+          email: attrs.email || '',
+          givenName: attrs.given_name || '',
+          familyName: attrs.family_name || '',
+          status: user.UserStatus,
+          enabled: user.Enabled,
+          createdAt: user.UserCreateDate?.toISOString(),
+          lastModified: user.UserLastModifiedDate?.toISOString(),
+          groups,
+        };
+      })
+    );
 
     return success({
       users,

@@ -10,12 +10,19 @@ export default function Register() {
   const [familyName, setFamilyName] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
   const [error, setError] = useState('');
   const [submitting, setSubmitting] = useState(false);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     setError('');
+
+    if (password !== confirmPassword) {
+      setError('Passwords do not match.');
+      return;
+    }
+
     setSubmitting(true);
 
     try {
@@ -89,6 +96,18 @@ export default function Register() {
             <p className="auth-hint">
               At least 8 characters with uppercase, lowercase, and a number.
             </p>
+          </div>
+          <div className="auth-field">
+            <label htmlFor="confirmPassword">Confirm Password</label>
+            <input
+              id="confirmPassword"
+              type="password"
+              value={confirmPassword}
+              onChange={(e) => setConfirmPassword(e.target.value)}
+              placeholder="Confirm your password"
+              required
+              autoComplete="new-password"
+            />
           </div>
           <button className="auth-submit" type="submit" disabled={submitting}>
             {submitting ? 'Creating Account...' : 'Create Account'}

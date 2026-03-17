@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
-import { fetchUsers, fetchUserGroups, updateUserGroups } from '../../api/users';
+import { fetchUsers } from '../../api/users';
 import './admin.css';
 import './users-admin.css';
 
@@ -8,6 +9,7 @@ const PAGE_SIZE = 20;
 
 export default function Users() {
   const { getIdToken } = useAuth();
+  const navigate = useNavigate();
   const [users, setUsers] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -15,10 +17,6 @@ export default function Users() {
   const [filterInput, setFilterInput] = useState('');
   const [paginationToken, setPaginationToken] = useState(null);
   const [hasMore, setHasMore] = useState(false);
-  const [expandedUser, setExpandedUser] = useState(null);
-  const [userGroups, setUserGroups] = useState({});
-  const [savingGroups, setSavingGroups] = useState(null);
-  const [groupError, setGroupError] = useState(null);
 
   const loadUsers = useCallback(async (append = false) => {
     try {
@@ -34,8 +32,8 @@ export default function Users() {
       } else {
         setUsers(result.users || []);
       }
-      setPaginationToken(result.paginationToken || null);
-      setHasMore(!!result.paginationToken);
+      setPaginationToken(result.nextToken || null);
+      setHasMore(!!result.nextToken);
     } catch (err) {
       setError(err.message || 'Failed to load users');
     } finally {
@@ -50,62 +48,18 @@ export default function Users() {
 
   const handleSearch = (e) => {
     e.preventDefault();
-    setExpandedUser(null);
     setPaginationToken(null);
     setFilter(filterInput.trim());
   };
 
   const handleClearFilter = () => {
     setFilterInput('');
-    setExpandedUser(null);
     setPaginationToken(null);
     setFilter('');
   };
 
-  const toggleExpand = async (username) => {
-    if (expandedUser === username) {
-      setExpandedUser(null);
-      return;
-    }
-    setExpandedUser(username);
-    setGroupError(null);
-
-    // Load groups if not cached
-    if (!userGroups[username]) {
-      try {
-        const token = await getIdToken();
-        const result = await fetchUserGroups(username, token);
-        setUserGroups(prev => ({ ...prev, [username]: result.groups || [] }));
-      } catch (err) {
-        setGroupError(err.message || 'Failed to load groups');
-      }
-    }
-  };
-
-  const handleToggleGroup = async (username, group) => {
-    setSavingGroups(username);
-    setGroupError(null);
-    try {
-      const current = userGroups[username] || [];
-      const newGroups = current.includes(group)
-        ? current.filter(g => g !== group)
-        : [...current, group];
-
-      const token = await getIdToken();
-      await updateUserGroups(username, newGroups, token);
-      setUserGroups(prev => ({ ...prev, [username]: newGroups }));
-    } catch (err) {
-      setGroupError(err.message || 'Failed to update groups');
-    } finally {
-      setSavingGroups(null);
-    }
-  };
-
-  const getAttr = (user, name) => {
-    const attr = (user.Attributes || user.attributes || []).find(
-      a => a.Name === name || a.name === name
-    );
-    return attr ? (attr.Value || attr.value || '') : '';
+  const handleRowClick = (user) => {
+    navigate(`/admin/users/${encodeURIComponent(user.username)}`, { state: { user } });
   };
 
   const formatDate = (dateStr) => {
@@ -165,6 +119,7 @@ export default function Users() {
               <thead>
                 <tr>
                   <th>Email</th>
+                  <th>Type</th>
                   <th>Name</th>
                   <th>Status</th>
                   <th>Created</th>
@@ -172,30 +127,19 @@ export default function Users() {
               </thead>
               <tbody>
                 {users.map(user => {
-                  const username = user.Username || user.username;
-                  const email = getAttr(user, 'email') || username;
-                  const givenName = getAttr(user, 'given_name');
-                  const familyName = getAttr(user, 'family_name');
-                  const name = [givenName, familyName].filter(Boolean).join(' ') || '--';
-                  const status = user.UserStatus || user.userStatus || '--';
-                  const created = user.UserCreateDate || user.userCreateDate;
-                  const isExpanded = expandedUser === username;
-                  const groups = userGroups[username] || [];
+                  const groups = user.groups || [];
+                  const userType = groups.includes('Admin') ? 'Admin' : 'Client';
+                  const name = [user.givenName, user.familyName].filter(Boolean).join(' ') || '--';
 
                   return (
                     <UserRow
-                      key={username}
-                      username={username}
-                      email={email}
+                      key={user.username}
+                      email={user.email || user.username}
+                      userType={userType}
                       name={name}
-                      status={status}
-                      created={formatDate(created)}
-                      isExpanded={isExpanded}
-                      groups={groups}
-                      savingGroups={savingGroups === username}
-                      groupError={isExpanded ? groupError : null}
-                      onToggleExpand={() => toggleExpand(username)}
-                      onToggleGroup={(group) => handleToggleGroup(username, group)}
+                      status={user.status || '--'}
+                      created={formatDate(user.createdAt)}
+                      onClick={() => handleRowClick(user)}
                     />
                   );
                 })}
@@ -216,49 +160,17 @@ export default function Users() {
   );
 }
 
-function UserRow({ username, email, name, status, created, isExpanded, groups, savingGroups, groupError, onToggleExpand, onToggleGroup }) {
+function UserRow({ email, userType, name, status, created, onClick }) {
   const statusClass = status === 'CONFIRMED' ? 'confirmed' : status === 'FORCE_CHANGE_PASSWORD' ? 'pending' : '';
+  const typeClass = userType === 'Admin' ? 'type-admin' : 'type-client';
 
   return (
-    <>
-      <tr className={`users-row ${isExpanded ? 'expanded' : ''}`} onClick={onToggleExpand}>
-        <td className="users-email">{email}</td>
-        <td>{name}</td>
-        <td>
-          <span className={`users-status ${statusClass}`}>{status}</span>
-        </td>
-        <td>{created}</td>
-      </tr>
-      {isExpanded && (
-        <tr className="users-detail-row">
-          <td colSpan={4}>
-            <div className="users-detail">
-              <div className="users-detail-section">
-                <strong>Username</strong>
-                <span className="users-detail-value">{username}</span>
-              </div>
-              <div className="users-detail-section">
-                <strong>Groups</strong>
-                <div className="users-groups">
-                  {['Admin', 'Client'].map(group => (
-                    <label key={group} className="users-group-toggle">
-                      <input
-                        type="checkbox"
-                        checked={groups.includes(group)}
-                        onChange={() => onToggleGroup(group)}
-                        disabled={savingGroups}
-                      />
-                      <span>{group}</span>
-                    </label>
-                  ))}
-                  {savingGroups && <span className="users-saving">Saving...</span>}
-                </div>
-                {groupError && <div className="users-group-error">{groupError}</div>}
-              </div>
-            </div>
-          </td>
-        </tr>
-      )}
-    </>
+    <tr className="users-row" onClick={onClick}>
+      <td className="users-email">{email}</td>
+      <td><span className={`users-type ${typeClass}`}>{userType}</span></td>
+      <td>{name}</td>
+      <td><span className={`users-status ${statusClass}`}>{status}</span></td>
+      <td>{created}</td>
+    </tr>
   );
 }

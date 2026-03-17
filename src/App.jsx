@@ -28,6 +28,7 @@ const Users = lazy(() => import('./pages/admin/Users'));
 const Content = lazy(() => import('./pages/admin/Content'));
 const FAQAdmin = lazy(() => import('./pages/admin/FAQAdmin'));
 const Merch = lazy(() => import('./pages/admin/Merch'));
+const UserProfile = lazy(() => import('./pages/admin/UserProfile'));
 
 function SectionLoader() {
   return (
@@ -117,6 +118,7 @@ export default function App() {
             }>
               <Route index element={<Suspense fallback={<SectionLoader />}><Dashboard /></Suspense>} />
               <Route path="users" element={<Suspense fallback={<SectionLoader />}><Users /></Suspense>} />
+              <Route path="users/:username" element={<Suspense fallback={<SectionLoader />}><UserProfile /></Suspense>} />
               <Route path="content" element={<Suspense fallback={<SectionLoader />}><Content /></Suspense>} />
               <Route path="faq" element={<Suspense fallback={<SectionLoader />}><FAQAdmin /></Suspense>} />
               <Route path="merch" element={<Suspense fallback={<SectionLoader />}><Merch /></Suspense>} />
