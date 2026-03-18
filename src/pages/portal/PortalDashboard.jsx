@@ -127,13 +127,13 @@ export default function PortalDashboard() {
             <span className="portal-link-icon">&#128100;</span>
             Edit Profile
           </Link>
+          <Link to="/portal/subscription" className="portal-link">
+            <span className="portal-link-icon">&#11088;</span>
+            Manage Subscription
+          </Link>
           <Link to="/portal/settings" className="portal-link">
             <span className="portal-link-icon">&#9881;</span>
             Settings
-          </Link>
-          <Link to="/programs" className="portal-link">
-            <span className="portal-link-icon">&#11088;</span>
-            Explore Programs
           </Link>
           <Link to="/faq" className="portal-link">
             <span className="portal-link-icon">&#10067;</span>

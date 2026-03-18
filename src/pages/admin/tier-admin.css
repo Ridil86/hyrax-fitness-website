@@ -1,0 +1,244 @@
+/* ── Tier Admin ── */
+
+/* Messages */
+.tier-message {
+  padding: 12px 16px;
+  border-radius: 10px;
+  font-size: .88rem;
+  margin-bottom: 16px;
+}
+
+.tier-message-success {
+  background: rgba(22, 163, 74, .1);
+  color: #15803d;
+}
+
+.tier-message-error {
+  background: rgba(220, 38, 38, .08);
+  color: #dc2626;
+}
+
+/* Cards layout */
+.tier-cards {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.tier-admin-card {
+  background: #fff;
+  border-radius: var(--radius);
+  box-shadow: var(--shadow-soft);
+  padding: 24px;
+  border: 1px solid rgba(27, 18, 10, .06);
+  transition: border-color .15s;
+}
+
+.tier-admin-card:hover {
+  border-color: var(--sand);
+}
+
+.tier-admin-card.editing {
+  border-color: var(--sunset);
+  box-shadow: 0 0 0 2px rgba(242, 133, 1, .1);
+}
+
+/* Card header */
+.tier-card-header {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  margin-bottom: 16px;
+}
+
+.tier-card-icon {
+  font-size: 1.8rem;
+}
+
+.tier-card-header h3 {
+  margin: 0;
+  font-size: 1.1rem;
+  color: var(--ink);
+}
+
+.tier-card-level {
+  font-size: .75rem;
+  font-weight: 600;
+  color: var(--rock);
+  text-transform: uppercase;
+  letter-spacing: .04em;
+}
+
+.tier-card-price {
+  margin-left: auto;
+  font-size: 1.3rem;
+  font-weight: 700;
+  color: var(--sunset);
+}
+
+/* Card body (view mode) */
+.tier-card-desc {
+  font-size: .88rem;
+  color: var(--rock);
+  line-height: 1.5;
+  margin: 0 0 12px;
+}
+
+.tier-card-features {
+  list-style: none;
+  padding: 0;
+  margin: 0 0 12px;
+}
+
+.tier-card-features li {
+  padding: 4px 0;
+  font-size: .85rem;
+  color: var(--ink);
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.tier-card-features li::before {
+  content: '\2713';
+  color: var(--sunset);
+  font-weight: 700;
+  font-size: .75rem;
+  flex-shrink: 0;
+}
+
+/* Edit form */
+.tier-edit-form {
+  padding-top: 4px;
+}
+
+.tier-edit-form .content-field {
+  margin-bottom: 16px;
+}
+
+.tier-edit-form .content-field label {
+  display: block;
+  font-size: .82rem;
+  font-weight: 600;
+  color: rgba(27, 18, 10, .55);
+  margin-bottom: 4px;
+  text-transform: uppercase;
+  letter-spacing: .03em;
+}
+
+.tier-edit-form .content-field input,
+.tier-edit-form .content-field textarea {
+  display: block;
+  width: 100%;
+  padding: 8px 12px;
+  border: 1px solid rgba(27, 18, 10, .12);
+  border-radius: 8px;
+  font: inherit;
+  font-size: .92rem;
+  background: #fff;
+  resize: vertical;
+}
+
+.tier-edit-form .content-field input:focus,
+.tier-edit-form .content-field textarea:focus {
+  outline: none;
+  border-color: var(--sunset);
+  box-shadow: var(--ring);
+}
+
+.tier-price-hint {
+  font-weight: 400;
+  color: var(--sand);
+  font-size: .75rem;
+  text-transform: none;
+  letter-spacing: 0;
+}
+
+.tier-price-warning {
+  font-size: .8rem;
+  color: #a16207;
+  margin: 6px 0 0;
+  line-height: 1.4;
+  padding: 8px 12px;
+  background: rgba(234, 179, 8, .08);
+  border-radius: 8px;
+}
+
+/* Feature rows */
+.tier-feature-row {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  margin-bottom: 6px;
+}
+
+.tier-feature-row input {
+  flex: 1;
+}
+
+/* Stripe info */
+.tier-stripe-info {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: .78rem;
+  color: var(--rock);
+  margin-top: 10px;
+}
+
+.tier-stripe-label {
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: .03em;
+  font-size: .7rem;
+}
+
+.tier-stripe-info code {
+  font-family: 'SF Mono', Monaco, monospace;
+  font-size: .72rem;
+  background: rgba(27, 18, 10, .04);
+  padding: 2px 8px;
+  border-radius: 4px;
+}
+
+/* Edit actions */
+.tier-edit-actions {
+  display: flex;
+  gap: 8px;
+  margin-top: 20px;
+  padding-top: 16px;
+  border-top: 1px solid rgba(27, 18, 10, .06);
+}
+
+/* Loading */
+.tier-loading {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-height: 200px;
+  text-align: center;
+}
+
+.tier-loading p {
+  margin-top: 12px;
+  color: var(--rock);
+  font-size: .9rem;
+}
+
+/* ── Responsive ── */
+@media (max-width: 768px) {
+  .tier-admin-card {
+    padding: 18px;
+  }
+
+  .tier-card-header {
+    flex-wrap: wrap;
+  }
+
+  .tier-card-price {
+    margin-left: 0;
+    width: 100%;
+    margin-top: 4px;
+  }
+}

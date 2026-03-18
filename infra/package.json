@@ -18,7 +18,9 @@
     "@aws-sdk/lib-dynamodb": "^3.1010.0",
     "@aws-sdk/s3-request-presigner": "^3.1010.0",
     "aws-cdk-lib": "^2.170.0",
-    "constructs": "^10.4.2"
+    "constructs": "^10.4.2",
+    "dotenv": "^17.3.1",
+    "stripe": "^17.7.0"
   },
   "devDependencies": {
     "@aws-sdk/credential-providers": "^3.1010.0",

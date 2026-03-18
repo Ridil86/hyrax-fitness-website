@@ -34,6 +34,8 @@ const Merch = lazy(() => import('./pages/admin/Merch'));
 const UserProfile = lazy(() => import('./pages/admin/UserProfile'));
 const AuditLog = lazy(() => import('./pages/admin/AuditLog'));
 const WorkoutAdmin = lazy(() => import('./pages/admin/WorkoutAdmin'));
+const Billing = lazy(() => import('./pages/admin/Billing'));
+const TierAdmin = lazy(() => import('./pages/admin/TierAdmin'));
 
 // Workout library pages
 const WorkoutLibrary = lazy(() => import('./pages/WorkoutLibrary'));
@@ -51,6 +53,7 @@ const PortalLayout = lazy(() => import('./components/PortalLayout'));
 const PortalDashboard = lazy(() => import('./pages/portal/PortalDashboard'));
 const PortalProfile = lazy(() => import('./pages/portal/PortalProfile'));
 const PortalSettings = lazy(() => import('./pages/portal/PortalSettings'));
+const PortalSubscription = lazy(() => import('./pages/portal/PortalSubscription'));
 
 // Cookie consent
 const CookieConsent = lazy(() => import('./components/CookieConsent'));
@@ -141,6 +144,7 @@ export default function App() {
               <Route path="workouts" element={<LazySection><WorkoutLibrary /></LazySection>} />
               <Route path="workouts/:id" element={<LazySection><WorkoutDetail /></LazySection>} />
               <Route path="profile" element={<LazySection><PortalProfile /></LazySection>} />
+              <Route path="subscription" element={<LazySection><PortalSubscription /></LazySection>} />
               <Route path="settings" element={<LazySection><PortalSettings /></LazySection>} />
             </Route>
 
@@ -157,6 +161,8 @@ export default function App() {
               <Route path="faq" element={<LazySection><FAQAdmin /></LazySection>} />
               <Route path="audit" element={<LazySection><AuditLog /></LazySection>} />
               <Route path="workouts" element={<LazySection><WorkoutAdmin /></LazySection>} />
+              <Route path="billing" element={<LazySection><Billing /></LazySection>} />
+              <Route path="tiers" element={<LazySection><TierAdmin /></LazySection>} />
               <Route path="merch" element={<LazySection><Merch /></LazySection>} />
             </Route>
           </Routes>

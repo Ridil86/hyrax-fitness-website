@@ -141,6 +141,19 @@ export function AuthProvider({ children }) {
     }
   }, []);
 
+  // Refresh the user's tier from their profile (call after subscription changes)
+  const refreshTier = useCallback(async () => {
+    try {
+      const token = await getIdToken();
+      if (token) {
+        const profile = await fetchProfile(token);
+        setUserTier(profile.tier || 'Pup');
+      }
+    } catch {
+      // Profile fetch failed — keep current tier
+    }
+  }, [getIdToken]);
+
   const value = {
     user,
     groups,
@@ -154,6 +167,7 @@ export function AuthProvider({ children }) {
     signOut,
     signInWithGoogle,
     getIdToken,
+    refreshTier,
   };
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

@@ -11,6 +11,10 @@ import { logAuditEvent, listAuditLogs, getAuditStats } from './routes/audit';
 import { createAccount } from './routes/signup';
 import { getProfile, createProfile, updateProfile } from './routes/profile';
 import { listWorkouts, getWorkout, createWorkout, updateWorkout, deleteWorkout } from './routes/workouts';
+import { listTiers, updateTier } from './routes/tiers';
+import { getStripeConfig, getSubscription, createCheckoutSession, createPortalSession, cancelSubscription } from './routes/stripe';
+import { handleWebhook } from './routes/stripe-webhook';
+import { listSubscriptions, listPayments, getUserPayments, getBillingStats } from './routes/billing';
 import { notFound, serverError } from './utils/response';
 
 export const handler = async (
@@ -134,6 +138,63 @@ export const handler = async (
     if (path === '/api/audit') {
       if (method === 'POST') return logAuditEvent(event);
       if (method === 'GET') return listAuditLogs(event);
+    }
+
+    // ── Tier Routes ──
+    if (path === '/api/tiers' && method === 'GET') {
+      return listTiers();
+    }
+
+    const tierMatch = path.match(/^\/api\/tiers\/([^/]+)$/);
+    if (tierMatch) {
+      event.pathParameters = { ...event.pathParameters, id: tierMatch[1] };
+      if (method === 'PUT') return updateTier(event);
+    }
+
+    // ── Stripe Routes ──
+    // Webhook must come first (public, no auth)
+    if (path === '/api/stripe/webhook' && method === 'POST') {
+      return handleWebhook(event);
+    }
+
+    if (path === '/api/stripe/config' && method === 'GET') {
+      return getStripeConfig();
+    }
+
+    if (path === '/api/stripe/subscription' && method === 'GET') {
+      return getSubscription(event);
+    }
+
+    if (path === '/api/stripe/create-checkout-session' && method === 'POST') {
+      return createCheckoutSession(event);
+    }
+
+    if (path === '/api/stripe/create-portal-session' && method === 'POST') {
+      return createPortalSession(event);
+    }
+
+    if (path === '/api/stripe/cancel-subscription' && method === 'POST') {
+      return cancelSubscription(event);
+    }
+
+    // ── Admin Billing Routes ──
+    if (path === '/api/admin/billing/stats' && method === 'GET') {
+      return getBillingStats(event);
+    }
+
+    if (path === '/api/admin/billing/subscriptions' && method === 'GET') {
+      return listSubscriptions(event);
+    }
+
+    // /api/admin/billing/payments/{userSub}
+    const userPaymentsMatch = path.match(/^\/api\/admin\/billing\/payments\/([^/]+)$/);
+    if (userPaymentsMatch) {
+      event.pathParameters = { ...event.pathParameters, userSub: userPaymentsMatch[1] };
+      if (method === 'GET') return getUserPayments(event);
+    }
+
+    if (path === '/api/admin/billing/payments' && method === 'GET') {
+      return listPayments(event);
     }
 
     return notFound(`No route found for ${method} ${path}`);

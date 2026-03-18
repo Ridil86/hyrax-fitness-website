@@ -204,7 +204,7 @@ Public components use `useContent(section)` hook which fetches from `/api/conten
 - `VITE_COGNITO_USER_POOL_ID` - Cognito User Pool ID
 - `VITE_COGNITO_CLIENT_ID` - Cognito App Client ID
 - `VITE_AWS_REGION` - AWS Region (us-east-1)
-- `VITE_API_URL` - API Gateway base URL (e.g., https://xxxxxxxxxx.execute-api.us-east-1.amazonaws.com/prod)
+- `VITE_API_URL` - API Gateway base URL (https://qe1jdbuidl.execute-api.us-east-1.amazonaws.com/prod)
 - Local dev: `.env.local` (gitignored), Production: Amplify Console env vars
 
 ## Design System

@@ -29,6 +29,14 @@ export class BackendStack extends cdk.Stack {
       removalPolicy: cdk.RemovalPolicy.RETAIN,
     });
 
+    // GSI for cross-user queries (subscriptions, payments)
+    table.addGlobalSecondaryIndex({
+      indexName: 'GSI1',
+      partitionKey: { name: 'gsi1pk', type: dynamodb.AttributeType.STRING },
+      sortKey: { name: 'gsi1sk', type: dynamodb.AttributeType.STRING },
+      projectionType: dynamodb.ProjectionType.ALL,
+    });
+
     // ── S3 Media Bucket ──
     const mediaBucket = new s3.Bucket(this, 'HyraxMediaBucket', {
       bucketName: `hyrax-fitness-media-${this.account}`,
@@ -73,6 +81,9 @@ export class BackendStack extends cdk.Stack {
         BUCKET_NAME: mediaBucket.bucketName,
         USER_POOL_ID: props.userPoolId,
         CDN_DOMAIN: mediaDistribution.distributionDomainName,
+        STRIPE_SECRET_KEY: process.env.STRIPE_SECRET_KEY || 'sk_test_placeholder',
+        STRIPE_WEBHOOK_SECRET: process.env.STRIPE_WEBHOOK_SECRET || 'whsec_placeholder',
+        STRIPE_PUBLISHABLE_KEY: process.env.STRIPE_PUBLISHABLE_KEY || 'pk_test_placeholder',
       },
       bundling: {
         minify: true,
@@ -279,6 +290,82 @@ export class BackendStack extends cdk.Stack {
 
     const auditStats = auditResource.addResource('stats');
     auditStats.addMethod('GET', lambdaIntegration, {
+      authorizer,
+      authorizationType: apigateway.AuthorizationType.COGNITO,
+    });
+
+    // Tier routes (GET public, PUT admin)
+    const tiersResource = apiResource.addResource('tiers');
+    tiersResource.addMethod('GET', lambdaIntegration); // Public
+    const tierItem = tiersResource.addResource('{id}');
+    tierItem.addMethod('PUT', lambdaIntegration, {
+      authorizer,
+      authorizationType: apigateway.AuthorizationType.COGNITO,
+    });
+
+    // Stripe routes
+    const stripeResource = apiResource.addResource('stripe');
+
+    // Config (public)
+    const stripeConfig = stripeResource.addResource('config');
+    stripeConfig.addMethod('GET', lambdaIntegration); // Public
+
+    // Webhook (public - NO authorizer for Stripe signature verification)
+    const stripeWebhook = stripeResource.addResource('webhook');
+    stripeWebhook.addMethod('POST', lambdaIntegration); // Public
+
+    // Checkout session (authenticated)
+    const stripeCheckout = stripeResource.addResource('create-checkout-session');
+    stripeCheckout.addMethod('POST', lambdaIntegration, {
+      authorizer,
+      authorizationType: apigateway.AuthorizationType.COGNITO,
+    });
+
+    // Customer portal (authenticated)
+    const stripePortal = stripeResource.addResource('create-portal-session');
+    stripePortal.addMethod('POST', lambdaIntegration, {
+      authorizer,
+      authorizationType: apigateway.AuthorizationType.COGNITO,
+    });
+
+    // Subscription (authenticated)
+    const stripeSubscription = stripeResource.addResource('subscription');
+    stripeSubscription.addMethod('GET', lambdaIntegration, {
+      authorizer,
+      authorizationType: apigateway.AuthorizationType.COGNITO,
+    });
+
+    // Cancel subscription (authenticated)
+    const stripeCancel = stripeResource.addResource('cancel-subscription');
+    stripeCancel.addMethod('POST', lambdaIntegration, {
+      authorizer,
+      authorizationType: apigateway.AuthorizationType.COGNITO,
+    });
+
+    // Admin billing routes
+    const adminResource = apiResource.addResource('admin');
+    const billingResource = adminResource.addResource('billing');
+
+    const billingStats = billingResource.addResource('stats');
+    billingStats.addMethod('GET', lambdaIntegration, {
+      authorizer,
+      authorizationType: apigateway.AuthorizationType.COGNITO,
+    });
+
+    const billingSubscriptions = billingResource.addResource('subscriptions');
+    billingSubscriptions.addMethod('GET', lambdaIntegration, {
+      authorizer,
+      authorizationType: apigateway.AuthorizationType.COGNITO,
+    });
+
+    const billingPayments = billingResource.addResource('payments');
+    billingPayments.addMethod('GET', lambdaIntegration, {
+      authorizer,
+      authorizationType: apigateway.AuthorizationType.COGNITO,
+    });
+
+    const billingUserPayments = billingPayments.addResource('{userSub}');
+    billingUserPayments.addMethod('GET', lambdaIntegration, {
       authorizer,
       authorizationType: apigateway.AuthorizationType.COGNITO,
     });
