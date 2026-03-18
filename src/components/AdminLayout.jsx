@@ -2,6 +2,10 @@ import { NavLink, Outlet, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import './AdminLayout.css';
 
+/* Pre-load CSS for lazy-loaded admin pages to prevent FOUC race condition */
+import '../pages/admin/video-admin.css';
+import '../pages/admin/workout-admin.css';
+
 const navItems = [
   { to: '/admin', label: 'Dashboard', icon: '\u2302' },       // house
   { to: '/admin/users', label: 'Users', icon: '\u263A' },     // smiley

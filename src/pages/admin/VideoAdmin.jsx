@@ -510,14 +510,15 @@ export default function VideoAdmin() {
           {/* Video File (first — duration and thumbnail depend on it) */}
           <div className="content-field">
             <label>Video File</label>
+            <span className="video-field-label">Video URL</span>
             <div className="workout-image-field">
               <input
                 value={editing.videoUrl}
                 onChange={(e) => updateEditing('videoUrl', e.target.value)}
-                placeholder="Video URL"
+                placeholder="https://..."
               />
               <label className={`content-upload-btn${uploadingVideo ? ' disabled' : ''}`}>
-                {uploadingVideo ? 'Uploading...' : 'Upload'}
+                {uploadingVideo ? 'Uploading...' : 'Upload Video'}
                 <input
                   type="file"
                   accept="video/mp4,video/webm,video/quicktime"
@@ -530,6 +531,7 @@ export default function VideoAdmin() {
                 />
               </label>
             </div>
+            <span className="video-field-helper">Accepted formats: MP4, WebM, MOV. Max recommended resolution: 1080p.</span>
             {uploadingVideo && (
               <div className="video-upload-progress">
                 <div className="section-spinner" style={{ width: 20, height: 20 }} />
@@ -617,11 +619,12 @@ export default function VideoAdmin() {
 
               {/* Option 3: Upload manually */}
               <div className="video-thumb-option">
+                <span className="video-field-label">Thumbnail URL</span>
                 <div className="workout-image-field">
                   <input
                     value={editing.thumbnailUrl}
                     onChange={(e) => updateEditing('thumbnailUrl', e.target.value)}
-                    placeholder="Thumbnail URL"
+                    placeholder="https://..."
                   />
                   <label className={`content-upload-btn${uploadingThumb ? ' disabled' : ''}`}>
                     {uploadingThumb ? 'Uploading...' : 'Upload Image'}
