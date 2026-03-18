@@ -207,14 +207,20 @@ export class BackendStack extends cdk.Stack {
 
     // Workout routes
     const workoutsResource = apiResource.addResource('workouts');
-    workoutsResource.addMethod('GET', lambdaIntegration); // Public (filters in handler)
+    workoutsResource.addMethod('GET', lambdaIntegration, {
+      authorizer,
+      authorizationType: apigateway.AuthorizationType.COGNITO,
+    });
     workoutsResource.addMethod('POST', lambdaIntegration, {
       authorizer,
       authorizationType: apigateway.AuthorizationType.COGNITO,
     });
 
     const workoutItem = workoutsResource.addResource('{id}');
-    workoutItem.addMethod('GET', lambdaIntegration); // Public (filters in handler)
+    workoutItem.addMethod('GET', lambdaIntegration, {
+      authorizer,
+      authorizationType: apigateway.AuthorizationType.COGNITO,
+    });
     workoutItem.addMethod('PUT', lambdaIntegration, {
       authorizer,
       authorizationType: apigateway.AuthorizationType.COGNITO,

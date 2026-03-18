@@ -1,5 +1,26 @@
 import jsPDF from 'jspdf';
 
+// ── Logo cache ──
+let _cachedLogo = null;
+
+async function loadLogoBase64() {
+  if (_cachedLogo) return _cachedLogo;
+  try {
+    const response = await fetch('/img/hyrax-fitness-logo-512x512.png');
+    const blob = await response.blob();
+    return new Promise((resolve) => {
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        _cachedLogo = reader.result;
+        resolve(reader.result);
+      };
+      reader.readAsDataURL(blob);
+    });
+  } catch {
+    return null;
+  }
+}
+
 // Brand colors
 const COLORS = {
   ink: [27, 18, 10],
@@ -17,7 +38,7 @@ const COLORS = {
  * @param {Object} workout - The workout data object
  * @returns {jsPDF} The generated PDF document
  */
-export function generateWorkoutPdf(workout) {
+export function generateWorkoutPdf(workout, logoBase64 = null) {
   const doc = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4' });
   const pageWidth = doc.internal.pageSize.getWidth();
   const pageHeight = doc.internal.pageSize.getHeight();
@@ -33,17 +54,23 @@ export function generateWorkoutPdf(workout) {
   doc.setFillColor(...COLORS.sunset);
   doc.rect(0, 38, pageWidth, 3, 'F');
 
+  // Logo in header
+  const textOffsetX = logoBase64 ? margin + 34 : margin;
+  if (logoBase64) {
+    doc.addImage(logoBase64, 'PNG', margin, 4, 30, 30);
+  }
+
   // Brand name
   doc.setFont('helvetica', 'bold');
   doc.setFontSize(22);
   doc.setTextColor(...COLORS.white);
-  doc.text('HYRAX FITNESS', margin, 18);
+  doc.text('HYRAX FITNESS', textOffsetX, 18);
 
   // Tagline
   doc.setFont('helvetica', 'normal');
   doc.setFontSize(9);
   doc.setTextColor(...COLORS.sand);
-  doc.text('START-STOP SCRAMBLE & CARRY TRAINING', margin, 28);
+  doc.text('START-STOP SCRAMBLE & CARRY TRAINING', textOffsetX, 28);
 
   y = 52;
 
@@ -177,6 +204,17 @@ export function generateWorkoutPdf(workout) {
   for (let i = 1; i <= totalPages; i++) {
     doc.setPage(i);
 
+    // Watermark (very low opacity logo centered on page)
+    if (logoBase64) {
+      const watermarkSize = pageWidth * 0.5;
+      const watermarkX = (pageWidth - watermarkSize) / 2;
+      const watermarkY = (pageHeight - watermarkSize) / 2;
+      doc.saveGraphicsState();
+      doc.setGState(new doc.GState({ opacity: 0.03 }));
+      doc.addImage(logoBase64, 'PNG', watermarkX, watermarkY, watermarkSize, watermarkSize);
+      doc.restoreGraphicsState();
+    }
+
     // Footer line
     doc.setDrawColor(...COLORS.sand);
     doc.setLineWidth(0.3);
@@ -208,8 +246,9 @@ export function generateWorkoutPdf(workout) {
 /**
  * Download the PDF for a workout.
  */
-export function downloadWorkoutPdf(workout) {
-  const doc = generateWorkoutPdf(workout);
+export async function downloadWorkoutPdf(workout) {
+  const logoBase64 = await loadLogoBase64();
+  const doc = generateWorkoutPdf(workout, logoBase64);
   const filename = `hyrax-${(workout.title || 'workout')
     .toLowerCase()
     .replace(/[^a-z0-9]+/g, '-')

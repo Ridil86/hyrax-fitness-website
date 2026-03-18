@@ -19,7 +19,7 @@ export default function Dashboard() {
       try {
         const token = await getIdToken();
         const [usersResult, faqResult, workoutsResult] = await Promise.allSettled([
-          fetchUsers({ limit: 1 }, token),
+          fetchUsers({ limit: 60 }, token),
           fetchFaqs(),
           fetchWorkouts(token),
         ]);
@@ -27,7 +27,10 @@ export default function Dashboard() {
         if (cancelled) return;
 
         const userCount = usersResult.status === 'fulfilled'
-          ? (usersResult.value.users || []).length + (usersResult.value.nextToken ? '+' : '')
+          ? (() => {
+              const count = (usersResult.value.users || []).length;
+              return usersResult.value.nextToken ? `${count}+` : String(count);
+            })()
           : null;
 
         const faqCount = faqResult.status === 'fulfilled'
@@ -47,27 +50,6 @@ export default function Dashboard() {
     }
 
     loadStats();
-    return () => { cancelled = true; };
-  }, [getIdToken]);
-
-  // For a more accurate user count, we load the full first page
-  useEffect(() => {
-    let cancelled = false;
-
-    async function loadFullUserCount() {
-      try {
-        const token = await getIdToken();
-        const result = await fetchUsers({ limit: 60 }, token);
-        if (cancelled) return;
-        const count = (result.users || []).length;
-        const display = result.nextToken ? `${count}+` : String(count);
-        setStats(prev => ({ ...prev, users: display }));
-      } catch {
-        // best-effort
-      }
-    }
-
-    loadFullUserCount();
     return () => { cancelled = true; };
   }, [getIdToken]);
 

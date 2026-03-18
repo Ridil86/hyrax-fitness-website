@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Link, useLocation, useNavigate } from 'react-router-dom';
+import { Link, useLocation } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useAuth } from '../context/AuthContext';
 import './Header.css';
@@ -7,9 +7,8 @@ import './Header.css';
 export default function Header() {
   const [menuOpen, setMenuOpen] = useState(false);
   const [scrolled, setScrolled] = useState(false);
-  const { isAuthenticated, isAdmin, signOut } = useAuth();
+  const { isAuthenticated, isAdmin } = useAuth();
   const location = useLocation();
-  const navigate = useNavigate();
 
   useEffect(() => {
     const onScroll = () => setScrolled(window.scrollY > 20);
@@ -24,29 +23,12 @@ export default function Header() {
 
   const closeMenu = () => setMenuOpen(false);
 
-  const handleSignOut = async () => {
-    closeMenu();
-    await signOut();
-    navigate('/');
-  };
-
   const navLinks = [
     { to: '/#method', label: 'Method' },
     { to: '/programs', label: 'Programs' },
     { to: '/gallery', label: 'Gallery' },
     { to: '/faq', label: 'FAQ' },
-    { to: '/portal/workouts', label: 'Workouts' },
   ];
-
-  // Add Portal link for authenticated users
-  if (isAuthenticated) {
-    navLinks.push({ to: '/portal', label: 'Portal' });
-  }
-
-  // Add Admin link for admin users
-  if (isAdmin) {
-    navLinks.push({ to: '/admin', label: 'Admin' });
-  }
 
   return (
     <header className={`site-header ${scrolled ? 'scrolled' : ''}`}>
@@ -82,7 +64,10 @@ export default function Header() {
             </nav>
             <div className="cta">
               {isAuthenticated ? (
-                <button className="btn ghost" onClick={handleSignOut}>Sign Out</button>
+                <>
+                  {isAdmin && <Link className="btn ghost" to="/admin">Admin</Link>}
+                  <Link className="btn primary" to="/portal">My Dashboard</Link>
+                </>
               ) : (
                 <Link className="btn primary" to="/login">Sign In</Link>
               )}
@@ -105,7 +90,10 @@ export default function Header() {
                 </nav>
                 <div className="cta">
                   {isAuthenticated ? (
-                    <button className="btn ghost" onClick={handleSignOut}>Sign Out</button>
+                    <>
+                      {isAdmin && <Link className="btn ghost" to="/admin" onClick={closeMenu}>Admin</Link>}
+                      <Link className="btn primary" to="/portal" onClick={closeMenu}>My Dashboard</Link>
+                    </>
                   ) : (
                     <Link className="btn primary" to="/login" onClick={closeMenu}>Sign In</Link>
                   )}
