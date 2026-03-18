@@ -156,16 +156,16 @@ export default function PortalProfile() {
               Email cannot be changed here.
             </span>
           </div>
-        </div>
 
-        <div className="portal-profile-actions">
-          <button
-            type="submit"
-            className="btn primary"
-            disabled={saving}
-          >
-            {saving ? 'Saving...' : 'Save Changes'}
-          </button>
+          <div className="portal-profile-actions">
+            <button
+              type="submit"
+              className="btn primary"
+              disabled={saving}
+            >
+              {saving ? 'Saving...' : 'Save Changes'}
+            </button>
+          </div>
         </div>
       </form>
 

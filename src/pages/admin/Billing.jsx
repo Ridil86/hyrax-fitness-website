@@ -94,26 +94,26 @@ export default function Billing() {
       {stats && (
         <div className="admin-stats">
           <div className="admin-stat-card">
-            <span className="admin-stat-label">Active Subscribers</span>
-            <span className="admin-stat-value">{stats.activeSubscribers}</span>
+            <div className="stat-label">Active Subscribers</div>
+            <div className="stat-value">{stats.activeSubscribers}</div>
           </div>
           <div className="admin-stat-card">
-            <span className="admin-stat-label">MRR</span>
-            <span className="admin-stat-value">
+            <div className="stat-label">MRR</div>
+            <div className="stat-value">
               ${(stats.mrr || 0).toFixed(2)}
-            </span>
+            </div>
           </div>
           <div className="admin-stat-card">
-            <span className="admin-stat-label">Revenue This Month</span>
-            <span className="admin-stat-value">
+            <div className="stat-label">Revenue This Month</div>
+            <div className="stat-value">
               ${(stats.revenueThisMonth || 0).toFixed(2)}
-            </span>
+            </div>
           </div>
           <div className="admin-stat-card">
-            <span className="admin-stat-label">Cancelling</span>
-            <span className="admin-stat-value">
+            <div className="stat-label">Cancelling</div>
+            <div className="stat-value">
               {stats.cancellingSubscribers}
-            </span>
+            </div>
           </div>
         </div>
       )}

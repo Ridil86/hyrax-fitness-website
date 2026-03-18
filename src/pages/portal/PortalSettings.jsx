@@ -73,12 +73,6 @@ export default function PortalSettings() {
         </div>
       </div>
 
-      <div className="portal-settings-card">
-        <h3>Account</h3>
-        <p className="portal-settings-coming">
-          Additional account settings — password change, linked accounts, and data export — coming soon.
-        </p>
-      </div>
     </div>
   );
 }

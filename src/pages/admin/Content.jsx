@@ -187,8 +187,6 @@ export default function Content() {
             <ProgramsEditor
               data={data}
               updateField={updateField}
-              addArrayItem={addArrayItem}
-              removeArrayItem={removeArrayItem}
             />
           )}
           {activeTab === 'testimonials' && (
@@ -407,7 +405,7 @@ function WorkoutsEditor({ data, updateField, removeArrayItem, onImageUpload }) {
   );
 }
 
-function ProgramsEditor({ data, updateField, addArrayItem, removeArrayItem }) {
+function ProgramsEditor({ data, updateField }) {
   return (
     <>
       <FieldGroup label="Heading">
@@ -416,43 +414,6 @@ function ProgramsEditor({ data, updateField, addArrayItem, removeArrayItem }) {
       <FieldGroup label="Subheading">
         <textarea value={data.subheading || ''} onChange={updateField('subheading')} rows={2} />
       </FieldGroup>
-      <h3 className="content-subhead">Tiers</h3>
-      {(data.tiers || []).map((tier, i) => (
-        <div key={i} className="content-card">
-          <div className="content-card-header">
-            <strong>{tier.name} ({tier.level})</strong>
-          </div>
-          <FieldGroup label="Level">
-            <input value={tier.level || ''} onChange={updateField(`tiers.${i}.level`)} />
-          </FieldGroup>
-          <FieldGroup label="Name">
-            <input value={tier.name || ''} onChange={updateField(`tiers.${i}.name`)} />
-          </FieldGroup>
-          <FieldGroup label="Description">
-            <textarea value={tier.desc || ''} onChange={updateField(`tiers.${i}.desc`)} rows={2} />
-          </FieldGroup>
-          <FieldGroup label="Price">
-            <input value={tier.price || ''} onChange={updateField(`tiers.${i}.price`)} />
-          </FieldGroup>
-          <FieldGroup label="Price Sub">
-            <input value={tier.priceSub || ''} onChange={updateField(`tiers.${i}.priceSub`)} />
-          </FieldGroup>
-          <FieldGroup label="Features (one per line)">
-            {(tier.features || []).map((f, j) => (
-              <div key={j} className="content-inline-group">
-                <input value={f} onChange={updateField(`tiers.${i}.features.${j}`)} />
-                <button className="content-remove-btn" onClick={() => removeArrayItem(`tiers.${i}.features`, j)}>x</button>
-              </div>
-            ))}
-            <button
-              className="btn ghost content-add-btn"
-              onClick={() => addArrayItem(`tiers.${i}.features`, () => '')}
-            >
-              + Add Feature
-            </button>
-          </FieldGroup>
-        </div>
-      ))}
       <h3 className="content-subhead">Events Section</h3>
       <FieldGroup label="Events Heading">
         <input value={data.eventsHeading || ''} onChange={updateField('eventsHeading')} />

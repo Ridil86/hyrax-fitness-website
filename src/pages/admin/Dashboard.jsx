@@ -123,6 +123,27 @@ export default function Dashboard() {
               <p>View compliance events and cookie consent tracking</p>
             </div>
           </Link>
+          <Link to="/admin/billing" className="dashboard-link-card">
+            <span className="dashboard-link-icon">&#128176;</span>
+            <div>
+              <strong>Billing</strong>
+              <p>View subscriptions, payments, and revenue analytics</p>
+            </div>
+          </Link>
+          <Link to="/admin/tiers" className="dashboard-link-card">
+            <span className="dashboard-link-icon">&#127941;</span>
+            <div>
+              <strong>Tier Management</strong>
+              <p>Edit subscription tier names, pricing, and features</p>
+            </div>
+          </Link>
+          <Link to="/admin/merch" className="dashboard-link-card">
+            <span className="dashboard-link-icon">&#11088;</span>
+            <div>
+              <strong>Merchandise</strong>
+              <p>Manage merchandise and product listings</p>
+            </div>
+          </Link>
         </div>
       </div>
     </div>

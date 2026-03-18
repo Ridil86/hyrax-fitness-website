@@ -10,13 +10,13 @@ import './Programs.css';
 
 // Display-level metadata per tier (keyed by name) — not editable from CMS
 const TIER_DISPLAY = {
-  'Pup': { level: 'Explorer', priceSub: 'forever' },
+  'Pup': { level: 'Explorer', priceSub: '' },
   'Rock Runner': { level: 'Committed', priceSub: '/ month', featured: true },
   'Iron Dassie': { level: 'All In', priceSub: '/ month' },
 };
 
 const fallbackTiers = [
-  { level: 'Explorer', name: 'Pup', desc: 'Curious newcomers testing the terrain. Dip in, explore the movements, and see if the Hyrax way clicks.', price: 'Free', priceSub: 'forever', features: ['Limited workout video library', 'Downloadable PDF guides', 'Movement tutorials', 'Community access'], cta: 'Get Started', ctaClass: 'btn primary' },
+  { level: 'Explorer', name: 'Pup', desc: 'Curious newcomers testing the terrain. Dip in, explore the movements, and see if the Hyrax way clicks.', price: 'Free', priceSub: '', features: ['Limited workout video library', 'Downloadable PDF guides', 'Movement tutorials', 'Community access'], cta: 'Get Started', ctaClass: 'btn primary' },
   { level: 'Committed', name: 'Rock Runner', desc: "Self-starters who want structure and accountability. You know you'll show up and be ready to train.", price: '$5', priceSub: '/ month', features: ['Customized workout routines', 'Benchmark tracking', 'Progress analytics', 'Full workout video library', 'Downloadable PDF guides', 'Movement tutorials', 'Community access'], cta: 'Get Started', ctaClass: 'btn primary', featured: true },
   { level: 'All In', name: 'Iron Dassie', desc: 'No half measures. Expert guidance, peak nutrition, and a system fully customized around your life.', price: '$20', priceSub: '/ month', features: ['Digital Personal Trainer', 'Customized diet plans', 'Customized workout routines', 'Benchmark tracking', 'Progress analytics', 'Full workout video library', 'Downloadable PDF guides', 'Movement tutorials', 'Community access', 'Priority support'], cta: 'Get Started', ctaClass: 'btn primary' },
 ];
