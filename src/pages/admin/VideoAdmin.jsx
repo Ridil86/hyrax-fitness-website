@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { useAuth } from '../../context/AuthContext';
 import {
   fetchVideos,
@@ -9,6 +9,14 @@ import {
 import { uploadFile } from '../../api/upload';
 import './admin.css';
 import './video-admin.css';
+
+function formatDuration(seconds) {
+  const h = Math.floor(seconds / 3600);
+  const m = Math.floor((seconds % 3600) / 60);
+  const s = Math.floor(seconds % 60);
+  if (h > 0) return `${h}:${String(m).padStart(2, '0')}:${String(s).padStart(2, '0')}`;
+  return `${m}:${String(s).padStart(2, '0')}`;
+}
 
 const CATEGORIES = [
   { value: 'program-explainer', label: 'Program Explainer' },
@@ -48,6 +56,11 @@ export default function VideoAdmin() {
   const [confirmDelete, setConfirmDelete] = useState(null);
   const [uploadingThumb, setUploadingThumb] = useState(false);
   const [uploadingVideo, setUploadingVideo] = useState(false);
+  const [generatingThumb, setGeneratingThumb] = useState(false);
+  const [thumbMinutes, setThumbMinutes] = useState(0);
+  const [thumbSeconds, setThumbSeconds] = useState(0);
+  const [videoDurationSecs, setVideoDurationSecs] = useState(0);
+  const videoPreviewRef = useRef(null);
 
   // Filters
   const [filterCategory, setFilterCategory] = useState('all');
@@ -159,6 +172,65 @@ export default function VideoAdmin() {
     } finally {
       setUploadingVideo(false);
     }
+  };
+
+  const captureFrameAtTime = async (targetSeconds) => {
+    const videoEl = videoPreviewRef.current;
+    if (!videoEl || !editing?.videoUrl) {
+      setError('No video loaded to capture from');
+      return;
+    }
+
+    setGeneratingThumb(true);
+    setError(null);
+
+    try {
+      // Seek to target time
+      videoEl.currentTime = targetSeconds;
+      await new Promise((resolve, reject) => {
+        const onSeeked = () => { videoEl.removeEventListener('seeked', onSeeked); resolve(); };
+        const onError = () => { videoEl.removeEventListener('error', onError); reject(new Error('Video seek failed')); };
+        videoEl.addEventListener('seeked', onSeeked);
+        videoEl.addEventListener('error', onError);
+      });
+
+      // Capture frame to canvas
+      const vw = videoEl.videoWidth || 1280;
+      const vh = videoEl.videoHeight || 720;
+      const maxW = 1280;
+      const maxH = 720;
+      const scale = Math.min(maxW / vw, maxH / vh, 1);
+      const w = Math.round(vw * scale);
+      const h = Math.round(vh * scale);
+
+      const canvas = document.createElement('canvas');
+      canvas.width = w;
+      canvas.height = h;
+      const ctx = canvas.getContext('2d');
+      ctx.drawImage(videoEl, 0, 0, w, h);
+
+      // Convert to blob and upload
+      const blob = await new Promise((resolve) => canvas.toBlob(resolve, 'image/jpeg', 0.85));
+      const file = new File([blob], 'thumbnail.jpg', { type: 'image/jpeg' });
+      const token = await getIdToken();
+      const { publicUrl } = await uploadFile(file, token);
+      setEditing((prev) => ({ ...prev, thumbnailUrl: publicUrl }));
+    } catch (err) {
+      setError(`Thumbnail generation failed: ${err.message}`);
+    } finally {
+      setGeneratingThumb(false);
+    }
+  };
+
+  const handleAutoGenerateThumb = () => {
+    // Capture at 25% of video duration to avoid black intro screens
+    const target = videoDurationSecs > 0 ? videoDurationSecs * 0.25 : 1;
+    captureFrameAtTime(target);
+  };
+
+  const handleCaptureAtTimestamp = () => {
+    const target = (thumbMinutes * 60) + thumbSeconds;
+    captureFrameAtTime(Math.min(target, videoDurationSecs || target));
   };
 
   const updateEditing = (field, value) => {
@@ -396,15 +468,6 @@ export default function VideoAdmin() {
             </div>
 
             <div className="content-field">
-              <label>Duration</label>
-              <input
-                value={editing.duration}
-                onChange={(e) => updateEditing('duration', e.target.value)}
-                placeholder="e.g., 12:34"
-              />
-            </div>
-
-            <div className="content-field">
               <label>Status</label>
               <select
                 value={editing.status}
@@ -444,37 +507,7 @@ export default function VideoAdmin() {
         <div className="workout-editor-card">
           <h3>Media</h3>
 
-          <div className="content-field">
-            <label>Thumbnail Image</label>
-            <div className="workout-image-field">
-              <input
-                value={editing.thumbnailUrl}
-                onChange={(e) => updateEditing('thumbnailUrl', e.target.value)}
-                placeholder="Thumbnail URL"
-              />
-              <label className={`content-upload-btn${uploadingThumb ? ' disabled' : ''}`}>
-                {uploadingThumb ? 'Uploading...' : 'Upload'}
-                <input
-                  type="file"
-                  accept="image/*"
-                  disabled={uploadingThumb}
-                  onChange={(e) => {
-                    const file = e.target.files?.[0];
-                    if (file) handleThumbUpload(file);
-                  }}
-                  hidden
-                />
-              </label>
-            </div>
-            {editing.thumbnailUrl && (
-              <img
-                src={editing.thumbnailUrl}
-                alt="Thumbnail preview"
-                className="workout-image-preview"
-              />
-            )}
-          </div>
-
+          {/* Video File (first — duration and thumbnail depend on it) */}
           <div className="content-field">
             <label>Video File</label>
             <div className="workout-image-field">
@@ -504,14 +537,119 @@ export default function VideoAdmin() {
               </div>
             )}
             {editing.videoUrl && !uploadingVideo && (
-              <div className="video-media-preview">
-                <video
-                  src={editing.videoUrl}
-                  controls
-                  preload="metadata"
-                  playsInline
-                />
+              <>
+                <div className="video-media-preview">
+                  <video
+                    ref={videoPreviewRef}
+                    src={editing.videoUrl}
+                    controls
+                    preload="metadata"
+                    playsInline
+                    crossOrigin="anonymous"
+                    onLoadedMetadata={(e) => {
+                      const dur = e.target.duration;
+                      if (dur && isFinite(dur)) {
+                        setVideoDurationSecs(dur);
+                        updateEditing('duration', formatDuration(dur));
+                      }
+                    }}
+                  />
+                </div>
+                {editing.duration && (
+                  <div className="video-duration-display">
+                    Duration: <strong>{editing.duration}</strong>
+                  </div>
+                )}
+              </>
+            )}
+          </div>
+
+          {/* Thumbnail */}
+          <div className="content-field">
+            <label>Thumbnail</label>
+
+            <div className="video-thumb-options">
+              {/* Option 1: Auto-generate */}
+              <div className="video-thumb-option">
+                <button
+                  className="btn ghost small"
+                  onClick={handleAutoGenerateThumb}
+                  disabled={!editing.videoUrl || generatingThumb || uploadingThumb}
+                >
+                  {generatingThumb ? 'Generating...' : 'Auto-generate Thumbnail'}
+                </button>
+                <span className="video-thumb-hint">
+                  Captures a frame automatically from the video
+                </span>
               </div>
+
+              {/* Option 2: Generate at timestamp */}
+              <div className="video-thumb-option">
+                <div className="video-thumb-timestamp">
+                  <label className="video-thumb-ts-label">Capture at:</label>
+                  <input
+                    type="number"
+                    min={0}
+                    max={Math.floor(videoDurationSecs / 60)}
+                    value={thumbMinutes}
+                    onChange={(e) => setThumbMinutes(Math.max(0, Number(e.target.value)))}
+                    className="video-thumb-ts-input"
+                  />
+                  <span>min</span>
+                  <input
+                    type="number"
+                    min={0}
+                    max={59}
+                    value={thumbSeconds}
+                    onChange={(e) => setThumbSeconds(Math.max(0, Math.min(59, Number(e.target.value))))}
+                    className="video-thumb-ts-input"
+                  />
+                  <span>sec</span>
+                  <button
+                    className="btn ghost small"
+                    onClick={handleCaptureAtTimestamp}
+                    disabled={!editing.videoUrl || generatingThumb || uploadingThumb}
+                  >
+                    Capture Frame
+                  </button>
+                </div>
+              </div>
+
+              {/* Option 3: Upload manually */}
+              <div className="video-thumb-option">
+                <div className="workout-image-field">
+                  <input
+                    value={editing.thumbnailUrl}
+                    onChange={(e) => updateEditing('thumbnailUrl', e.target.value)}
+                    placeholder="Thumbnail URL"
+                  />
+                  <label className={`content-upload-btn${uploadingThumb ? ' disabled' : ''}`}>
+                    {uploadingThumb ? 'Uploading...' : 'Upload Image'}
+                    <input
+                      type="file"
+                      accept="image/*"
+                      disabled={uploadingThumb}
+                      onChange={(e) => {
+                        const file = e.target.files?.[0];
+                        if (file) handleThumbUpload(file);
+                      }}
+                      hidden
+                    />
+                  </label>
+                </div>
+                <span className="video-thumb-hint">
+                  Recommended: JPEG or PNG, 1280&times;720px (16:9 aspect ratio)
+                </span>
+              </div>
+            </div>
+
+            {/* Thumbnail preview (shared across all options) */}
+            {editing.thumbnailUrl && (
+              <img
+                src={editing.thumbnailUrl}
+                alt="Thumbnail preview"
+                className="video-thumb-preview"
+              />
             )}
           </div>
         </div>
