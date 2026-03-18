@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { useSearchParams, Link } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import { useTiers } from '../../hooks/useTiers';
@@ -43,6 +43,7 @@ export default function PortalSubscription() {
   const [showCancelConfirm, setShowCancelConfirm] = useState(false);
 
   const [searchParams, setSearchParams] = useSearchParams();
+  const upgradeTierRef = useRef(null);
 
   const loadSubscription = useCallback(async () => {
     try {
@@ -80,7 +81,7 @@ export default function PortalSubscription() {
     }
   }, [searchParams, setSearchParams, refreshTier, loadSubscription]);
 
-  const handleUpgrade = async (tierId) => {
+  const handleUpgrade = useCallback(async (tierId) => {
     setActionLoading(tierId);
     setError(null);
     try {
@@ -102,7 +103,19 @@ export default function PortalSubscription() {
     } finally {
       setActionLoading(null);
     }
-  };
+  }, [getIdToken, refreshTier, loadSubscription]);
+
+  // Handle pending upgrade from /programs page
+  useEffect(() => {
+    const upgradeTierId = searchParams.get('upgradeTier');
+    if (upgradeTierId && !loading && !tiersLoading) {
+      upgradeTierRef.current = upgradeTierId;
+      // Clean up URL param
+      setSearchParams({}, { replace: true });
+      // Auto-trigger upgrade for the requested tier
+      handleUpgrade(upgradeTierId);
+    }
+  }, [searchParams, setSearchParams, loading, tiersLoading, handleUpgrade]);
 
   const handleCancel = async () => {
     setActionLoading('cancel');
@@ -143,6 +156,8 @@ export default function PortalSubscription() {
   const currentTierLevel = tiers.find(
     (t) => t.name === userTier || t.id === subscription?.tierId
   )?.level || 1;
+
+  const currentTierData = tiers.find((t) => t.name === userTier);
 
   const isActive =
     subscription?.status === 'active' && !subscription?.cancelAtPeriodEnd;
@@ -195,21 +210,46 @@ export default function PortalSubscription() {
       <div className="portal-card sub-current-plan">
         <h3>Current Plan</h3>
         <div className="sub-current-info">
-          <span className={`portal-tier ${tierClass(userTier)}`}>
-            {userTier || 'Pup'}
-          </span>
-          {isActive && (
-            <span className="sub-status sub-status-active">Active</span>
+          {currentTierData?.logoUrl && (
+            <img
+              src={currentTierData.logoUrl}
+              alt={`${userTier} logo`}
+              className="sub-current-logo"
+            />
           )}
-          {isCancelling && (
-            <span className="sub-status sub-status-cancelling">
-              Cancelling
+          <div className="sub-current-info-text">
+            <span className={`portal-tier ${tierClass(userTier)}`}>
+              {userTier || 'Pup'}
             </span>
-          )}
-          {!subscription && (
-            <span className="sub-status sub-status-free">Free Plan</span>
-          )}
+            {isActive && (
+              <span className="sub-status sub-status-active">Active</span>
+            )}
+            {isCancelling && (
+              <span className="sub-status sub-status-cancelling">
+                Cancelling
+              </span>
+            )}
+            {!subscription && (
+              <span className="sub-status sub-status-free">Free Plan</span>
+            )}
+          </div>
         </div>
+
+        {/* Current plan features */}
+        {currentTierData?.features && currentTierData.features.length > 0 && (
+          <div className="sub-current-features">
+            <div className="sub-current-price">
+              {currentTierData.priceInCents === 0
+                ? 'Free'
+                : `$${(currentTierData.priceInCents / 100).toFixed(0)}/mo`}
+            </div>
+            <ul className="sub-tier-features">
+              {currentTierData.features.map((f, i) => (
+                <li key={i}>{f}</li>
+              ))}
+            </ul>
+          </div>
+        )}
 
         {subscription && subscription.status === 'active' && (
           <div className="sub-current-details">
@@ -278,6 +318,13 @@ export default function PortalSubscription() {
                 )}
 
                 <div className="sub-tier-header">
+                  {tier.logoUrl && (
+                    <img
+                      src={tier.logoUrl}
+                      alt={`${tier.name} logo`}
+                      className="sub-tier-logo"
+                    />
+                  )}
                   <h4>{tier.name}</h4>
                   <div className="sub-tier-price">
                     {isFree ? (

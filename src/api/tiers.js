@@ -9,3 +9,8 @@ export function fetchTiers() {
 export function updateTier(token, id, data) {
   return apiPut(`/api/tiers/${id}`, data, token);
 }
+
+/** Update comparison features (admin only) */
+export function updateComparisonFeatures(token, comparisonFeatures) {
+  return apiPut('/api/tiers/comparison', { comparisonFeatures }, token);
+}

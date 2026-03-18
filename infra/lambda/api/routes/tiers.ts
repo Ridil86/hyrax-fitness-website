@@ -1,5 +1,5 @@
 import { DynamoDBClient } from '@aws-sdk/client-dynamodb';
-import { DynamoDBDocumentClient, QueryCommand, UpdateCommand } from '@aws-sdk/lib-dynamodb';
+import { DynamoDBDocumentClient, QueryCommand, UpdateCommand, GetCommand, PutCommand } from '@aws-sdk/lib-dynamodb';
 import Stripe from 'stripe';
 import type { APIGatewayProxyEvent, APIGatewayProxyResult } from 'aws-lambda';
 import { success, badRequest, serverError } from '../utils/response';
@@ -14,6 +14,7 @@ function getStripe(): Stripe {
 
 /**
  * GET /api/tiers - List all tiers sorted by sortOrder (PUBLIC)
+ * Returns { tiers: [...], comparisonFeatures: [...] }
  */
 export async function listTiers(): Promise<APIGatewayProxyResult> {
   try {
@@ -27,21 +28,30 @@ export async function listTiers(): Promise<APIGatewayProxyResult> {
       })
     );
 
-    const tiers = (result.Items || []).map((item) => ({
-      id: item.sk?.replace('TIER#', ''),
-      name: item.name,
-      level: item.level,
-      description: item.description,
-      price: item.price,
-      priceInCents: item.priceInCents,
-      billingInterval: item.billingInterval || 'month',
-      features: item.features || [],
-      sortOrder: item.sortOrder,
-      stripeProductId: item.stripeProductId || null,
-      stripePriceId: item.stripePriceId || null,
-    }));
+    const allItems = result.Items || [];
 
-    return success(tiers);
+    // Separate comparison record from tier records
+    const comparisonItem = allItems.find((item) => item.sk === 'TIER#COMPARISON');
+    const comparisonFeatures = comparisonItem?.comparisonFeatures || [];
+
+    const tiers = allItems
+      .filter((item) => item.sk !== 'TIER#COMPARISON')
+      .map((item) => ({
+        id: item.sk?.replace('TIER#', ''),
+        name: item.name,
+        level: item.level,
+        description: item.description,
+        price: item.price,
+        priceInCents: item.priceInCents,
+        billingInterval: item.billingInterval || 'month',
+        features: item.features || [],
+        logoUrl: item.logoUrl || null,
+        sortOrder: item.sortOrder,
+        stripeProductId: item.stripeProductId || null,
+        stripePriceId: item.stripePriceId || null,
+      }));
+
+    return success({ tiers, comparisonFeatures });
   } catch (error) {
     console.error('listTiers error:', error);
     return serverError('Failed to fetch tiers');
@@ -66,7 +76,7 @@ export async function updateTier(
 
   try {
     const body = JSON.parse(event.body || '{}');
-    const allowedFields = ['name', 'description', 'price', 'priceInCents', 'features'];
+    const allowedFields = ['name', 'description', 'price', 'priceInCents', 'features', 'logoUrl'];
 
     const expressionParts: string[] = [];
     const expressionValues: Record<string, unknown> = {};
@@ -96,8 +106,6 @@ export async function updateTier(
       const stripe = getStripe();
 
       // Get current tier to find existing Stripe IDs
-      const { QueryCommand: QC } = await import('@aws-sdk/lib-dynamodb');
-      const { GetCommand } = await import('@aws-sdk/lib-dynamodb');
       const current = await client.send(
         new GetCommand({
           TableName: TABLE_NAME,
@@ -143,7 +151,6 @@ export async function updateTier(
       }
     } else if (body.name || body.description) {
       // Update Stripe product metadata even if price didn't change
-      const { GetCommand } = await import('@aws-sdk/lib-dynamodb');
       const current = await client.send(
         new GetCommand({
           TableName: TABLE_NAME,
@@ -177,5 +184,46 @@ export async function updateTier(
   } catch (error) {
     console.error('updateTier error:', error);
     return serverError('Failed to update tier');
+  }
+}
+
+/**
+ * PUT /api/tiers/comparison - Update comparison features (ADMIN)
+ */
+export async function updateComparisonFeatures(
+  event: APIGatewayProxyEvent
+): Promise<APIGatewayProxyResult> {
+  if (!isAdmin(event)) {
+    return badRequest('Admin access required');
+  }
+
+  try {
+    const body = JSON.parse(event.body || '{}');
+    const { comparisonFeatures } = body;
+
+    if (!Array.isArray(comparisonFeatures)) {
+      return badRequest('comparisonFeatures must be an array');
+    }
+
+    const now = new Date().toISOString();
+
+    await client.send(
+      new PutCommand({
+        TableName: TABLE_NAME,
+        Item: {
+          pk: 'TIER',
+          sk: 'TIER#COMPARISON',
+          comparisonFeatures,
+          gsi1pk: 'TIER',
+          gsi1sk: '999',
+          updatedAt: now,
+        },
+      })
+    );
+
+    return success({ comparisonFeatures, updatedAt: now });
+  } catch (error) {
+    console.error('updateComparisonFeatures error:', error);
+    return serverError('Failed to update comparison features');
   }
 }

@@ -67,7 +67,7 @@ export default function UserProfile() {
         if (!cancelled) {
           setGroups((result.groups || []).map(g => typeof g === 'string' ? g : g.name));
         }
-      } catch (err) {
+      } catch {
         // If user was passed via state with groups, use those as fallback
         if (!cancelled && user?.groups) {
           setGroups(user.groups);

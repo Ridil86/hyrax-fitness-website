@@ -11,7 +11,7 @@ import { logAuditEvent, listAuditLogs, getAuditStats } from './routes/audit';
 import { createAccount } from './routes/signup';
 import { getProfile, createProfile, updateProfile } from './routes/profile';
 import { listWorkouts, getWorkout, createWorkout, updateWorkout, deleteWorkout } from './routes/workouts';
-import { listTiers, updateTier } from './routes/tiers';
+import { listTiers, updateTier, updateComparisonFeatures } from './routes/tiers';
 import { getStripeConfig, getSubscription, createCheckoutSession, createPortalSession, cancelSubscription } from './routes/stripe';
 import { handleWebhook } from './routes/stripe-webhook';
 import { listSubscriptions, listPayments, getUserPayments, getBillingStats } from './routes/billing';
@@ -143,6 +143,11 @@ export const handler = async (
     // ── Tier Routes ──
     if (path === '/api/tiers' && method === 'GET') {
       return listTiers();
+    }
+
+    // Comparison route must match before the generic tiers/{id} route
+    if (path === '/api/tiers/comparison' && method === 'PUT') {
+      return updateComparisonFeatures(event);
     }
 
     const tierMatch = path.match(/^\/api\/tiers\/([^/]+)$/);

@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
+import { useTiers } from '../../hooks/useTiers';
 import { fetchProfile } from '../../api/profile';
 import './portal-dashboard.css';
 
@@ -27,6 +28,8 @@ function formatDate(iso) {
 
 export default function PortalDashboard() {
   const { user, getIdToken } = useAuth();
+  const { tiers } = useTiers();
+  const navigate = useNavigate();
   const [profile, setProfile] = useState(null);
   const [loading, setLoading] = useState(true);
 
@@ -51,6 +54,19 @@ export default function PortalDashboard() {
     return () => { cancelled = true; };
   }, [getIdToken]);
 
+  // Check for pending upgrade from /programs page
+  useEffect(() => {
+    if (!loading && profile) {
+      try {
+        const pendingTier = localStorage.getItem('pendingUpgradeTier');
+        if (pendingTier) {
+          localStorage.removeItem('pendingUpgradeTier');
+          navigate(`/portal/subscription?upgradeTier=${pendingTier}`, { replace: true });
+        }
+      } catch { /* ignore localStorage errors */ }
+    }
+  }, [loading, profile, navigate]);
+
   // Get display name from profile or user object
   const givenName = profile?.givenName || user?.signInDetails?.loginId?.split('@')[0] || '';
   const familyName = profile?.familyName || '';
@@ -59,6 +75,11 @@ export default function PortalDashboard() {
   const email = profile?.email || user?.signInDetails?.loginId || '';
   const tier = profile?.tier || 'Pup';
   const memberSince = profile?.createdAt;
+
+  // Find current tier data for logo and level
+  const currentTierData = tiers.find((t) => t.name === tier);
+  const maxTierLevel = tiers.length > 0 ? Math.max(...tiers.map((t) => t.level || 0)) : 3;
+  const isMaxTier = currentTierData?.level >= maxTierLevel;
 
   if (loading) {
     return (
@@ -92,6 +113,21 @@ export default function PortalDashboard() {
             <div>
               <span className={`portal-tier ${tierClass(tier)}`}>{tier}</span>
             </div>
+          </div>
+          {/* Tier Logo Column */}
+          <div className="portal-tier-logo-col">
+            {currentTierData?.logoUrl && (
+              <img
+                src={currentTierData.logoUrl}
+                alt={`${tier} logo`}
+                className="portal-tier-logo"
+              />
+            )}
+            {!isMaxTier && (
+              <Link to="/portal/subscription" className="btn primary small portal-upgrade-btn">
+                Upgrade
+              </Link>
+            )}
           </div>
         </div>
 

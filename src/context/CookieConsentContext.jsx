@@ -1,4 +1,4 @@
-import { createContext, useContext, useState, useEffect, useCallback } from 'react';
+import { createContext, useContext, useState, useCallback } from 'react';
 import { logConsentEvent } from '../api/audit';
 
 const CookieConsentContext = createContext(null);
@@ -7,21 +7,14 @@ const STORAGE_KEY = 'hyrax_cookie_consent';
 
 export function CookieConsentProvider({ children }) {
   // null = no decision yet, 'accepted', 'rejected'
-  const [consentStatus, setConsentStatus] = useState(null);
-  const [loading, setLoading] = useState(true);
-
-  useEffect(() => {
+  const [consentStatus, setConsentStatus] = useState(() => {
     try {
-      const stored = localStorage.getItem(STORAGE_KEY);
-      if (stored === 'accepted') {
-        setConsentStatus('accepted');
-      }
-      // If not 'accepted', leave as null so the banner shows
+      return localStorage.getItem(STORAGE_KEY) === 'accepted' ? 'accepted' : null;
     } catch {
-      // localStorage not available; banner will show
+      return null;
     }
-    setLoading(false);
-  }, []);
+  });
+  const loading = false;
 
   const acceptCookies = useCallback(() => {
     setConsentStatus('accepted');
@@ -62,6 +55,7 @@ export function CookieConsentProvider({ children }) {
   );
 }
 
+// eslint-disable-next-line react-refresh/only-export-components
 export function useCookieConsent() {
   const ctx = useContext(CookieConsentContext);
   if (!ctx) {

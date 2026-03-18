@@ -175,9 +175,43 @@
   100% { background-position: -200% 0; }
 }
 
+/* ── Tier Logo Column ── */
+.portal-tier-logo-col {
+  margin-left: auto;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  flex-shrink: 0;
+}
+
+.portal-tier-logo {
+  width: 72px;
+  height: 72px;
+  object-fit: contain;
+}
+
+.portal-upgrade-btn {
+  font-size: .78rem;
+  padding: 5px 16px;
+  white-space: nowrap;
+}
+
 /* ── Responsive ── */
 @media (max-width: 520px) {
   .portal-details {
     grid-template-columns: 1fr;
+  }
+
+  .portal-profile-header {
+    flex-wrap: wrap;
+  }
+
+  .portal-tier-logo-col {
+    margin-left: 0;
+    flex-direction: row;
+    width: 100%;
+    justify-content: flex-start;
+    margin-top: 8px;
   }
 }

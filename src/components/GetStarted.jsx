@@ -2,10 +2,12 @@ import { Link } from 'react-router-dom';
 import ScrollReveal from './ScrollReveal';
 import LazyImage from './LazyImage';
 import { useContent } from '../hooks/useContent';
+import { useAuth } from '../context/AuthContext';
 import './GetStarted.css';
 
 export default function GetStarted() {
   const { data } = useContent('getstarted');
+  const { isAuthenticated } = useAuth();
   const d = data || {};
 
   return (
@@ -20,7 +22,11 @@ export default function GetStarted() {
                 <p className="muted" style={{ margin: '0 0 6px' }}>
                   {d.body || 'Take a quick assessment to discover your ideal Hyrax program. We\u2019ll ask about your fitness background, goals, and preferences, then build a plan that fits your life. It only takes about 2 minutes. No commitment, no credit card required.'}
                 </p>
-                <Link className="btn primary" to="/get-started">{d.ctaText || 'Get Started'}</Link>
+                {isAuthenticated ? (
+                  <Link className="btn primary" to="/portal">Go to My Account</Link>
+                ) : (
+                  <Link className="btn primary" to="/get-started">{d.ctaText || 'Get Started'}</Link>
+                )}
               </div>
 
               <LazyImage

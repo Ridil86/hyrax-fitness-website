@@ -40,7 +40,7 @@ export default function WorkoutDetail() {
 
     load();
     return () => { cancelled = true; };
-  }, [id]);
+  }, [id, getIdToken]);
 
   if (loading) {
     return (

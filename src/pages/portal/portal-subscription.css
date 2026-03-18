@@ -34,8 +34,37 @@
 .sub-current-info {
   display: flex;
   align-items: center;
-  gap: 10px;
+  gap: 14px;
   margin-bottom: 16px;
+}
+
+.sub-current-logo {
+  width: 64px;
+  height: 64px;
+  object-fit: contain;
+  flex-shrink: 0;
+}
+
+.sub-current-info-text {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.sub-current-features {
+  margin-bottom: 16px;
+  padding: 12px 16px;
+  background: rgba(251, 247, 230, .4);
+  border-radius: 12px;
+  border: 1px solid rgba(27, 18, 10, .06);
+}
+
+.sub-current-price {
+  font-size: 1.1rem;
+  font-weight: 700;
+  color: var(--sunset);
+  margin-bottom: 8px;
 }
 
 .sub-status {
@@ -154,6 +183,15 @@
 
 .sub-tier-header {
   margin-bottom: 12px;
+  text-align: center;
+}
+
+.sub-tier-logo {
+  width: 64px;
+  height: 64px;
+  object-fit: contain;
+  margin: 0 auto 8px;
+  display: block;
 }
 
 .sub-tier-header h4 {

@@ -1,6 +1,7 @@
 import { Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { useContent } from '../hooks/useContent';
+import { useAuth } from '../context/AuthContext';
 import './Hero.css';
 
 const container = {
@@ -28,6 +29,7 @@ const fallback = {
 
 export default function Hero() {
   const { data } = useContent('hero');
+  const { isAuthenticated } = useAuth();
   const d = data || fallback;
 
   return (
@@ -66,7 +68,11 @@ export default function Hero() {
                     <span className="leadSub">{d.leadSub}</span>
                   </p>
                   <div className="heroActions">
-                    <Link className="btn primary" to="/get-started">{d.ctaText}</Link>
+                    {isAuthenticated ? (
+                      <Link className="btn primary" to="/portal">Go to My Account</Link>
+                    ) : (
+                      <Link className="btn primary" to="/get-started">{d.ctaText}</Link>
+                    )}
                   </div>
                 </motion.div>
 

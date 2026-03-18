@@ -17,9 +17,8 @@ export default function Header() {
   }, []);
 
   // Close mobile menu on route change
-  useEffect(() => {
-    setMenuOpen(false);
-  }, [location]);
+  // eslint-disable-next-line react-hooks/set-state-in-effect
+  useEffect(() => { setMenuOpen(false); }, [location]);
 
   const closeMenu = () => setMenuOpen(false);
 
@@ -66,7 +65,7 @@ export default function Header() {
               {isAuthenticated ? (
                 <>
                   {isAdmin && <Link className="btn ghost" to="/admin">Admin</Link>}
-                  <Link className="btn primary" to="/portal">My Dashboard</Link>
+                  <Link className="btn primary" to="/portal">My Account</Link>
                 </>
               ) : (
                 <Link className="btn primary" to="/login">Sign In</Link>
@@ -92,7 +91,7 @@ export default function Header() {
                   {isAuthenticated ? (
                     <>
                       {isAdmin && <Link className="btn ghost" to="/admin" onClick={closeMenu}>Admin</Link>}
-                      <Link className="btn primary" to="/portal" onClick={closeMenu}>My Dashboard</Link>
+                      <Link className="btn primary" to="/portal" onClick={closeMenu}>My Account</Link>
                     </>
                   ) : (
                     <Link className="btn primary" to="/login" onClick={closeMenu}>Sign In</Link>

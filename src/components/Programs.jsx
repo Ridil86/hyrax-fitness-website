@@ -4,7 +4,16 @@ import { useInView } from 'react-intersection-observer';
 import ScrollReveal from './ScrollReveal';
 import LazyImage from './LazyImage';
 import { useContent } from '../hooks/useContent';
+import { useTiers } from '../hooks/useTiers';
+import { useAuth } from '../context/AuthContext';
 import './Programs.css';
+
+// Display-level metadata per tier (keyed by name) — not editable from CMS
+const TIER_DISPLAY = {
+  'Pup': { level: 'Explorer', priceSub: 'forever' },
+  'Rock Runner': { level: 'Committed', priceSub: '/ month', featured: true },
+  'Iron Dassie': { level: 'All In', priceSub: '/ month' },
+};
 
 const fallbackTiers = [
   { level: 'Explorer', name: 'Pup', desc: 'Curious newcomers testing the terrain. Dip in, explore the movements, and see if the Hyrax way clicks.', price: 'Free', priceSub: 'forever', features: ['Limited workout video library', 'Downloadable PDF guides', 'Movement tutorials', 'Community access'], cta: 'Get Started', ctaClass: 'btn primary' },
@@ -49,13 +58,85 @@ function CellIcon({ value }) {
   return value ? <Check /> : <Dash />;
 }
 
+/** Returns the CTA element for a tier card or comparison footer */
+function TierCta({ tierLevel, tierId, isPaid, isAuthenticated, userTierLevel }) {
+  if (isAuthenticated) {
+    if (tierLevel === userTierLevel) {
+      return <span className="tier-current-label">Current Subscription</span>;
+    }
+    if (tierLevel > userTierLevel) {
+      return <Link className="btn primary" to="/portal/subscription">Upgrade</Link>;
+    }
+    return <span className="tier-included-label">Included in current subscription</span>;
+  }
+
+  // Not authenticated
+  if (isPaid) {
+    return (
+      <Link
+        className="btn primary"
+        to="/get-started"
+        onClick={() => {
+          try { localStorage.setItem('pendingUpgradeTier', tierId); } catch { /* ignore */ }
+        }}
+      >
+        Get Started
+      </Link>
+    );
+  }
+  return <Link className="btn primary" to="/get-started">Get Started</Link>;
+}
+
 export default function Programs() {
   const { ref, inView } = useInView({ triggerOnce: true, threshold: 0.1 });
   const { ref: chartRef, inView: chartInView } = useInView({ triggerOnce: true, threshold: 0.05 });
   const { data } = useContent('programs');
+  const { tiers: apiTiers, comparisonFeatures: apiComparison } = useTiers();
+  const { isAuthenticated, userTier } = useAuth();
   const d = data || {};
-  const tiers = d.tiers || fallbackTiers;
-  const comparisonFeatures = d.comparisonFeatures || fallbackComparison;
+
+  // Merge API tier data with display metadata; fall back to content/hardcoded tiers
+  const tiers = apiTiers.length > 0
+    ? apiTiers.map((t) => {
+        const display = TIER_DISPLAY[t.name] || {};
+        const priceDisplay = t.priceInCents === 0 ? 'Free' : `$${(t.priceInCents / 100).toFixed(0)}`;
+        return {
+          id: t.id,
+          level: display.level || `Tier ${t.level}`,
+          name: t.name,
+          desc: t.description || '',
+          price: priceDisplay,
+          priceSub: display.priceSub || (t.priceInCents > 0 ? '/ month' : 'forever'),
+          features: t.features || [],
+          logoUrl: t.logoUrl,
+          tierLevel: t.level,
+          featured: display.featured || false,
+          isPaid: t.priceInCents > 0,
+        };
+      })
+    : (d.tiers || fallbackTiers).map((t, i) => ({
+        ...t,
+        id: String(i + 1),
+        tierLevel: i + 1,
+        isPaid: t.price !== 'Free',
+      }));
+
+  const comparisonFeatures = (apiComparison && apiComparison.length > 0)
+    ? apiComparison
+    : (d.comparisonFeatures || fallbackComparison);
+
+  // Determine user's current tier level for comparison
+  const userTierLevel = apiTiers.length > 0
+    ? (apiTiers.find((t) => t.name === userTier)?.level || 1)
+    : 1;
+
+  // Ordered tier info for comparison footer CTAs
+  const tierOrder = tiers.map((t) => ({
+    level: t.tierLevel,
+    name: t.name,
+    id: t.id,
+    isPaid: t.isPaid,
+  }));
 
   return (
     <section id="programs">
@@ -83,6 +164,9 @@ export default function Programs() {
             >
               <div className="top">
                 <span className="pill">{tier.level}</span>
+                {tier.logoUrl && (
+                  <img src={tier.logoUrl} alt={`${tier.name} logo`} className="tier-logo" />
+                )}
                 <h3>{tier.name}</h3>
                 <div className="muted small">{tier.desc}</div>
                 <div className="price">
@@ -94,7 +178,14 @@ export default function Programs() {
                   {(tier.features || []).map((f, j) => <li key={j}>{f}</li>)}
                 </ul>
                 <div className="actions">
-                  <Link className={tier.ctaClass || 'btn primary'} to="/get-started">{tier.cta || 'Get Started'}</Link>
+                  <TierCta
+                    tierLevel={tier.tierLevel}
+
+                    tierId={tier.id}
+                    isPaid={tier.isPaid}
+                    isAuthenticated={isAuthenticated}
+                    userTierLevel={userTierLevel}
+                  />
                 </div>
               </div>
             </motion.article>
@@ -137,15 +228,18 @@ export default function Programs() {
               <tfoot>
                 <tr>
                   <td className="compare-feature-col" />
-                  <td className="compare-plan-col">
-                    <Link className="btn primary compare-cta" to="/get-started">Get Started</Link>
-                  </td>
-                  <td className="compare-plan-col featured">
-                    <Link className="btn primary compare-cta" to="/get-started">Get Started</Link>
-                  </td>
-                  <td className="compare-plan-col">
-                    <Link className="btn primary compare-cta" to="/get-started">Get Started</Link>
-                  </td>
+                  {tierOrder.map((t, i) => (
+                    <td key={t.id || i} className={`compare-plan-col ${i === 1 ? 'featured' : ''}`}>
+                      <TierCta
+                        tierLevel={t.level}
+
+                        tierId={t.id}
+                        isPaid={t.isPaid}
+                        isAuthenticated={isAuthenticated}
+                        userTierLevel={userTierLevel}
+                      />
+                    </td>
+                  ))}
                 </tr>
               </tfoot>
             </table>

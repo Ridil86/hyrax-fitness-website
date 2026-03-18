@@ -23,7 +23,7 @@ export default function PortalLayout() {
     <div className="portal-layout">
       <aside className="portal-sidebar">
         <div className="portal-sidebar-brand">
-          <strong>My Portal</strong>
+          <strong>My Account</strong>
           {user && <span className="portal-sidebar-user">{user.signInDetails?.loginId || 'Member'}</span>}
         </div>
 

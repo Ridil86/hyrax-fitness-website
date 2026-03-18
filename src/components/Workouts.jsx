@@ -1,8 +1,10 @@
+import { Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { useInView } from 'react-intersection-observer';
 import ScrollReveal from './ScrollReveal';
 import LazyImage from './LazyImage';
 import { useContent } from '../hooks/useContent';
+import { useAuth } from '../context/AuthContext';
 import './Workouts.css';
 
 const fallbackWorkouts = [
@@ -14,6 +16,7 @@ const fallbackWorkouts = [
 export default function Workouts() {
   const { ref: gridRef, inView: gridInView } = useInView({ triggerOnce: true, threshold: 0.1 });
   const { data } = useContent('workouts');
+  const { isAuthenticated } = useAuth();
   const d = data || {};
   const workouts = d.workouts || fallbackWorkouts;
   const roundDetails = d.roundDetails || ['60s steps or stairs', '40m carry', '20m crawl', '6 scan freeze cycles'];
@@ -84,7 +87,11 @@ export default function Workouts() {
                   </div>
                 </div>
                 <div style={{ height: 14 }} />
-                <a className="btn primary" href="#get-started">Get Started</a>
+                {isAuthenticated ? (
+                  <Link className="btn primary" to="/portal">Go to My Account</Link>
+                ) : (
+                  <a className="btn primary" href="#get-started">Get Started</a>
+                )}
               </div>
             </div>
 

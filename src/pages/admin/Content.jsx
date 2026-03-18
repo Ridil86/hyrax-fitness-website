@@ -179,7 +179,6 @@ export default function Content() {
             <WorkoutsEditor
               data={data}
               updateField={updateField}
-              addArrayItem={addArrayItem}
               removeArrayItem={removeArrayItem}
               onImageUpload={handleImageUpload}
             />
@@ -362,7 +361,7 @@ function MethodEditor({ data, updateField, addArrayItem, removeArrayItem, onImag
   );
 }
 
-function WorkoutsEditor({ data, updateField, addArrayItem, removeArrayItem, onImageUpload }) {
+function WorkoutsEditor({ data, updateField, removeArrayItem, onImageUpload }) {
   return (
     <>
       <FieldGroup label="Heading">
