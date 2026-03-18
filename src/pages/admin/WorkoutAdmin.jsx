@@ -87,13 +87,28 @@ export default function WorkoutAdmin() {
       return;
     }
 
+    // Check for exercises with content but no name
+    const hasContentNoName = editing.exercises.some(
+      (e) =>
+        !e.name.trim() &&
+        (e.sets || e.reps || e.rest || e.duration || e.notes)
+    );
+    if (hasContentNoName) {
+      setError(
+        'All exercises must have a name. Please fill in missing exercise names.'
+      );
+      return;
+    }
+
     setSaving(true);
     setError(null);
     setSaveMsg('');
     try {
       const token = await getIdToken();
-      // Filter out empty exercises
-      const cleanExercises = editing.exercises.filter((e) => e.name.trim());
+      // Filter out completely empty exercises (no fields filled at all)
+      const cleanExercises = editing.exercises.filter(
+        (e) => e.name.trim() || e.sets || e.reps || e.rest || e.duration || e.notes
+      );
       const payload = { ...editing, exercises: cleanExercises };
 
       if (editing.id) {
@@ -327,8 +342,8 @@ export default function WorkoutAdmin() {
 
       <div className="workout-editor">
         {/* Basic Info */}
-        <div className="workout-editor-section">
-          <h3 className="content-subhead">Basic Information</h3>
+        <div className="workout-editor-card">
+          <h3>Basic Information</h3>
 
           <div className="content-field">
             <label>Title *</label>
@@ -432,8 +447,8 @@ export default function WorkoutAdmin() {
         </div>
 
         {/* Equipment */}
-        <div className="workout-editor-section">
-          <h3 className="content-subhead">Equipment</h3>
+        <div className="workout-editor-card">
+          <h3>Equipment</h3>
           {editing.equipment.map((item, i) => (
             <div key={i} className="content-inline-group">
               <input
@@ -455,8 +470,8 @@ export default function WorkoutAdmin() {
         </div>
 
         {/* Exercises */}
-        <div className="workout-editor-section">
-          <h3 className="content-subhead">
+        <div className="workout-editor-card">
+          <h3>
             Exercises ({editing.exercises.length})
           </h3>
 
@@ -465,10 +480,15 @@ export default function WorkoutAdmin() {
               <div className="workout-exercise-header">
                 <span className="workout-exercise-num">{i + 1}</span>
                 <input
-                  className="workout-exercise-name"
+                  className={`workout-exercise-name${
+                    !exercise.name.trim() &&
+                    (exercise.sets || exercise.reps || exercise.rest || exercise.duration || exercise.notes)
+                      ? ' invalid'
+                      : ''
+                  }`}
                   value={exercise.name}
                   onChange={(e) => updateExercise(i, 'name', e.target.value)}
-                  placeholder="Exercise name"
+                  placeholder="Exercise name *"
                 />
                 <div className="workout-exercise-controls">
                   <button

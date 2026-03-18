@@ -146,26 +146,86 @@
   max-width: 840px;
 }
 
-.workout-editor-section {
-  margin-bottom: 28px;
-  padding-bottom: 20px;
-  border-bottom: 1px solid rgba(27, 18, 10, .06);
+/* Card-based editor sections (matches portal-profile-card pattern) */
+.workout-editor-card {
+  background: #fff;
+  border-radius: var(--radius);
+  box-shadow: var(--shadow-soft);
+  padding: 28px;
+  margin-bottom: 20px;
 }
 
-.workout-editor-section .content-subhead {
-  font-size: 1.05rem;
-  font-weight: 650;
+.workout-editor-card h3 {
+  font-size: 1rem;
+  margin: 0 0 20px;
+  color: var(--ink);
+  border-bottom: 1px solid rgba(27, 18, 10, .08);
+  padding-bottom: 10px;
+}
+
+/* Form field overrides inside editor cards */
+.workout-editor-card .content-field {
+  margin-bottom: 16px;
+}
+
+.workout-editor-card .content-field label {
+  display: block;
+  font-size: .82rem;
+  font-weight: 600;
+  color: rgba(27, 18, 10, .55);
+  margin-bottom: 4px;
+  text-transform: uppercase;
+  letter-spacing: .03em;
+}
+
+.workout-editor-card .content-field input,
+.workout-editor-card .content-field textarea {
+  display: block;
+  width: 100%;
+  padding: 8px 12px;
+  border: 1px solid rgba(27, 18, 10, .12);
+  border-radius: 8px;
+  font: inherit;
+  font-size: .92rem;
+  background: #fff;
+  resize: vertical;
+}
+
+.workout-editor-card .content-field input:focus,
+.workout-editor-card .content-field textarea:focus {
+  outline: none;
+  border-color: var(--sunset);
+  box-shadow: var(--ring);
+}
+
+.workout-editor-card .content-field select {
+  display: block;
+  width: 100%;
+  padding: 8px 14px;
+  border: 1px solid rgba(27, 18, 10, .12);
+  border-radius: 8px;
+  font: inherit;
+  font-size: .92rem;
+  background: #fff;
+  color: var(--ink);
+  cursor: pointer;
+}
+
+.workout-editor-card .content-field select:focus {
+  outline: none;
+  border-color: var(--sunset);
+  box-shadow: var(--ring);
 }
 
 .workout-editor-row {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
-  gap: 12px;
+  gap: 16px;
 }
 
 .workout-image-field {
   display: flex;
-  gap: 8px;
+  gap: 10px;
   align-items: center;
 }
 
@@ -174,38 +234,40 @@
 }
 
 .workout-image-preview {
-  margin-top: 8px;
-  max-width: 200px;
-  max-height: 120px;
+  margin-top: 10px;
+  max-width: 220px;
+  max-height: 130px;
   border-radius: 10px;
   object-fit: cover;
+  border: 1px solid rgba(27, 18, 10, .08);
 }
 
 /* Exercise card */
 .workout-exercise-card {
-  padding: 16px;
+  padding: 18px;
   border-radius: 12px;
   border: 1px solid rgba(27, 18, 10, .08);
   border-left: 3px solid rgba(242, 133, 1, .25);
-  background: rgba(255, 255, 255, .5);
-  margin-bottom: 12px;
-  transition: border-left-color .15s;
+  background: rgba(251, 247, 230, .35);
+  margin-bottom: 14px;
+  transition: border-left-color .15s, box-shadow .15s;
 }
 
 .workout-exercise-card:hover {
   border-left-color: var(--sunset);
+  box-shadow: 0 4px 12px rgba(27, 18, 10, .06);
 }
 
 .workout-exercise-header {
   display: flex;
   align-items: center;
   gap: 10px;
-  margin-bottom: 12px;
+  margin-bottom: 14px;
 }
 
 .workout-exercise-num {
-  width: 28px;
-  height: 28px;
+  width: 30px;
+  height: 30px;
   border-radius: 50%;
   background: linear-gradient(135deg, var(--sunset), var(--sunrise));
   color: #fff;
@@ -221,17 +283,28 @@
   flex: 1;
   font-weight: 600;
   font-size: .95rem;
-  border: 1px solid transparent;
+  border: 1px solid rgba(27, 18, 10, .12);
   border-radius: 8px;
-  padding: 4px 8px;
-  background: transparent;
+  padding: 8px 12px;
+  background: #fff;
+  font-family: inherit;
   transition: border-color .15s;
 }
 
 .workout-exercise-name:focus {
-  border-color: rgba(27, 18, 10, .12);
+  border-color: var(--sunset);
   outline: none;
   box-shadow: var(--ring);
+}
+
+.workout-exercise-name::placeholder {
+  color: rgba(27, 18, 10, .35);
+  font-weight: 400;
+}
+
+.workout-exercise-name.invalid {
+  border-color: #dc2626;
+  background: #fef2f2;
 }
 
 .workout-exercise-controls {
@@ -241,18 +314,19 @@
 }
 
 .workout-move-btn {
-  background: none;
+  background: #fff;
   border: 1px solid rgba(27, 18, 10, .1);
-  border-radius: 6px;
-  padding: 2px 6px;
-  font-size: .7rem;
+  border-radius: 8px;
+  padding: 4px 8px;
+  font-size: .75rem;
   cursor: pointer;
   color: var(--rock);
-  transition: background .15s;
+  transition: background .15s, border-color .15s;
 }
 
 .workout-move-btn:hover:not(:disabled) {
   background: rgba(27, 18, 10, .05);
+  border-color: rgba(27, 18, 10, .18);
 }
 
 .workout-move-btn:disabled {
@@ -263,8 +337,12 @@
 .workout-exercise-details {
   display: grid;
   grid-template-columns: repeat(4, 1fr);
-  gap: 10px;
-  margin-bottom: 8px;
+  gap: 12px;
+  margin-bottom: 10px;
+}
+
+.workout-exercise-details .content-field {
+  margin-bottom: 0;
 }
 
 .workout-exercise-details .content-field label {
@@ -276,14 +354,48 @@
   padding: 6px 10px;
 }
 
+/* Exercise notes field */
+.workout-exercise-card > .content-field:last-child {
+  margin-bottom: 0;
+}
+
+/* Equipment items inside card */
+.workout-editor-card .content-inline-group {
+  margin-bottom: 10px;
+}
+
+.workout-editor-card .content-inline-group input {
+  display: block;
+  width: 100%;
+  padding: 8px 12px;
+  border: 1px solid rgba(27, 18, 10, .12);
+  border-radius: 8px;
+  font: inherit;
+  font-size: .92rem;
+  background: #fff;
+}
+
+.workout-editor-card .content-inline-group input:focus {
+  outline: none;
+  border-color: var(--sunset);
+  box-shadow: var(--ring);
+}
+
+/* Add buttons inside cards */
+.workout-editor-card .content-add-btn {
+  margin-top: 12px;
+}
+
 /* Editor actions bar */
 .workout-editor-actions {
+  background: #fff;
+  border-radius: var(--radius);
+  box-shadow: var(--shadow-soft);
+  padding: 18px 28px;
   display: flex;
   align-items: center;
   justify-content: flex-end;
   gap: 10px;
-  padding-top: 20px;
-  border-top: 1px solid rgba(27, 18, 10, .08);
 }
 
 /* ── Responsive ── */
@@ -304,10 +416,22 @@
   .workout-editor-row {
     grid-template-columns: 1fr;
   }
+
+  .workout-editor-card {
+    padding: 20px;
+  }
+
+  .workout-editor-actions {
+    padding: 14px 20px;
+  }
 }
 
 @media (max-width: 480px) {
   .workout-exercise-details {
     grid-template-columns: 1fr;
+  }
+
+  .workout-editor-card {
+    padding: 16px;
   }
 }
