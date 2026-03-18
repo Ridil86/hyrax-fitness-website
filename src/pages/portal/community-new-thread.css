@@ -1,0 +1,223 @@
+/* ── Community New Thread ── */
+
+.community-new-thread {
+  max-width: 680px;
+  margin: 0 auto;
+}
+
+.community-back-link {
+  display: inline-block;
+  margin-bottom: 20px;
+  font-size: .9rem;
+  color: var(--rock);
+  text-decoration: none;
+  transition: color .15s;
+}
+
+.community-back-link:hover {
+  color: var(--sunset);
+}
+
+.community-new-thread-card {
+  background: rgba(255, 255, 255, .55);
+  border: 1px solid rgba(27, 18, 10, .08);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow-soft);
+  padding: 32px 36px;
+}
+
+.community-new-thread-card h1 {
+  margin: 0 0 24px;
+  font-size: 1.5rem;
+  color: var(--ink);
+}
+
+/* ── Form Groups ── */
+.community-form-group {
+  margin-bottom: 20px;
+}
+
+.community-form-group > label {
+  display: block;
+  font-size: .88rem;
+  font-weight: 600;
+  color: var(--ink);
+  margin-bottom: 6px;
+}
+
+.community-form-group input[type='text'],
+.community-form-group select,
+.community-form-group textarea {
+  width: 100%;
+  padding: 11px 14px;
+  border: 1px solid rgba(27, 18, 10, .12);
+  border-radius: 12px;
+  font: inherit;
+  font-size: .92rem;
+  background: #fff;
+  box-sizing: border-box;
+  transition: border-color .15s, box-shadow .15s;
+}
+
+.community-form-group input[type='text']:focus,
+.community-form-group select:focus,
+.community-form-group textarea:focus {
+  outline: none;
+  border-color: var(--sunset);
+  box-shadow: var(--ring);
+}
+
+.community-form-group textarea {
+  resize: vertical;
+  min-height: 140px;
+}
+
+.community-form-group select {
+  cursor: pointer;
+}
+
+/* ── Validation ── */
+.community-form-error {
+  display: block;
+  margin-top: 5px;
+  font-size: .82rem;
+  color: #c53030;
+}
+
+.community-form-hint {
+  margin-top: 5px;
+  font-size: .8rem;
+  color: var(--rock);
+  opacity: .7;
+}
+
+.community-form-hint-warn {
+  color: var(--sunset);
+  font-weight: 600;
+}
+
+.community-form-submit-error {
+  margin-bottom: 16px;
+  padding: 10px 14px;
+  border-radius: 10px;
+  background: rgba(200, 50, 50, .08);
+  color: #c53030;
+  font-size: .88rem;
+}
+
+/* ── Image Upload ── */
+.community-image-upload-area {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 28px 20px;
+  border: 2px dashed rgba(27, 18, 10, .12);
+  border-radius: 14px;
+  background: rgba(27, 18, 10, .02);
+  cursor: pointer;
+  font-size: .88rem;
+  color: var(--rock);
+  transition: border-color .15s, background .15s;
+}
+
+.community-image-upload-area:hover {
+  border-color: var(--sunset);
+  background: rgba(242, 133, 1, .04);
+}
+
+.community-image-upload-icon {
+  font-size: 1.8rem;
+  opacity: .5;
+}
+
+.community-image-preview {
+  position: relative;
+  display: inline-block;
+}
+
+.community-image-preview img {
+  max-width: 100%;
+  max-height: 300px;
+  border-radius: 12px;
+  object-fit: cover;
+  display: block;
+}
+
+.community-image-remove {
+  margin-top: 8px;
+  padding: 5px 14px;
+  border-radius: 8px;
+  border: 1px solid rgba(200, 50, 50, .2);
+  background: rgba(200, 50, 50, .06);
+  color: #c53030;
+  font: inherit;
+  font-size: .82rem;
+  cursor: pointer;
+  transition: background .15s;
+}
+
+.community-image-remove:hover {
+  background: rgba(200, 50, 50, .12);
+}
+
+/* ── Anonymous Toggle ── */
+.community-anonymous-label {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  cursor: pointer;
+  font-size: .9rem;
+  color: var(--ink);
+}
+
+.community-anonymous-label input[type='checkbox'] {
+  accent-color: var(--sunset);
+  width: 17px;
+  height: 17px;
+  cursor: pointer;
+}
+
+.community-anonymous-hint {
+  margin: 4px 0 0;
+  font-size: .8rem;
+  color: var(--rock);
+  opacity: .7;
+}
+
+/* ── Form Actions ── */
+.community-form-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 12px;
+  margin-top: 28px;
+  padding-top: 20px;
+  border-top: 1px solid rgba(27, 18, 10, .08);
+}
+
+/* ── Responsive ── */
+@media (max-width: 768px) {
+  .community-new-thread-card {
+    padding: 24px 22px;
+  }
+
+  .community-new-thread-card h1 {
+    font-size: 1.3rem;
+  }
+}
+
+@media (max-width: 480px) {
+  .community-new-thread-card {
+    padding: 20px 16px;
+  }
+
+  .community-form-actions {
+    flex-direction: column-reverse;
+  }
+
+  .community-form-actions .btn {
+    width: 100%;
+    text-align: center;
+  }
+}

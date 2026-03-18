@@ -355,6 +355,101 @@ export class BackendStack extends cdk.Stack {
       authorizationType: apigateway.AuthorizationType.COGNITO,
     });
 
+    // Community routes (all authenticated)
+    const communityResource = apiResource.addResource('community');
+
+    // /api/community/threads
+    const communityThreads = communityResource.addResource('threads');
+    communityThreads.addMethod('GET', lambdaIntegration, {
+      authorizer,
+      authorizationType: apigateway.AuthorizationType.COGNITO,
+    });
+    communityThreads.addMethod('POST', lambdaIntegration, {
+      authorizer,
+      authorizationType: apigateway.AuthorizationType.COGNITO,
+    });
+
+    // /api/community/threads/{id}
+    const communityThreadItem = communityThreads.addResource('{id}');
+    communityThreadItem.addMethod('GET', lambdaIntegration, {
+      authorizer,
+      authorizationType: apigateway.AuthorizationType.COGNITO,
+    });
+    communityThreadItem.addMethod('PUT', lambdaIntegration, {
+      authorizer,
+      authorizationType: apigateway.AuthorizationType.COGNITO,
+    });
+    communityThreadItem.addMethod('DELETE', lambdaIntegration, {
+      authorizer,
+      authorizationType: apigateway.AuthorizationType.COGNITO,
+    });
+
+    // /api/community/threads/{id}/replies
+    const communityReplies = communityThreadItem.addResource('replies');
+    communityReplies.addMethod('POST', lambdaIntegration, {
+      authorizer,
+      authorizationType: apigateway.AuthorizationType.COGNITO,
+    });
+
+    // /api/community/replies/{id}
+    const communityReplyItem = communityResource.addResource('replies').addResource('{id}');
+    communityReplyItem.addMethod('PUT', lambdaIntegration, {
+      authorizer,
+      authorizationType: apigateway.AuthorizationType.COGNITO,
+    });
+    communityReplyItem.addMethod('DELETE', lambdaIntegration, {
+      authorizer,
+      authorizationType: apigateway.AuthorizationType.COGNITO,
+    });
+
+    // /api/community/reactions
+    const communityReactions = communityResource.addResource('reactions');
+    communityReactions.addMethod('POST', lambdaIntegration, {
+      authorizer,
+      authorizationType: apigateway.AuthorizationType.COGNITO,
+    });
+
+    // /api/community/reports
+    const communityReports = communityResource.addResource('reports');
+    communityReports.addMethod('POST', lambdaIntegration, {
+      authorizer,
+      authorizationType: apigateway.AuthorizationType.COGNITO,
+    });
+
+    // /api/community/stats (admin)
+    const communityStats = communityResource.addResource('stats');
+    communityStats.addMethod('GET', lambdaIntegration, {
+      authorizer,
+      authorizationType: apigateway.AuthorizationType.COGNITO,
+    });
+
+    // /api/community/admin/*
+    const communityAdmin = communityResource.addResource('admin');
+
+    const communityQueue = communityAdmin.addResource('queue');
+    communityQueue.addMethod('GET', lambdaIntegration, {
+      authorizer,
+      authorizationType: apigateway.AuthorizationType.COGNITO,
+    });
+
+    const communityModerate = communityAdmin.addResource('moderate').addResource('{id}');
+    communityModerate.addMethod('PUT', lambdaIntegration, {
+      authorizer,
+      authorizationType: apigateway.AuthorizationType.COGNITO,
+    });
+
+    const communityAdminReports = communityAdmin.addResource('reports').addResource('{id}');
+    communityAdminReports.addMethod('PUT', lambdaIntegration, {
+      authorizer,
+      authorizationType: apigateway.AuthorizationType.COGNITO,
+    });
+
+    const communityPin = communityAdmin.addResource('pin').addResource('{id}');
+    communityPin.addMethod('PUT', lambdaIntegration, {
+      authorizer,
+      authorizationType: apigateway.AuthorizationType.COGNITO,
+    });
+
     // Upload route (admin-only)
     const uploadResource = apiResource.addResource('upload');
     uploadResource.addMethod('POST', lambdaIntegration, {

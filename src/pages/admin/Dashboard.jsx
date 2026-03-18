@@ -5,12 +5,13 @@ import { fetchUsers } from '../../api/users';
 import { fetchFaqs } from '../../api/faq';
 import { fetchWorkouts } from '../../api/workouts';
 import { fetchVideos } from '../../api/videos';
+import { fetchCommunityStats } from '../../api/community';
 import './admin.css';
 import './dashboard.css';
 
 export default function Dashboard() {
   const { getIdToken } = useAuth();
-  const [stats, setStats] = useState({ users: null, faq: null, workouts: null, videos: null });
+  const [stats, setStats] = useState({ users: null, faq: null, workouts: null, videos: null, threads: null, pendingReports: null });
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -19,11 +20,12 @@ export default function Dashboard() {
     async function loadStats() {
       try {
         const token = await getIdToken();
-        const [usersResult, faqResult, workoutsResult, videosResult] = await Promise.allSettled([
+        const [usersResult, faqResult, workoutsResult, videosResult, communityResult] = await Promise.allSettled([
           fetchUsers({ limit: 60 }, token),
           fetchFaqs(),
           fetchWorkouts(token),
           fetchVideos(token),
+          fetchCommunityStats(token),
         ]);
 
         if (cancelled) return;
@@ -47,7 +49,15 @@ export default function Dashboard() {
           ? (videosResult.value || []).length
           : null;
 
-        setStats({ users: userCount, faq: faqCount, workouts: workoutCount, videos: videoCount });
+        const threadCount = communityResult.status === 'fulfilled'
+          ? communityResult.value.threadCount
+          : null;
+
+        const pendingReports = communityResult.status === 'fulfilled'
+          ? communityResult.value.pendingReports
+          : null;
+
+        setStats({ users: userCount, faq: faqCount, workouts: workoutCount, videos: videoCount, threads: threadCount, pendingReports });
       } catch {
         // Stats load is best-effort
       } finally {
@@ -95,6 +105,20 @@ export default function Dashboard() {
             {loading ? <span className="stat-loading" /> : (stats.videos ?? '--')}
           </div>
         </div>
+        <div className="admin-stat-card">
+          <div className="stat-label">Threads</div>
+          <div className="stat-value">
+            {loading ? <span className="stat-loading" /> : (stats.threads ?? '--')}
+          </div>
+        </div>
+        {stats.pendingReports > 0 && (
+          <div className="admin-stat-card">
+            <div className="stat-label">Pending Reports</div>
+            <div className="stat-value" style={{ color: '#dc2626' }}>
+              {stats.pendingReports}
+            </div>
+          </div>
+        )}
       </div>
 
       <div className="dashboard-links">
@@ -154,6 +178,13 @@ export default function Dashboard() {
             <div>
               <strong>Tier Management</strong>
               <p>Edit subscription tier names, pricing, and features</p>
+            </div>
+          </Link>
+          <Link to="/admin/community" className="dashboard-link-card">
+            <span className="dashboard-link-icon">&#9993;</span>
+            <div>
+              <strong>Community</strong>
+              <p>Moderate threads, manage reports, and pin announcements</p>
             </div>
           </Link>
           <Link to="/admin/merch" className="dashboard-link-card">

@@ -46,6 +46,12 @@ const WorkoutDetail = lazy(() => import('./pages/WorkoutDetail'));
 const VideoLibrary = lazy(() => import('./pages/portal/VideoLibrary'));
 const VideoDetail = lazy(() => import('./pages/portal/VideoDetail'));
 
+// Community pages
+const Community = lazy(() => import('./pages/portal/Community'));
+const CommunityThread = lazy(() => import('./pages/portal/CommunityThread'));
+const CommunityNewThread = lazy(() => import('./pages/portal/CommunityNewThread'));
+const CommunityAdmin = lazy(() => import('./pages/admin/CommunityAdmin'));
+
 // Legal pages
 const TermsOfUse = lazy(() => import('./pages/TermsOfUse'));
 const PrivacyPolicy = lazy(() => import('./pages/PrivacyPolicy'));
@@ -150,6 +156,9 @@ export default function App() {
               <Route path="workouts/:id" element={<LazySection><WorkoutDetail /></LazySection>} />
               <Route path="videos" element={<LazySection><VideoLibrary /></LazySection>} />
               <Route path="videos/:id" element={<LazySection><VideoDetail /></LazySection>} />
+              <Route path="community" element={<LazySection><Community /></LazySection>} />
+              <Route path="community/new" element={<LazySection><CommunityNewThread /></LazySection>} />
+              <Route path="community/:id" element={<LazySection><CommunityThread /></LazySection>} />
               <Route path="profile" element={<LazySection><PortalProfile /></LazySection>} />
               <Route path="subscription" element={<LazySection><PortalSubscription /></LazySection>} />
               <Route path="settings" element={<LazySection><PortalSettings /></LazySection>} />
@@ -171,6 +180,7 @@ export default function App() {
               <Route path="videos" element={<LazySection><VideoAdmin /></LazySection>} />
               <Route path="billing" element={<LazySection><Billing /></LazySection>} />
               <Route path="tiers" element={<LazySection><TierAdmin /></LazySection>} />
+              <Route path="community" element={<LazySection><CommunityAdmin /></LazySection>} />
               <Route path="merch" element={<LazySection><Merch /></LazySection>} />
             </Route>
           </Routes>

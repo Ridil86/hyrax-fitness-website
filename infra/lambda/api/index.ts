@@ -16,6 +16,12 @@ import { listTiers, updateTier, updateComparisonFeatures } from './routes/tiers'
 import { getStripeConfig, getSubscription, createCheckoutSession, createPortalSession, cancelSubscription } from './routes/stripe';
 import { handleWebhook } from './routes/stripe-webhook';
 import { listSubscriptions, listPayments, getUserPayments, getBillingStats } from './routes/billing';
+import {
+  listThreads, getThread, createThread, updateThread, deleteThread,
+  createReply, updateReply, deleteReply,
+  toggleReaction, createReport,
+  getAdminQueue, moderateThread, resolveReport, togglePin, getCommunityStats,
+} from './routes/community';
 import { notFound, serverError } from './utils/response';
 
 export const handler = async (
@@ -215,6 +221,72 @@ export const handler = async (
 
     if (path === '/api/admin/billing/payments' && method === 'GET') {
       return listPayments(event);
+    }
+
+    // ── Community Routes ──
+    // Admin routes must match before generic community routes
+    if (path === '/api/community/admin/queue' && method === 'GET') {
+      return getAdminQueue(event);
+    }
+
+    if (path === '/api/community/stats' && method === 'GET') {
+      return getCommunityStats(event);
+    }
+
+    const communityModerateMatch = path.match(/^\/api\/community\/admin\/moderate\/([^/]+)$/);
+    if (communityModerateMatch && method === 'PUT') {
+      event.pathParameters = { ...event.pathParameters, id: communityModerateMatch[1] };
+      return moderateThread(event);
+    }
+
+    const communityReportResolveMatch = path.match(/^\/api\/community\/admin\/reports\/([^/]+)$/);
+    if (communityReportResolveMatch && method === 'PUT') {
+      event.pathParameters = { ...event.pathParameters, id: communityReportResolveMatch[1] };
+      return resolveReport(event);
+    }
+
+    const communityPinMatch = path.match(/^\/api\/community\/admin\/pin\/([^/]+)$/);
+    if (communityPinMatch && method === 'PUT') {
+      event.pathParameters = { ...event.pathParameters, id: communityPinMatch[1] };
+      return togglePin(event);
+    }
+
+    if (path === '/api/community/reactions' && method === 'POST') {
+      return toggleReaction(event);
+    }
+
+    if (path === '/api/community/reports' && method === 'POST') {
+      return createReport(event);
+    }
+
+    // /api/community/replies/{id}
+    const communityReplyMatch = path.match(/^\/api\/community\/replies\/([^/]+)$/);
+    if (communityReplyMatch) {
+      event.pathParameters = { ...event.pathParameters, id: communityReplyMatch[1] };
+      if (method === 'PUT') return updateReply(event);
+      if (method === 'DELETE') return deleteReply(event);
+    }
+
+    // /api/community/threads/{id}/replies
+    const threadRepliesMatch = path.match(/^\/api\/community\/threads\/([^/]+)\/replies$/);
+    if (threadRepliesMatch && method === 'POST') {
+      event.pathParameters = { ...event.pathParameters, id: threadRepliesMatch[1] };
+      return createReply(event);
+    }
+
+    // /api/community/threads
+    if (path === '/api/community/threads') {
+      if (method === 'GET') return listThreads(event);
+      if (method === 'POST') return createThread(event);
+    }
+
+    // /api/community/threads/{id}
+    const communityThreadMatch = path.match(/^\/api\/community\/threads\/([^/]+)$/);
+    if (communityThreadMatch) {
+      event.pathParameters = { ...event.pathParameters, id: communityThreadMatch[1] };
+      if (method === 'GET') return getThread(event);
+      if (method === 'PUT') return updateThread(event);
+      if (method === 'DELETE') return deleteThread(event);
     }
 
     return notFound(`No route found for ${method} ${path}`);
