@@ -54,10 +54,12 @@ export function generateWorkoutPdf(workout, logoBase64 = null) {
   doc.setFillColor(...COLORS.sunset);
   doc.rect(0, 38, pageWidth, 3, 'F');
 
-  // Logo in header
-  const textOffsetX = logoBase64 ? margin + 34 : margin;
+  // Logo in header (actual image is 817x625, ratio 1.307:1)
+  const logoHeight = 22;
+  const logoWidth = logoHeight * (817 / 625); // ~28.8mm
+  const textOffsetX = logoBase64 ? margin + logoWidth + 4 : margin;
   if (logoBase64) {
-    doc.addImage(logoBase64, 'PNG', margin, 4, 30, 30);
+    doc.addImage(logoBase64, 'PNG', margin, 8, logoWidth, logoHeight);
   }
 
   // Brand name
@@ -204,14 +206,15 @@ export function generateWorkoutPdf(workout, logoBase64 = null) {
   for (let i = 1; i <= totalPages; i++) {
     doc.setPage(i);
 
-    // Watermark (very low opacity logo centered on page)
+    // Watermark (very low opacity logo centered on page, correct aspect ratio)
     if (logoBase64) {
-      const watermarkSize = pageWidth * 0.5;
-      const watermarkX = (pageWidth - watermarkSize) / 2;
-      const watermarkY = (pageHeight - watermarkSize) / 2;
+      const watermarkW = pageWidth * 0.5;
+      const watermarkH = watermarkW * (625 / 817); // maintain aspect ratio
+      const watermarkX = (pageWidth - watermarkW) / 2;
+      const watermarkY = (pageHeight - watermarkH) / 2;
       doc.saveGraphicsState();
       doc.setGState(new doc.GState({ opacity: 0.03 }));
-      doc.addImage(logoBase64, 'PNG', watermarkX, watermarkY, watermarkSize, watermarkSize);
+      doc.addImage(logoBase64, 'PNG', watermarkX, watermarkY, watermarkW, watermarkH);
       doc.restoreGraphicsState();
     }
 

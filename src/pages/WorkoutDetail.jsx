@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
+import { useAuth } from '../context/AuthContext';
 import { fetchWorkout } from '../api/workouts';
 import { downloadWorkoutPdf } from '../utils/workoutPdf';
 import './workout-detail.css';
@@ -14,6 +15,7 @@ const DIFFICULTY_STARS = {
 
 export default function WorkoutDetail() {
   const { id } = useParams();
+  const { getIdToken } = useAuth();
   const [workout, setWorkout] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -25,7 +27,8 @@ export default function WorkoutDetail() {
       setLoading(true);
       setError(null);
       try {
-        const data = await fetchWorkout(id);
+        const token = await getIdToken();
+        const data = await fetchWorkout(id, token);
         if (!cancelled) setWorkout(data);
       } catch (err) {
         if (!cancelled) setError(err.message || 'Failed to load workout');

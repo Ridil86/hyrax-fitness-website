@@ -1,5 +1,6 @@
 import { useState, useMemo } from 'react';
 import { Link } from 'react-router-dom';
+import { useAuth } from '../context/AuthContext';
 import { useWorkouts } from '../hooks/useWorkouts';
 import { motion } from 'framer-motion';
 import './workout-library.css';
@@ -23,7 +24,8 @@ const DIFFICULTY_ICONS = {
 };
 
 export default function WorkoutLibrary() {
-  const { workouts, loading, error } = useWorkouts();
+  const { getIdToken } = useAuth();
+  const { workouts, loading, error } = useWorkouts(getIdToken);
   const [category, setCategory] = useState('all');
   const [search, setSearch] = useState('');
 

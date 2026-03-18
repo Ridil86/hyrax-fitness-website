@@ -45,11 +45,11 @@
   padding-bottom: 10px;
 }
 
-.portal-profile-form .content-field {
+.portal-profile-card .content-field {
   margin-bottom: 16px;
 }
 
-.portal-profile-form .content-field label {
+.portal-profile-card .content-field label {
   display: block;
   font-size: .82rem;
   font-weight: 600;
@@ -59,7 +59,7 @@
   letter-spacing: .03em;
 }
 
-.portal-profile-form .content-field input {
+.portal-profile-card .content-field input {
   display: block;
   width: 100%;
   padding: 8px 12px;
@@ -70,7 +70,7 @@
   background: #fff;
 }
 
-.portal-profile-form .content-field input:focus {
+.portal-profile-card .content-field input:focus {
   outline: none;
   border-color: var(--sunset);
   box-shadow: var(--ring);

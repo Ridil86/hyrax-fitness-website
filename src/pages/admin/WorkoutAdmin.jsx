@@ -39,6 +39,7 @@ export default function WorkoutAdmin() {
   const [editing, setEditing] = useState(null); // null = list view, object = editor
   const [saving, setSaving] = useState(false);
   const [confirmDelete, setConfirmDelete] = useState(null);
+  const [uploading, setUploading] = useState(false);
 
   const loadWorkouts = useCallback(async () => {
     setLoading(true);
@@ -124,12 +125,15 @@ export default function WorkoutAdmin() {
   };
 
   const handleImageUpload = async (file) => {
+    setUploading(true);
     try {
       const token = await getIdToken();
       const { publicUrl } = await uploadFile(file, token);
       setEditing((prev) => ({ ...prev, imageUrl: publicUrl }));
     } catch (err) {
       setError(`Upload failed: ${err.message}`);
+    } finally {
+      setUploading(false);
     }
   };
 
@@ -403,11 +407,12 @@ export default function WorkoutAdmin() {
                 onChange={(e) => updateEditing('imageUrl', e.target.value)}
                 placeholder="Image URL"
               />
-              <label className="content-upload-btn">
-                Upload
+              <label className={`content-upload-btn${uploading ? ' disabled' : ''}`}>
+                {uploading ? 'Uploading...' : 'Upload'}
                 <input
                   type="file"
                   accept="image/*"
+                  disabled={uploading}
                   onChange={(e) => {
                     const file = e.target.files?.[0];
                     if (file) handleImageUpload(file);

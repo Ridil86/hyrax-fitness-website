@@ -1,6 +1,8 @@
 import * as cdk from 'aws-cdk-lib';
 import * as dynamodb from 'aws-cdk-lib/aws-dynamodb';
 import * as s3 from 'aws-cdk-lib/aws-s3';
+import * as cloudfront from 'aws-cdk-lib/aws-cloudfront';
+import * as origins from 'aws-cdk-lib/aws-cloudfront-origins';
 import * as apigateway from 'aws-cdk-lib/aws-apigateway';
 import * as iam from 'aws-cdk-lib/aws-iam';
 import * as lambda from 'aws-cdk-lib/aws-lambda';
@@ -48,6 +50,16 @@ export class BackendStack extends cdk.Stack {
       removalPolicy: cdk.RemovalPolicy.RETAIN,
     });
 
+    // ── CloudFront Distribution for media assets ──
+    const mediaDistribution = new cloudfront.Distribution(this, 'HyraxMediaCdn', {
+      defaultBehavior: {
+        origin: origins.S3BucketOrigin.withOriginAccessControl(mediaBucket),
+        viewerProtocolPolicy: cloudfront.ViewerProtocolPolicy.REDIRECT_TO_HTTPS,
+        cachePolicy: cloudfront.CachePolicy.CACHING_OPTIMIZED,
+      },
+      comment: 'Hyrax Fitness media CDN',
+    });
+
     // ── API Lambda (monolith with internal routing) ──
     const apiFn = new NodejsFunction(this, 'HyraxApiFn', {
       functionName: 'hyrax-api',
@@ -60,6 +72,7 @@ export class BackendStack extends cdk.Stack {
         TABLE_NAME: table.tableName,
         BUCKET_NAME: mediaBucket.bucketName,
         USER_POOL_ID: props.userPoolId,
+        CDN_DOMAIN: mediaDistribution.distributionDomainName,
       },
       bundling: {
         minify: true,
@@ -284,6 +297,11 @@ export class BackendStack extends cdk.Stack {
     new cdk.CfnOutput(this, 'MediaBucketName', {
       value: mediaBucket.bucketName,
       description: 'S3 Media Bucket Name',
+    });
+
+    new cdk.CfnOutput(this, 'MediaCdnDomain', {
+      value: mediaDistribution.distributionDomainName,
+      description: 'CloudFront CDN Domain for media assets',
     });
   }
 }

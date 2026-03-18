@@ -6,14 +6,14 @@ const CACHE_TTL = 60_000; // 1 minute
 
 /**
  * Fetch workout library with in-memory cache.
- * Pass a token for admin to see draft items.
+ * Pass getIdToken (async function) to authenticate requests.
  */
-export function useWorkouts(token) {
+export function useWorkouts(getIdToken) {
   const [workouts, setWorkouts] = useState(cache.data || []);
   const [loading, setLoading] = useState(!cache.data);
   const [error, setError] = useState(null);
-  const tokenRef = useRef(token);
-  tokenRef.current = token;
+  const getIdTokenRef = useRef(getIdToken);
+  getIdTokenRef.current = getIdToken;
 
   const load = useCallback(async () => {
     // Use cache if fresh
@@ -26,7 +26,8 @@ export function useWorkouts(token) {
     setLoading(true);
     setError(null);
     try {
-      const data = await fetchWorkouts(tokenRef.current);
+      const token = getIdTokenRef.current ? await getIdTokenRef.current() : undefined;
+      const data = await fetchWorkouts(token);
       cache.data = data;
       cache.ts = Date.now();
       setWorkouts(data);

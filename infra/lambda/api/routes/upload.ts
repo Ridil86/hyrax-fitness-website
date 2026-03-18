@@ -7,6 +7,7 @@ import { randomUUID } from 'crypto';
 
 const s3 = new S3Client({});
 const BUCKET_NAME = process.env.BUCKET_NAME!;
+const CDN_DOMAIN = process.env.CDN_DOMAIN;
 
 /**
  * POST /api/upload - Generate a pre-signed URL for S3 upload
@@ -50,8 +51,10 @@ export async function getUploadUrl(
 
     const uploadUrl = await getSignedUrl(s3, command, { expiresIn: 300 });
 
-    // Public read URL (will use CloudFront or S3 URL)
-    const publicUrl = `https://${BUCKET_NAME}.s3.amazonaws.com/${key}`;
+    // Public read URL via CloudFront CDN (falls back to S3 URL if CDN not configured)
+    const publicUrl = CDN_DOMAIN
+      ? `https://${CDN_DOMAIN}/${key}`
+      : `https://${BUCKET_NAME}.s3.amazonaws.com/${key}`;
 
     return success({
       uploadUrl,

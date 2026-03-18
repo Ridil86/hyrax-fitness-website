@@ -168,19 +168,30 @@
 
 /* ── Image Upload ── */
 .content-upload-btn {
-  display: inline-block;
-  margin-top: 6px;
-  padding: 4px 12px;
-  border: 1px solid rgba(27, 18, 10, .12);
-  border-radius: 6px;
-  font-size: .82rem;
-  color: rgba(27, 18, 10, .6);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 8px 18px;
+  border: 1px solid rgba(242, 133, 1, .30);
+  border-radius: 10px;
+  font-size: .85rem;
+  font-weight: 650;
+  color: var(--ink);
+  background: linear-gradient(180deg, rgba(253, 185, 15, .96), rgba(242, 133, 1, .94));
   cursor: pointer;
-  transition: background .15s;
+  transition: transform .12s ease, background .12s ease;
+  white-space: nowrap;
+  font-family: inherit;
 }
 
 .content-upload-btn:hover {
-  background: rgba(27, 18, 10, .04);
+  transform: translateY(-1px);
+}
+
+.content-upload-btn.disabled {
+  opacity: .6;
+  cursor: not-allowed;
+  pointer-events: none;
 }
 
 /* ── Save Bar ── */
