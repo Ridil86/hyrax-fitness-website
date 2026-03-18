@@ -11,6 +11,7 @@ import { logAuditEvent, listAuditLogs, getAuditStats } from './routes/audit';
 import { createAccount } from './routes/signup';
 import { getProfile, createProfile, updateProfile } from './routes/profile';
 import { listWorkouts, getWorkout, createWorkout, updateWorkout, deleteWorkout } from './routes/workouts';
+import { listVideos, getVideo, createVideo, updateVideo, deleteVideo } from './routes/videos';
 import { listTiers, updateTier, updateComparisonFeatures } from './routes/tiers';
 import { getStripeConfig, getSubscription, createCheckoutSession, createPortalSession, cancelSubscription } from './routes/stripe';
 import { handleWebhook } from './routes/stripe-webhook';
@@ -122,6 +123,20 @@ export const handler = async (
       if (method === 'GET') return getWorkout(event);
       if (method === 'PUT') return updateWorkout(event);
       if (method === 'DELETE') return deleteWorkout(event);
+    }
+
+    // ── Video Routes ──
+    if (path === '/api/videos') {
+      if (method === 'GET') return listVideos(event);
+      if (method === 'POST') return createVideo(event);
+    }
+
+    const videoMatch = path.match(/^\/api\/videos\/([^/]+)$/);
+    if (videoMatch) {
+      event.pathParameters = { ...event.pathParameters, id: videoMatch[1] };
+      if (method === 'GET') return getVideo(event);
+      if (method === 'PUT') return updateVideo(event);
+      if (method === 'DELETE') return deleteVideo(event);
     }
 
     // ── Upload Route ──

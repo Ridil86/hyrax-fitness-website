@@ -5,6 +5,7 @@ import './PortalLayout.css';
 const navItems = [
   { to: '/portal', label: 'Dashboard', icon: '\u2302' },
   { to: '/portal/workouts', label: 'Workouts', icon: '\u270A' },
+  { to: '/portal/videos', label: 'Videos', icon: '\u25B6' },
   { to: '/portal/profile', label: 'Profile', icon: '\u263A' },
   { to: '/portal/subscription', label: 'Subscription', icon: '\u2606' },
   { to: '/portal/settings', label: 'Settings', icon: '\u2699' },

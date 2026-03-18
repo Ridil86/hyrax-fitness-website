@@ -8,6 +8,7 @@ const navItems = [
   { to: '/admin/content', label: 'Content', icon: '\u270E' }, // pencil
   { to: '/admin/faq', label: 'FAQ', icon: '?' },
   { to: '/admin/workouts', label: 'Workouts', icon: '\u270A' },
+  { to: '/admin/videos', label: 'Videos', icon: '\u25B6' },
   { to: '/admin/billing', label: 'Billing', icon: '$' },
   { to: '/admin/tiers', label: 'Tiers', icon: '\u2261' },
   { to: '/admin/merch', label: 'Merch', icon: '\u2605' },      // star

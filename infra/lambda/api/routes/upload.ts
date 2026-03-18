@@ -32,6 +32,9 @@ export async function getUploadUrl(
       'image/gif',
       'image/svg+xml',
       'application/pdf',
+      'video/mp4',
+      'video/webm',
+      'video/quicktime',
     ];
     if (!allowedTypes.includes(body.contentType)) {
       return badRequest(
@@ -39,9 +42,11 @@ export async function getUploadUrl(
       );
     }
 
-    // Generate unique key
+    // Generate unique key — organize videos in a separate prefix
     const ext = body.filename.split('.').pop() || 'jpg';
-    const key = `uploads/${randomUUID()}.${ext}`;
+    const isVideo = body.contentType.startsWith('video/');
+    const prefix = isVideo ? 'uploads/videos' : 'uploads';
+    const key = `${prefix}/${randomUUID()}.${ext}`;
 
     const command = new PutObjectCommand({
       Bucket: BUCKET_NAME,
@@ -49,7 +54,9 @@ export async function getUploadUrl(
       ContentType: body.contentType,
     });
 
-    const uploadUrl = await getSignedUrl(s3, command, { expiresIn: 300 });
+    // Longer expiry for video uploads (1 hour vs 5 minutes)
+    const expiresIn = isVideo ? 3600 : 300;
+    const uploadUrl = await getSignedUrl(s3, command, { expiresIn });
 
     // Public read URL via CloudFront CDN (falls back to S3 URL if CDN not configured)
     const publicUrl = CDN_DOMAIN

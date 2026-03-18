@@ -34,12 +34,17 @@ const Merch = lazy(() => import('./pages/admin/Merch'));
 const UserProfile = lazy(() => import('./pages/admin/UserProfile'));
 const AuditLog = lazy(() => import('./pages/admin/AuditLog'));
 const WorkoutAdmin = lazy(() => import('./pages/admin/WorkoutAdmin'));
+const VideoAdmin = lazy(() => import('./pages/admin/VideoAdmin'));
 const Billing = lazy(() => import('./pages/admin/Billing'));
 const TierAdmin = lazy(() => import('./pages/admin/TierAdmin'));
 
 // Workout library pages
 const WorkoutLibrary = lazy(() => import('./pages/WorkoutLibrary'));
 const WorkoutDetail = lazy(() => import('./pages/WorkoutDetail'));
+
+// Video library pages
+const VideoLibrary = lazy(() => import('./pages/portal/VideoLibrary'));
+const VideoDetail = lazy(() => import('./pages/portal/VideoDetail'));
 
 // Legal pages
 const TermsOfUse = lazy(() => import('./pages/TermsOfUse'));
@@ -143,6 +148,8 @@ export default function App() {
               <Route index element={<LazySection><PortalDashboard /></LazySection>} />
               <Route path="workouts" element={<LazySection><WorkoutLibrary /></LazySection>} />
               <Route path="workouts/:id" element={<LazySection><WorkoutDetail /></LazySection>} />
+              <Route path="videos" element={<LazySection><VideoLibrary /></LazySection>} />
+              <Route path="videos/:id" element={<LazySection><VideoDetail /></LazySection>} />
               <Route path="profile" element={<LazySection><PortalProfile /></LazySection>} />
               <Route path="subscription" element={<LazySection><PortalSubscription /></LazySection>} />
               <Route path="settings" element={<LazySection><PortalSettings /></LazySection>} />
@@ -161,6 +168,7 @@ export default function App() {
               <Route path="faq" element={<LazySection><FAQAdmin /></LazySection>} />
               <Route path="audit" element={<LazySection><AuditLog /></LazySection>} />
               <Route path="workouts" element={<LazySection><WorkoutAdmin /></LazySection>} />
+              <Route path="videos" element={<LazySection><VideoAdmin /></LazySection>} />
               <Route path="billing" element={<LazySection><Billing /></LazySection>} />
               <Route path="tiers" element={<LazySection><TierAdmin /></LazySection>} />
               <Route path="merch" element={<LazySection><Merch /></LazySection>} />

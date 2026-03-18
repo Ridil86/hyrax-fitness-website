@@ -4,12 +4,13 @@ import { useAuth } from '../../context/AuthContext';
 import { fetchUsers } from '../../api/users';
 import { fetchFaqs } from '../../api/faq';
 import { fetchWorkouts } from '../../api/workouts';
+import { fetchVideos } from '../../api/videos';
 import './admin.css';
 import './dashboard.css';
 
 export default function Dashboard() {
   const { getIdToken } = useAuth();
-  const [stats, setStats] = useState({ users: null, faq: null, workouts: null });
+  const [stats, setStats] = useState({ users: null, faq: null, workouts: null, videos: null });
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -18,10 +19,11 @@ export default function Dashboard() {
     async function loadStats() {
       try {
         const token = await getIdToken();
-        const [usersResult, faqResult, workoutsResult] = await Promise.allSettled([
+        const [usersResult, faqResult, workoutsResult, videosResult] = await Promise.allSettled([
           fetchUsers({ limit: 60 }, token),
           fetchFaqs(),
           fetchWorkouts(token),
+          fetchVideos(token),
         ]);
 
         if (cancelled) return;
@@ -41,7 +43,11 @@ export default function Dashboard() {
           ? (workoutsResult.value || []).length
           : null;
 
-        setStats({ users: userCount, faq: faqCount, workouts: workoutCount });
+        const videoCount = videosResult.status === 'fulfilled'
+          ? (videosResult.value || []).length
+          : null;
+
+        setStats({ users: userCount, faq: faqCount, workouts: workoutCount, videos: videoCount });
       } catch {
         // Stats load is best-effort
       } finally {
@@ -83,6 +89,12 @@ export default function Dashboard() {
             {loading ? <span className="stat-loading" /> : (stats.workouts ?? '--')}
           </div>
         </div>
+        <div className="admin-stat-card">
+          <div className="stat-label">Videos</div>
+          <div className="stat-value">
+            {loading ? <span className="stat-loading" /> : (stats.videos ?? '--')}
+          </div>
+        </div>
       </div>
 
       <div className="dashboard-links">
@@ -114,6 +126,13 @@ export default function Dashboard() {
             <div>
               <strong>Workout Library</strong>
               <p>Create and manage workout regimens for the content library</p>
+            </div>
+          </Link>
+          <Link to="/admin/videos" className="dashboard-link-card">
+            <span className="dashboard-link-icon">&#9654;</span>
+            <div>
+              <strong>Video Library</strong>
+              <p>Upload and manage video content for members</p>
             </div>
           </Link>
           <Link to="/admin/audit" className="dashboard-link-card">

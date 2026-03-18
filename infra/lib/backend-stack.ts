@@ -1,11 +1,14 @@
 import * as cdk from 'aws-cdk-lib';
 import * as dynamodb from 'aws-cdk-lib/aws-dynamodb';
 import * as s3 from 'aws-cdk-lib/aws-s3';
+import * as s3n from 'aws-cdk-lib/aws-s3-notifications';
 import * as cloudfront from 'aws-cdk-lib/aws-cloudfront';
 import * as origins from 'aws-cdk-lib/aws-cloudfront-origins';
 import * as apigateway from 'aws-cdk-lib/aws-apigateway';
 import * as iam from 'aws-cdk-lib/aws-iam';
 import * as lambda from 'aws-cdk-lib/aws-lambda';
+import * as events from 'aws-cdk-lib/aws-events';
+import * as targets from 'aws-cdk-lib/aws-events-targets';
 import * as path from 'path';
 import { NodejsFunction } from 'aws-cdk-lib/aws-lambda-nodejs';
 import { Runtime } from 'aws-cdk-lib/aws-lambda';
@@ -114,6 +117,79 @@ export class BackendStack extends cdk.Stack {
         resources: [props.userPoolArn],
       })
     );
+
+    // ── MediaConvert Video Transcoding Pipeline ──
+
+    // IAM Role that MediaConvert assumes to access S3
+    const mediaConvertRole = new iam.Role(this, 'MediaConvertRole', {
+      assumedBy: new iam.ServicePrincipal('mediaconvert.amazonaws.com'),
+      description: 'Role for MediaConvert to read/write S3 media bucket',
+    });
+    mediaBucket.grantRead(mediaConvertRole);
+    mediaBucket.grantPut(mediaConvertRole);
+
+    // Transcoder Lambda — triggered by S3 uploads and EventBridge
+    const transcoderFn = new NodejsFunction(this, 'HyraxTranscoderFn', {
+      functionName: 'hyrax-transcoder',
+      runtime: Runtime.NODEJS_20_X,
+      entry: path.join(__dirname, '..', 'lambda', 'transcoder', 'index.ts'),
+      handler: 'handler',
+      timeout: cdk.Duration.minutes(1),
+      memorySize: 256,
+      environment: {
+        TABLE_NAME: table.tableName,
+        BUCKET_NAME: mediaBucket.bucketName,
+        CDN_DOMAIN: mediaDistribution.distributionDomainName,
+        MEDIACONVERT_ROLE_ARN: mediaConvertRole.roleArn,
+        MEDIACONVERT_ENDPOINT: process.env.MEDIACONVERT_ENDPOINT || 'https://mediaconvert.us-east-1.amazonaws.com',
+      },
+      bundling: {
+        minify: true,
+        sourceMap: false,
+        forceDockerBundling: false,
+      },
+    });
+
+    // Grant Transcoder Lambda permissions
+    table.grantReadWriteData(transcoderFn);
+    mediaBucket.grantRead(transcoderFn);
+    transcoderFn.addToRolePolicy(
+      new iam.PolicyStatement({
+        actions: [
+          'mediaconvert:CreateJob',
+          'mediaconvert:GetJob',
+          'mediaconvert:DescribeEndpoints',
+        ],
+        resources: ['*'],
+      })
+    );
+    // MediaConvert needs PassRole to assume the MediaConvert role
+    transcoderFn.addToRolePolicy(
+      new iam.PolicyStatement({
+        actions: ['iam:PassRole'],
+        resources: [mediaConvertRole.roleArn],
+      })
+    );
+
+    // S3 Event Notification — trigger transcoding when video uploaded
+    mediaBucket.addEventNotification(
+      s3.EventType.OBJECT_CREATED,
+      new s3n.LambdaDestination(transcoderFn),
+      { prefix: 'uploads/videos/' }
+    );
+
+    // EventBridge Rule — catch MediaConvert job completion/failure
+    const transcodingCompleteRule = new events.Rule(this, 'TranscodingCompleteRule', {
+      description: 'Trigger Transcoder Lambda when MediaConvert job completes or fails',
+      eventPattern: {
+        source: ['aws.mediaconvert'],
+        detailType: ['MediaConvert Job State Change'],
+        detail: {
+          status: ['COMPLETE', 'ERROR'],
+        },
+      },
+    });
+    transcodingCompleteRule.addTarget(new targets.LambdaFunction(transcoderFn));
 
     // ── API Gateway ──
     const api = new apigateway.RestApi(this, 'HyraxApi', {
@@ -250,6 +326,31 @@ export class BackendStack extends cdk.Stack {
       authorizationType: apigateway.AuthorizationType.COGNITO,
     });
     workoutItem.addMethod('DELETE', lambdaIntegration, {
+      authorizer,
+      authorizationType: apigateway.AuthorizationType.COGNITO,
+    });
+
+    // Video routes
+    const videosResource = apiResource.addResource('videos');
+    videosResource.addMethod('GET', lambdaIntegration, {
+      authorizer,
+      authorizationType: apigateway.AuthorizationType.COGNITO,
+    });
+    videosResource.addMethod('POST', lambdaIntegration, {
+      authorizer,
+      authorizationType: apigateway.AuthorizationType.COGNITO,
+    });
+
+    const videoItem = videosResource.addResource('{id}');
+    videoItem.addMethod('GET', lambdaIntegration, {
+      authorizer,
+      authorizationType: apigateway.AuthorizationType.COGNITO,
+    });
+    videoItem.addMethod('PUT', lambdaIntegration, {
+      authorizer,
+      authorizationType: apigateway.AuthorizationType.COGNITO,
+    });
+    videoItem.addMethod('DELETE', lambdaIntegration, {
       authorizer,
       authorizationType: apigateway.AuthorizationType.COGNITO,
     });
