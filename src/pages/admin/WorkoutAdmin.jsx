@@ -13,6 +13,11 @@ import './workout-admin.css';
 
 const CATEGORIES = ['general', 'strength', 'cardio', 'hiit', 'mobility', 'endurance', 'scramble'];
 const DIFFICULTIES = ['beginner', 'intermediate', 'advanced', 'elite'];
+const TIER_OPTIONS = [
+  { value: 'Pup', label: 'Pup (Free)' },
+  { value: 'Rock Runner', label: 'Rock Runner ($5/mo)' },
+  { value: 'Iron Dassie', label: 'Iron Dassie ($20/mo)' },
+];
 
 const EMPTY_EXERCISE = { name: '', sets: '', reps: '', rest: '', duration: '', notes: '' };
 
@@ -25,6 +30,7 @@ const EMPTY_WORKOUT = {
   equipment: [],
   exercises: [{ ...EMPTY_EXERCISE }],
   imageUrl: '',
+  requiredTier: 'Pup',
   status: 'draft',
 };
 
@@ -266,6 +272,9 @@ export default function WorkoutAdmin() {
                       <span className="workout-badge category">{w.category}</span>
                       <span className="workout-badge difficulty">{w.difficulty}</span>
                       {w.duration && <span className="workout-badge">{w.duration}</span>}
+                      {w.requiredTier && w.requiredTier !== 'Pup' && (
+                        <span className="workout-badge tier">{w.requiredTier}</span>
+                      )}
                     </div>
                     <p className="workout-admin-desc">
                       {w.description?.slice(0, 120)}
@@ -410,6 +419,20 @@ export default function WorkoutAdmin() {
               >
                 <option value="draft">Draft</option>
                 <option value="published">Published</option>
+              </select>
+            </div>
+
+            <div className="content-field">
+              <label>Required Tier</label>
+              <select
+                value={editing.requiredTier || 'Pup'}
+                onChange={(e) => updateEditing('requiredTier', e.target.value)}
+              >
+                {TIER_OPTIONS.map((t) => (
+                  <option key={t.value} value={t.value}>
+                    {t.label}
+                  </option>
+                ))}
               </select>
             </div>
           </div>

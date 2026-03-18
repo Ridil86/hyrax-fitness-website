@@ -303,6 +303,51 @@
   color: var(--rock);
 }
 
+/* ── Tier-locked content ── */
+.workout-detail-locked {
+  max-width: 540px;
+  margin: 40px auto;
+  text-align: center;
+}
+
+.workout-locked-card {
+  background: #fff;
+  border-radius: var(--radius);
+  box-shadow: var(--shadow-soft);
+  padding: 40px 32px;
+}
+
+.workout-locked-icon {
+  font-size: 3rem;
+  display: block;
+  margin-bottom: 16px;
+}
+
+.workout-locked-card h2 {
+  margin: 0 0 12px;
+  color: var(--ink);
+}
+
+.workout-locked-card p {
+  margin: 0 0 8px;
+  color: var(--rock);
+  line-height: 1.5;
+}
+
+.workout-locked-sub {
+  font-size: .9rem;
+  margin-bottom: 24px !important;
+}
+
+.workout-locked-actions {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  flex-wrap: wrap;
+  margin-top: 20px;
+}
+
 /* ── Responsive ── */
 @media (max-width: 900px) {
   .workout-detail-layout {

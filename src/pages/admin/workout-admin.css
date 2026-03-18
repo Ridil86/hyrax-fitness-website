@@ -102,6 +102,11 @@
   color: var(--sunset);
 }
 
+.workout-badge.tier {
+  background: rgba(242, 133, 1, .15);
+  color: var(--earth);
+}
+
 .workout-admin-desc {
   margin: 0;
   font-size: .85rem;

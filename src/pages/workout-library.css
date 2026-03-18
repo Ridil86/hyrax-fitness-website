@@ -111,6 +111,7 @@
 }
 
 .workout-card-img {
+  position: relative;
   height: 180px;
   overflow: hidden;
   background: linear-gradient(135deg, var(--earth), var(--ink));
@@ -243,6 +244,36 @@
   margin: 0;
   color: var(--rock);
   font-size: .9rem;
+}
+
+/* ── Tier-locked cards ── */
+.workout-card.locked {
+  opacity: .75;
+}
+
+.workout-card.locked:hover {
+  opacity: .85;
+}
+
+.workout-card-lock-overlay {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(27, 18, 10, .4);
+  border-radius: inherit;
+}
+
+.workout-card-lock-icon {
+  font-size: 2rem;
+  filter: drop-shadow(0 2px 4px rgba(0, 0, 0, .3));
+}
+
+.workout-card-badge.tier-required {
+  background: rgba(242, 133, 1, .15);
+  color: var(--earth);
+  font-weight: 650;
 }
 
 /* ── Responsive ── */

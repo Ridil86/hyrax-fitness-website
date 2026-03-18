@@ -131,6 +131,7 @@ export async function createWorkout(
       equipment: body.equipment || [],
       exercises: body.exercises || [],
       imageUrl: body.imageUrl || '',
+      requiredTier: body.requiredTier || 'Pup',
       status: body.status || 'draft',
       sortOrder: body.sortOrder ?? 999,
       createdBy: claims?.email || 'unknown',
@@ -182,6 +183,7 @@ export async function updateWorkout(
       'equipment',
       'exercises',
       'imageUrl',
+      'requiredTier',
       'status',
       'sortOrder',
     ];

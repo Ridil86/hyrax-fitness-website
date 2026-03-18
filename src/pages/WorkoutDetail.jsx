@@ -4,6 +4,7 @@ import { motion } from 'framer-motion';
 import { useAuth } from '../context/AuthContext';
 import { fetchWorkout } from '../api/workouts';
 import { downloadWorkoutPdf } from '../utils/workoutPdf';
+import { hasTierAccess, getRequiredTierInfo } from '../utils/tiers';
 import './workout-detail.css';
 
 const DIFFICULTY_STARS = {
@@ -15,7 +16,7 @@ const DIFFICULTY_STARS = {
 
 export default function WorkoutDetail() {
   const { id } = useParams();
-  const { getIdToken } = useAuth();
+  const { getIdToken, userTier, isAdmin } = useAuth();
   const [workout, setWorkout] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -71,6 +72,8 @@ export default function WorkoutDetail() {
   }
 
   const stars = DIFFICULTY_STARS[workout.difficulty] || 2;
+  const locked = !isAdmin && !hasTierAccess(userTier, workout.requiredTier);
+  const requiredInfo = locked ? getRequiredTierInfo(workout.requiredTier) : null;
 
   return (
     <div className="workout-detail">
@@ -119,127 +122,158 @@ export default function WorkoutDetail() {
       </div>
 
       <div className="wrap">
-        <div className="workout-detail-layout">
-          {/* Main content */}
-          <div className="workout-detail-main">
-            {/* Description */}
-            {workout.description && (
-              <motion.section
-                className="workout-detail-section"
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.4, delay: 0.15 }}
-              >
-                <p className="workout-detail-desc">{workout.description}</p>
-              </motion.section>
-            )}
+        {locked ? (
+          <motion.div
+            className="workout-detail-locked"
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.4, delay: 0.15 }}
+          >
+            <div className="workout-locked-card">
+              <span className="workout-locked-icon">&#128274;</span>
+              <h2>Premium Content</h2>
+              <p>
+                This workout requires the{' '}
+                <strong>{requiredInfo.label}</strong> tier ({requiredInfo.price})
+                or higher to access.
+              </p>
+              <p className="workout-locked-sub">
+                Upgrade your plan to unlock this workout, including full
+                exercise details and a downloadable PDF.
+              </p>
+              <div className="workout-locked-actions">
+                <Link to="/programs" className="btn primary">
+                  View Plans &amp; Upgrade
+                </Link>
+                <Link to="/portal/workouts" className="btn ghost">
+                  Back to Library
+                </Link>
+              </div>
+            </div>
+          </motion.div>
+        ) : (
+          <div className="workout-detail-layout">
+            {/* Main content */}
+            <div className="workout-detail-main">
+              {/* Description */}
+              {workout.description && (
+                <motion.section
+                  className="workout-detail-section"
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ duration: 0.4, delay: 0.15 }}
+                >
+                  <p className="workout-detail-desc">{workout.description}</p>
+                </motion.section>
+              )}
 
-            {/* Exercises */}
-            {workout.exercises && workout.exercises.length > 0 && (
-              <motion.section
-                className="workout-detail-section"
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.4, delay: 0.2 }}
-              >
-                <h2>Exercises</h2>
-                <div className="workout-exercises-list">
-                  {workout.exercises.map((exercise, i) => (
-                    <div key={i} className="workout-exercise-item">
-                      <div className="workout-exercise-number">{i + 1}</div>
-                      <div className="workout-exercise-content">
-                        <h3>{exercise.name}</h3>
+              {/* Exercises */}
+              {workout.exercises && workout.exercises.length > 0 && (
+                <motion.section
+                  className="workout-detail-section"
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ duration: 0.4, delay: 0.2 }}
+                >
+                  <h2>Exercises</h2>
+                  <div className="workout-exercises-list">
+                    {workout.exercises.map((exercise, i) => (
+                      <div key={i} className="workout-exercise-item">
+                        <div className="workout-exercise-number">{i + 1}</div>
+                        <div className="workout-exercise-content">
+                          <h3>{exercise.name}</h3>
 
-                        <div className="workout-exercise-stats">
-                          {exercise.sets && (
-                            <div className="workout-stat">
-                              <span className="workout-stat-label">Sets</span>
-                              <span className="workout-stat-value">{exercise.sets}</span>
-                            </div>
-                          )}
-                          {exercise.reps && (
-                            <div className="workout-stat">
-                              <span className="workout-stat-label">Reps</span>
-                              <span className="workout-stat-value">{exercise.reps}</span>
-                            </div>
-                          )}
-                          {exercise.rest && (
-                            <div className="workout-stat">
-                              <span className="workout-stat-label">Rest</span>
-                              <span className="workout-stat-value">{exercise.rest}</span>
-                            </div>
-                          )}
-                          {exercise.duration && (
-                            <div className="workout-stat">
-                              <span className="workout-stat-label">Duration</span>
-                              <span className="workout-stat-value">{exercise.duration}</span>
-                            </div>
+                          <div className="workout-exercise-stats">
+                            {exercise.sets && (
+                              <div className="workout-stat">
+                                <span className="workout-stat-label">Sets</span>
+                                <span className="workout-stat-value">{exercise.sets}</span>
+                              </div>
+                            )}
+                            {exercise.reps && (
+                              <div className="workout-stat">
+                                <span className="workout-stat-label">Reps</span>
+                                <span className="workout-stat-value">{exercise.reps}</span>
+                              </div>
+                            )}
+                            {exercise.rest && (
+                              <div className="workout-stat">
+                                <span className="workout-stat-label">Rest</span>
+                                <span className="workout-stat-value">{exercise.rest}</span>
+                              </div>
+                            )}
+                            {exercise.duration && (
+                              <div className="workout-stat">
+                                <span className="workout-stat-label">Duration</span>
+                                <span className="workout-stat-value">{exercise.duration}</span>
+                              </div>
+                            )}
+                          </div>
+
+                          {exercise.notes && (
+                            <p className="workout-exercise-notes">{exercise.notes}</p>
                           )}
                         </div>
-
-                        {exercise.notes && (
-                          <p className="workout-exercise-notes">{exercise.notes}</p>
-                        )}
                       </div>
-                    </div>
-                  ))}
-                </div>
-              </motion.section>
-            )}
-          </div>
-
-          {/* Sidebar */}
-          <aside className="workout-detail-sidebar">
-            <div className="workout-sidebar-card">
-              <button
-                className="btn primary workout-download-btn"
-                onClick={() => downloadWorkoutPdf(workout)}
-              >
-                &#128196; Download PDF
-              </button>
-              <p className="workout-download-hint">
-                Get a branded, print-ready PDF of this workout.
-              </p>
-            </div>
-
-            {/* Equipment */}
-            {workout.equipment && workout.equipment.length > 0 && (
-              <div className="workout-sidebar-card">
-                <h4>Equipment Needed</h4>
-                <ul className="workout-equipment-list">
-                  {workout.equipment.map((item, i) => (
-                    <li key={i}>{item}</li>
-                  ))}
-                </ul>
-              </div>
-            )}
-
-            {/* Quick stats */}
-            <div className="workout-sidebar-card">
-              <h4>Quick Stats</h4>
-              <div className="workout-quick-stats">
-                <div>
-                  <span className="workout-qs-label">Category</span>
-                  <span className="workout-qs-value">{workout.category}</span>
-                </div>
-                <div>
-                  <span className="workout-qs-label">Difficulty</span>
-                  <span className="workout-qs-value">{workout.difficulty}</span>
-                </div>
-                {workout.duration && (
-                  <div>
-                    <span className="workout-qs-label">Duration</span>
-                    <span className="workout-qs-value">{workout.duration}</span>
+                    ))}
                   </div>
-                )}
-                <div>
-                  <span className="workout-qs-label">Exercises</span>
-                  <span className="workout-qs-value">{workout.exercises?.length || 0}</span>
+                </motion.section>
+              )}
+            </div>
+
+            {/* Sidebar */}
+            <aside className="workout-detail-sidebar">
+              <div className="workout-sidebar-card">
+                <button
+                  className="btn primary workout-download-btn"
+                  onClick={() => downloadWorkoutPdf(workout)}
+                >
+                  &#128196; Download PDF
+                </button>
+                <p className="workout-download-hint">
+                  Get a branded, print-ready PDF of this workout.
+                </p>
+              </div>
+
+              {/* Equipment */}
+              {workout.equipment && workout.equipment.length > 0 && (
+                <div className="workout-sidebar-card">
+                  <h4>Equipment Needed</h4>
+                  <ul className="workout-equipment-list">
+                    {workout.equipment.map((item, i) => (
+                      <li key={i}>{item}</li>
+                    ))}
+                  </ul>
+                </div>
+              )}
+
+              {/* Quick stats */}
+              <div className="workout-sidebar-card">
+                <h4>Quick Stats</h4>
+                <div className="workout-quick-stats">
+                  <div>
+                    <span className="workout-qs-label">Category</span>
+                    <span className="workout-qs-value">{workout.category}</span>
+                  </div>
+                  <div>
+                    <span className="workout-qs-label">Difficulty</span>
+                    <span className="workout-qs-value">{workout.difficulty}</span>
+                  </div>
+                  {workout.duration && (
+                    <div>
+                      <span className="workout-qs-label">Duration</span>
+                      <span className="workout-qs-value">{workout.duration}</span>
+                    </div>
+                  )}
+                  <div>
+                    <span className="workout-qs-label">Exercises</span>
+                    <span className="workout-qs-value">{workout.exercises?.length || 0}</span>
+                  </div>
                 </div>
               </div>
-            </div>
-          </aside>
-        </div>
+            </aside>
+          </div>
+        )}
       </div>
     </div>
   );

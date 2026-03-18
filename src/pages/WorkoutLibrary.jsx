@@ -2,6 +2,7 @@ import { useState, useMemo } from 'react';
 import { Link } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { useWorkouts } from '../hooks/useWorkouts';
+import { hasTierAccess } from '../utils/tiers';
 import { motion } from 'framer-motion';
 import './workout-library.css';
 
@@ -24,7 +25,7 @@ const DIFFICULTY_ICONS = {
 };
 
 export default function WorkoutLibrary() {
-  const { getIdToken } = useAuth();
+  const { getIdToken, userTier, isAdmin } = useAuth();
   const { workouts, loading, error } = useWorkouts(getIdToken);
   const [category, setCategory] = useState('all');
   const [search, setSearch] = useState('');
@@ -137,67 +138,78 @@ export default function WorkoutLibrary() {
               },
             }}
           >
-            {filtered.map((workout) => (
-              <motion.div
-                key={workout.id}
-                variants={{
-                  hidden: { opacity: 0, y: 24 },
-                  visible: { opacity: 1, y: 0 },
-                }}
-                transition={{ duration: 0.35 }}
-              >
-                <Link
-                  to={`/portal/workouts/${workout.id}`}
-                  className="workout-card-link"
+            {filtered.map((workout) => {
+              const locked = !isAdmin && !hasTierAccess(userTier, workout.requiredTier);
+              return (
+                <motion.div
+                  key={workout.id}
+                  variants={{
+                    hidden: { opacity: 0, y: 24 },
+                    visible: { opacity: 1, y: 0 },
+                  }}
+                  transition={{ duration: 0.35 }}
                 >
-                  <article className="workout-card">
-                    {workout.imageUrl ? (
-                      <div className="workout-card-img">
-                        <img src={workout.imageUrl} alt={workout.title} />
-                      </div>
-                    ) : (
-                      <div className="workout-card-img placeholder">
-                        <span>&#128170;</span>
-                      </div>
-                    )}
-
-                    <div className="workout-card-body">
-                      <div className="workout-card-badges">
-                        <span className="workout-card-badge category">
-                          {workout.category}
-                        </span>
-                        <span className="workout-card-badge difficulty">
-                          {workout.difficulty}
-                        </span>
-                      </div>
-
-                      <h3>{workout.title}</h3>
-
-                      {workout.description && (
-                        <p>
-                          {workout.description.slice(0, 100)}
-                          {workout.description.length > 100 ? '...' : ''}
-                        </p>
-                      )}
-
-                      <div className="workout-card-footer">
-                        {workout.duration && (
-                          <span className="workout-card-duration">
-                            &#9201; {workout.duration}
-                          </span>
+                  <Link
+                    to={`/portal/workouts/${workout.id}`}
+                    className="workout-card-link"
+                  >
+                    <article className={`workout-card${locked ? ' locked' : ''}`}>
+                      <div className={`workout-card-img${workout.imageUrl ? '' : ' placeholder'}`}>
+                        {workout.imageUrl ? (
+                          <img src={workout.imageUrl} alt={workout.title} />
+                        ) : (
+                          <span>&#128170;</span>
                         )}
-                        <span className="workout-card-exercises">
-                          {workout.exercises?.length || 0} exercises
-                        </span>
-                        <span className="workout-card-stars">
-                          {DIFFICULTY_ICONS[workout.difficulty] || ''}
-                        </span>
+                        {locked && (
+                          <div className="workout-card-lock-overlay">
+                            <span className="workout-card-lock-icon">&#128274;</span>
+                          </div>
+                        )}
                       </div>
-                    </div>
-                  </article>
-                </Link>
-              </motion.div>
-            ))}
+
+                      <div className="workout-card-body">
+                        <div className="workout-card-badges">
+                          <span className="workout-card-badge category">
+                            {workout.category}
+                          </span>
+                          <span className="workout-card-badge difficulty">
+                            {workout.difficulty}
+                          </span>
+                          {locked && (
+                            <span className="workout-card-badge tier-required">
+                              {workout.requiredTier}
+                            </span>
+                          )}
+                        </div>
+
+                        <h3>{workout.title}</h3>
+
+                        {workout.description && (
+                          <p>
+                            {workout.description.slice(0, 100)}
+                            {workout.description.length > 100 ? '...' : ''}
+                          </p>
+                        )}
+
+                        <div className="workout-card-footer">
+                          {workout.duration && (
+                            <span className="workout-card-duration">
+                              &#9201; {workout.duration}
+                            </span>
+                          )}
+                          <span className="workout-card-exercises">
+                            {workout.exercises?.length || 0} exercises
+                          </span>
+                          <span className="workout-card-stars">
+                            {DIFFICULTY_ICONS[workout.difficulty] || ''}
+                          </span>
+                        </div>
+                      </div>
+                    </article>
+                  </Link>
+                </motion.div>
+              );
+            })}
           </motion.div>
         )}
       </div>

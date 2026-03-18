@@ -9,12 +9,14 @@ import {
   fetchAuthSession,
 } from 'aws-amplify/auth';
 import { Hub } from 'aws-amplify/utils';
+import { fetchProfile } from '../api/profile';
 
 const AuthContext = createContext(null);
 
 export function AuthProvider({ children }) {
   const [user, setUser] = useState(null);
   const [groups, setGroups] = useState([]);
+  const [userTier, setUserTier] = useState('Pup');
   const [loading, setLoading] = useState(true);
 
   const isAuthenticated = !!user;
@@ -38,9 +40,21 @@ export function AuthProvider({ children }) {
       setUser(currentUser);
       const userGroups = await extractGroups();
       setGroups(userGroups);
+      // Fetch tier from user profile
+      try {
+        const session = await fetchAuthSession();
+        const token = session.tokens?.idToken?.toString();
+        if (token) {
+          const profile = await fetchProfile(token);
+          setUserTier(profile.tier || 'Pup');
+        }
+      } catch {
+        // Profile fetch failed — keep default tier
+      }
     } catch {
       setUser(null);
       setGroups([]);
+      setUserTier('Pup');
     }
   }, [extractGroups]);
 
@@ -109,6 +123,7 @@ export function AuthProvider({ children }) {
     await amplifySignOut();
     setUser(null);
     setGroups([]);
+    setUserTier('Pup');
   };
 
   // Sign in with Google via Cognito Hosted UI redirect
@@ -131,6 +146,7 @@ export function AuthProvider({ children }) {
     groups,
     isAuthenticated,
     isAdmin,
+    userTier,
     loading,
     signIn,
     signUp,
