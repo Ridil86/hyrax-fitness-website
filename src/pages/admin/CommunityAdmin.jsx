@@ -288,7 +288,7 @@ export default function CommunityAdmin() {
           </div>
           <div className="admin-stat-card">
             <div className="stat-label">Pending Reports</div>
-            <div className="stat-value">{pendingReportsCount}</div>
+            <div className="stat-value">{stats.pendingReports ?? 0}</div>
           </div>
         </div>
       )}

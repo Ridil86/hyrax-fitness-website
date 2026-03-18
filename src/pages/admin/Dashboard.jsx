@@ -50,7 +50,7 @@ export default function Dashboard() {
           : null;
 
         const threadCount = communityResult.status === 'fulfilled'
-          ? communityResult.value.threadCount
+          ? communityResult.value.totalThreads
           : null;
 
         const pendingReports = communityResult.status === 'fulfilled'

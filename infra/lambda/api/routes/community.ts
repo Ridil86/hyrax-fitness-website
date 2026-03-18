@@ -847,7 +847,6 @@ export async function getCommunityStats(
           TableName: TABLE_NAME,
           KeyConditionExpression: 'pk = :pk',
           ExpressionAttributeValues: { ':pk': 'COMMUNITY' },
-          Select: 'COUNT',
         })
       ),
       client.send(
@@ -864,8 +863,16 @@ export async function getCommunityStats(
       ),
     ]);
 
+    const threads = threadsResult.Items || [];
+    const totalThreads = threads.length;
+    const totalReplies = threads.reduce((sum, t) => sum + (Number(t.replyCount) || 0), 0);
+    const uniqueAuthors = new Set(threads.map((t) => t.authorId).filter(Boolean));
+    const activeUsers = uniqueAuthors.size;
+
     return success({
-      threadCount: threadsResult.Count || 0,
+      totalThreads,
+      totalReplies,
+      activeUsers,
       pendingReports: reportsResult.Count || 0,
     });
   } catch (error) {
