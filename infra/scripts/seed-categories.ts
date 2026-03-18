@@ -5,9 +5,22 @@
 
 import { DynamoDBClient } from '@aws-sdk/client-dynamodb';
 import { DynamoDBDocumentClient, PutCommand } from '@aws-sdk/lib-dynamodb';
+import { fromIni } from '@aws-sdk/credential-providers';
 
 const TABLE_NAME = 'HyraxContent';
-const client = DynamoDBDocumentClient.from(new DynamoDBClient({}));
+const REGION = 'us-east-1';
+
+// Parse --profile flag
+const args = process.argv.slice(2);
+const profileIndex = args.indexOf('--profile');
+const profile = profileIndex !== -1 ? args[profileIndex + 1] : undefined;
+
+const clientConfig: any = { region: REGION };
+if (profile) {
+  clientConfig.credentials = fromIni({ profile });
+}
+
+const client = DynamoDBDocumentClient.from(new DynamoDBClient(clientConfig));
 
 const CATEGORIES = [
   { id: 'general', label: 'General', description: 'Open discussion', icon: '💬', sortOrder: 1 },
