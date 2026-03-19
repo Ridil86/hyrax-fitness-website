@@ -1,7 +1,11 @@
 import { useState, useEffect, useCallback } from 'react';
+import { Link } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import { fetchUserLogs, fetchLogStats, deleteLogApi } from '../../api/completionLog';
+import { fetchProfile } from '../../api/profile';
+import { hasTierAccess } from '../../utils/tiers';
 import './activity-log.css';
+import './portal-dashboard.css';
 
 function timeAgo(dateStr) {
   if (!dateStr) return '';
@@ -53,6 +57,29 @@ export default function ActivityLog() {
   const [expandedSessions, setExpandedSessions] = useState({});
   const [deletingId, setDeletingId] = useState(null);
   const [confirmDeleteId, setConfirmDeleteId] = useState(null);
+  const [profile, setProfile] = useState(null);
+  const [profileLoading, setProfileLoading] = useState(true);
+
+  // Fetch profile for tier check
+  useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      try {
+        const token = await getIdToken();
+        if (token) {
+          const result = await fetchProfile(token);
+          if (!cancelled) setProfile(result);
+        }
+      } catch (err) {
+        console.error('Failed to load profile:', err);
+      } finally {
+        if (!cancelled) setProfileLoading(false);
+      }
+    })();
+    return () => { cancelled = true; };
+  }, [getIdToken]);
+
+  const locked = !profileLoading && !hasTierAccess(profile?.tier, 'Rock Runner');
 
   const loadData = useCallback(async () => {
     setLoading(true);
@@ -139,6 +166,33 @@ export default function ActivityLog() {
       [sessionId]: !prev[sessionId],
     }));
   };
+
+  if (profileLoading) {
+    return (
+      <div className="activity-log">
+        <div className="activity-log-loading">
+          <div className="section-spinner" />
+          <p>Loading...</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (locked) {
+    return (
+      <div className="activity-log">
+        <div className="activity-log-header">
+          <h1>Activity Log</h1>
+        </div>
+        <div className="portal-tier-gate">
+          <span className="portal-tier-gate-icon">{'\u{1F512}'}</span>
+          <h2>Upgrade to Rock Runner</h2>
+          <p>Track your activity log and monitor workout sessions with a Rock Runner or higher subscription.</p>
+          <Link to="/portal/subscription" className="btn primary">Upgrade Account</Link>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="activity-log">

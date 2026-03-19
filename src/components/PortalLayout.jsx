@@ -6,13 +6,13 @@ const navItems = [
   { to: '/portal', label: 'Dashboard', icon: '\u2302' },
   { to: '/portal/workouts', label: 'Workouts', icon: '\u270A' },
   { to: '/portal/videos', label: 'Videos', icon: '\u25B6' },
-  { to: '/portal/community', label: 'Community', icon: '\u2709' },
-  { to: '/portal/support', label: 'Support', icon: '\u2753' },
-  { to: '/portal/profile', label: 'Profile', icon: '\u263A' },
-  { to: '/portal/subscription', label: 'Subscription', icon: '\u2606' },
-  { to: '/portal/activity', label: 'Activity', icon: '\u{1F4CA}' },
   { to: '/portal/progress', label: 'Progress', icon: '\u{1F4C8}' },
+  { to: '/portal/activity', label: 'Activity', icon: '\u{1F4CA}' },
+  { to: '/portal/community', label: 'Community', icon: '\u2709' },
+  { to: '/portal/subscription', label: 'Subscription', icon: '\u2606' },
+  { to: '/portal/profile', label: 'Profile', icon: '\u263A' },
   { to: '/portal/settings', label: 'Settings', icon: '\u2699' },
+  { to: '/portal/support', label: 'Support', icon: '\u2753' },
 ];
 
 export default function PortalLayout() {

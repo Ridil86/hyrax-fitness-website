@@ -1,9 +1,13 @@
 import { useState, useEffect, useCallback, useMemo } from 'react';
+import { Link } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import { fetchLogStats, fetchUserLogs, fetchExerciseHistory, fetchCalendarData } from '../../api/completionLog';
+import { fetchProfile } from '../../api/profile';
+import { hasTierAccess } from '../../utils/tiers';
 import { Line, Bar } from 'react-chartjs-2';
 import { Chart as ChartJS, CategoryScale, LinearScale, PointElement, LineElement, BarElement, Title, Tooltip, Legend, Filler } from 'chart.js';
 import './progress-dashboard.css';
+import './portal-dashboard.css';
 
 // Register only needed Chart.js components
 ChartJS.register(CategoryScale, LinearScale, PointElement, LineElement, BarElement, Title, Tooltip, Legend, Filler);
@@ -90,6 +94,29 @@ export default function ProgressDashboard() {
   const [calendarYear, setCalendarYear] = useState(new Date().getFullYear());
   const [calendarMonth, setCalendarMonth] = useState(new Date().getMonth() + 1);
   const [hoveredDay, setHoveredDay] = useState(null);
+  const [profile, setProfile] = useState(null);
+  const [profileLoading, setProfileLoading] = useState(true);
+
+  // Fetch profile for tier check
+  useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      try {
+        const token = await getIdToken();
+        if (token) {
+          const result = await fetchProfile(token);
+          if (!cancelled) setProfile(result);
+        }
+      } catch (err) {
+        console.error('Failed to load profile:', err);
+      } finally {
+        if (!cancelled) setProfileLoading(false);
+      }
+    })();
+    return () => { cancelled = true; };
+  }, [getIdToken]);
+
+  const locked = !profileLoading && !hasTierAccess(profile?.tier, 'Rock Runner');
 
   // Load stats + all logs on mount
   const loadInitialData = useCallback(async () => {
@@ -280,6 +307,33 @@ export default function ProgressDashboard() {
       setCalendarMonth((m) => m + 1);
     }
   };
+
+  if (profileLoading) {
+    return (
+      <div className="progress-dashboard">
+        <div className="progress-loading">
+          <div className="section-spinner" />
+          <p>Loading...</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (locked) {
+    return (
+      <div className="progress-dashboard">
+        <div className="progress-header">
+          <h1>Progress Dashboard</h1>
+        </div>
+        <div className="portal-tier-gate">
+          <span className="portal-tier-gate-icon">{'\u{1F512}'}</span>
+          <h2>Upgrade to Rock Runner</h2>
+          <p>View detailed progress charts, activity calendar, and exercise history with a Rock Runner or higher subscription.</p>
+          <Link to="/portal/subscription" className="btn primary">Upgrade Account</Link>
+        </div>
+      </div>
+    );
+  }
 
   if (loading) {
     return (

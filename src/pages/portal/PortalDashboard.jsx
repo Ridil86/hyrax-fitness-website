@@ -1,9 +1,50 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import { useTiers } from '../../hooks/useTiers';
 import { fetchProfile } from '../../api/profile';
+import { fetchLogStats, fetchUserLogs, fetchCalendarData } from '../../api/completionLog';
+import { hasTierAccess } from '../../utils/tiers';
 import './portal-dashboard.css';
+
+function timeAgo(dateStr) {
+  if (!dateStr) return '';
+  const ms = Date.now() - new Date(dateStr).getTime();
+  const mins = Math.floor(ms / 60000);
+  if (mins < 1) return 'just now';
+  if (mins < 60) return `${mins}m ago`;
+  const hrs = Math.floor(mins / 60);
+  if (hrs < 24) return `${hrs}h ago`;
+  const days = Math.floor(hrs / 24);
+  if (days < 30) return `${days}d ago`;
+  const months = Math.floor(days / 30);
+  return `${months}mo ago`;
+}
+
+function getDaysInMonth(year, month) {
+  return new Date(year, month, 0).getDate();
+}
+
+function getFirstDayOfMonth(year, month) {
+  const day = new Date(year, month - 1, 1).getDay();
+  return day === 0 ? 6 : day - 1; // Mon-first
+}
+
+function getActivityLevel(count) {
+  if (!count || count === 0) return 0;
+  if (count <= 2) return 1;
+  if (count <= 5) return 2;
+  return 3;
+}
+
+const ACTIVITY_COLORS = [
+  'transparent',
+  'rgba(242,133,1,.2)',
+  'rgba(242,133,1,.5)',
+  'rgba(242,133,1,1)',
+];
+
+const DAY_HEADERS = ['M', 'T', 'W', 'T', 'F', 'S', 'S'];
 
 function tierClass(tier) {
   if (!tier) return 'pup';
@@ -32,6 +73,9 @@ export default function PortalDashboard() {
   const navigate = useNavigate();
   const [profile, setProfile] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [activityStats, setActivityStats] = useState(null);
+  const [recentLogs, setRecentLogs] = useState([]);
+  const [calendarData, setCalendarData] = useState({});
 
   useEffect(() => {
     let cancelled = false;
@@ -54,6 +98,36 @@ export default function PortalDashboard() {
     return () => { cancelled = true; };
   }, [getIdToken]);
 
+  // Load activity/progress data for tier II+ users
+  useEffect(() => {
+    if (loading || !profile) return;
+    if (!hasTierAccess(profile.tier, 'Rock Runner')) return;
+
+    let cancelled = false;
+    const now = new Date();
+
+    (async () => {
+      try {
+        const token = await getIdToken();
+        const [statsData, logsData, calData] = await Promise.all([
+          fetchLogStats(token),
+          fetchUserLogs({ limit: 3 }, token),
+          fetchCalendarData(now.getFullYear(), now.getMonth() + 1, token),
+        ]);
+        if (!cancelled) {
+          setActivityStats(statsData);
+          const logs = Array.isArray(logsData) ? logsData : logsData?.logs || [];
+          setRecentLogs(logs.slice(0, 3));
+          setCalendarData(calData || {});
+        }
+      } catch (err) {
+        console.error('Failed to load dashboard activity data:', err);
+      }
+    })();
+
+    return () => { cancelled = true; };
+  }, [loading, profile, getIdToken]);
+
   // Check for pending upgrade from /programs page
   useEffect(() => {
     if (!loading && profile) {
@@ -75,6 +149,27 @@ export default function PortalDashboard() {
   const email = profile?.email || user?.signInDetails?.loginId || '';
   const tier = profile?.tier || 'Pup';
   const memberSince = profile?.createdAt;
+
+  const hasActivityAccess = hasTierAccess(tier, 'Rock Runner');
+
+  // Mini calendar cells for current month
+  const now = new Date();
+  const calYear = now.getFullYear();
+  const calMonth = now.getMonth() + 1;
+  const calendarCells = useMemo(() => {
+    const daysInMonth = getDaysInMonth(calYear, calMonth);
+    const firstDay = getFirstDayOfMonth(calYear, calMonth);
+    const cells = [];
+    for (let i = 0; i < firstDay; i++) {
+      cells.push({ day: null, key: `empty-${i}` });
+    }
+    for (let d = 1; d <= daysInMonth; d++) {
+      const dateStr = `${calYear}-${String(calMonth).padStart(2, '0')}-${String(d).padStart(2, '0')}`;
+      const count = calendarData[dateStr] || 0;
+      cells.push({ day: d, dateStr, count, key: dateStr });
+    }
+    return cells;
+  }, [calYear, calMonth, calendarData]);
 
   // Find current tier data for logo and level
   const currentTierData = tiers.find((t) => t.name === tier);
@@ -149,6 +244,102 @@ export default function PortalDashboard() {
             <span>{fullName}</span>
           </div>
         </div>
+      </div>
+
+      {/* Activity Summary */}
+      <div className="portal-card">
+        <h3>{'\u{1F4CA}'} Activity</h3>
+        {hasActivityAccess ? (
+          <>
+            <div className="dashboard-stats">
+              <div className="dashboard-stat-card">
+                <span className="dashboard-stat-value">{activityStats?.totalLogs || 0}</span>
+                <span className="dashboard-stat-label">Total Logs</span>
+              </div>
+              <div className="dashboard-stat-card">
+                <span className="dashboard-stat-value">{activityStats?.currentStreak || 0}</span>
+                <span className="dashboard-stat-label">Day Streak</span>
+              </div>
+              <div className="dashboard-stat-card">
+                <span className="dashboard-stat-value">{activityStats?.uniqueExercises || 0}</span>
+                <span className="dashboard-stat-label">Unique Exercises</span>
+              </div>
+            </div>
+            {recentLogs.length > 0 && (
+              <ul className="dashboard-recent-list">
+                {recentLogs.map((log) => (
+                  <li key={log.id} className="dashboard-recent-item">
+                    <span className="dashboard-recent-name">{log.exerciseName || 'Exercise'}</span>
+                    <span className="dashboard-recent-detail">
+                      {log.sets && log.reps ? `${log.sets}x${log.reps}` : ''}
+                      {log.weight ? ` @ ${log.weight}${log.weightUnit || 'kg'}` : ''}
+                    </span>
+                    <span className="dashboard-recent-time">{timeAgo(log.completedAt || log.createdAt)}</span>
+                  </li>
+                ))}
+              </ul>
+            )}
+            <Link to="/portal/activity" className="dashboard-view-more">
+              View All Activity &rarr;
+            </Link>
+          </>
+        ) : (
+          <div className="dashboard-locked-msg">
+            <span>{'\u{1F512}'}</span>
+            <span>Activity tracking is available with Rock Runner and above.</span>
+            <Link to="/portal/subscription">Upgrade &rarr;</Link>
+          </div>
+        )}
+      </div>
+
+      {/* Progress Summary */}
+      <div className="portal-card">
+        <h3>{'\u{1F4C8}'} Progress</h3>
+        {hasActivityAccess ? (
+          <>
+            <div className="dashboard-stats">
+              <div className="dashboard-stat-card">
+                <span className="dashboard-stat-value">{activityStats?.totalSessions || 0}</span>
+                <span className="dashboard-stat-label">Total Workouts</span>
+              </div>
+              <div className="dashboard-stat-card">
+                <span className="dashboard-stat-value">{activityStats?.totalLogs || 0}</span>
+                <span className="dashboard-stat-label">Exercises Logged</span>
+              </div>
+              <div className="dashboard-stat-card">
+                <span className="dashboard-stat-value">{activityStats?.currentStreak || 0}</span>
+                <span className="dashboard-stat-label">Streak</span>
+              </div>
+            </div>
+            <div className="dashboard-mini-calendar">
+              {DAY_HEADERS.map((d, i) => (
+                <div key={`h-${i}`} className="dashboard-cal-header">{d}</div>
+              ))}
+              {calendarCells.map((cell) => (
+                <div key={cell.key} className="dashboard-cal-day">
+                  {cell.day && (
+                    <>
+                      <span className="dashboard-cal-day-num">{cell.day}</span>
+                      <span
+                        className="dashboard-cal-dot"
+                        style={{ backgroundColor: ACTIVITY_COLORS[getActivityLevel(cell.count)] }}
+                      />
+                    </>
+                  )}
+                </div>
+              ))}
+            </div>
+            <Link to="/portal/progress" className="dashboard-view-more">
+              View Full Progress &rarr;
+            </Link>
+          </>
+        ) : (
+          <div className="dashboard-locked-msg">
+            <span>{'\u{1F512}'}</span>
+            <span>Progress tracking is available with Rock Runner and above.</span>
+            <Link to="/portal/subscription">Upgrade &rarr;</Link>
+          </div>
+        )}
       </div>
 
       {/* Quick Links */}
