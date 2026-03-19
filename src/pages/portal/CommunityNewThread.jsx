@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import { createThread } from '../../api/community';
-import { uploadFile } from '../../api/upload';
+import { uploadUserFile } from '../../api/upload';
 import './community-new-thread.css';
 
 const CATEGORIES = [
@@ -64,7 +64,7 @@ export default function CommunityNewThread() {
       let imageUrl = null;
 
       if (image) {
-        const uploaded = await uploadFile(image, token);
+        const uploaded = await uploadUserFile(image, token);
         imageUrl = uploaded.publicUrl;
       }
 

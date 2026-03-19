@@ -7,7 +7,7 @@ import {
   toggleReaction,
   createReport,
 } from '../../api/community';
-import { uploadFile } from '../../api/upload';
+import { uploadUserFile } from '../../api/upload';
 import LazyImage from '../../components/LazyImage';
 import './community-thread.css';
 
@@ -166,7 +166,7 @@ export default function CommunityThread() {
       let imageUrl = null;
 
       if (replyImage) {
-        const uploaded = await uploadFile(replyImage, token);
+        const uploaded = await uploadUserFile(replyImage, token);
         imageUrl = uploaded.publicUrl;
       }
 

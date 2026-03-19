@@ -7,6 +7,7 @@ import { listFaq, createFaq, updateFaq, deleteFaq, reorderFaq } from './routes/f
 import { getContent, updateContent } from './routes/content';
 import { listUsers, getUserGroups, updateUserGroups, deleteUser, setUserStatus } from './routes/users';
 import { getUploadUrl } from './routes/upload';
+import { getUserUploadUrl } from './routes/user-upload';
 import { logAuditEvent, listAuditLogs, getAuditStats } from './routes/audit';
 import { createAccount } from './routes/signup';
 import { getProfile, createProfile, updateProfile } from './routes/profile';
@@ -152,6 +153,10 @@ export const handler = async (
     // ── Upload Route ──
     if (path === '/api/upload' && method === 'POST') {
       return getUploadUrl(event);
+    }
+
+    if (path === '/api/user-upload' && method === 'POST') {
+      return getUserUploadUrl(event);
     }
 
     // ── Audit Routes ──

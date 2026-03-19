@@ -499,6 +499,13 @@ export class BackendStack extends cdk.Stack {
       authorizationType: apigateway.AuthorizationType.COGNITO,
     });
 
+    // User upload route (any authenticated user, images only)
+    const userUploadResource = apiResource.addResource('user-upload');
+    userUploadResource.addMethod('POST', lambdaIntegration, {
+      authorizer,
+      authorizationType: apigateway.AuthorizationType.COGNITO,
+    });
+
     // Signup route (public - intake wizard)
     const signupResource = apiResource.addResource('signup');
     signupResource.addMethod('POST', lambdaIntegration); // Public

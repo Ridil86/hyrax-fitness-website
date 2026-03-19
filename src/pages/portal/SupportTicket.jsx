@@ -2,7 +2,7 @@ import { useState, useEffect, useCallback, useRef } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import { fetchTicket, updateTicket, addTicketMessage } from '../../api/support';
-import { uploadFile } from '../../api/upload';
+import { uploadUserFile } from '../../api/upload';
 import LazyImage from '../../components/LazyImage';
 import './support-ticket.css';
 
@@ -127,7 +127,7 @@ export default function SupportTicket() {
       let attachmentUrl = null;
 
       if (replyImage) {
-        const uploaded = await uploadFile(replyImage, token);
+        const uploaded = await uploadUserFile(replyImage, token);
         attachmentUrl = uploaded.publicUrl;
       }
 
