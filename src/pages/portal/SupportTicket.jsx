@@ -23,11 +23,6 @@ function statusColor(status) {
   return '#6b7280';
 }
 
-function priorityLabel(priority) {
-  if (priority === 'high') return { text: 'High', color: '#dc2626' };
-  if (priority === 'medium') return { text: 'Medium', color: '#d97706' };
-  return { text: 'Low', color: '#6b7280' };
-}
 
 function slaIndicator(createdAt, status) {
   if (status === 'resolved' || status === 'closed') return null;
@@ -191,7 +186,6 @@ export default function SupportTicket() {
   }
 
   const sla = slaIndicator(ticket.createdAt, ticket.status);
-  const prio = priorityLabel(ticket.priority);
   const refNumber = ticket.refNumber || `HF-${String(ticket.ticketNumber || 0).padStart(5, '0')}`;
   const isOpenOrProgress = ticket.status === 'open' || ticket.status === 'in_progress';
   const isResolved = ticket.status === 'resolved';
@@ -220,15 +214,6 @@ export default function SupportTicket() {
             }}
           >
             {statusLabel(ticket.status)}
-          </span>
-          <span
-            className="support-priority-badge"
-            style={{
-              background: `${prio.color}18`,
-              color: prio.color,
-            }}
-          >
-            {prio.text}
           </span>
           <span className="support-category-badge">
             {categoryLabel(ticket.category)}

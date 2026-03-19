@@ -8,6 +8,7 @@ import {
   assignTicket,
   fetchSupportStats,
 } from '../../api/support';
+import { fetchUsers } from '../../api/users';
 import './admin.css';
 import './support-admin.css';
 
@@ -179,6 +180,9 @@ export default function SupportAdmin() {
   const [assignInput, setAssignInput] = useState('');
   const [savingUpdate, setSavingUpdate] = useState(false);
 
+  // Admin users for assignment dropdown
+  const [adminUsers, setAdminUsers] = useState([]);
+
   // Feedback
   const [error, setError] = useState(null);
   const [saveMsg, setSaveMsg] = useState('');
@@ -219,10 +223,29 @@ export default function SupportAdmin() {
     }
   }, [getIdToken]);
 
+  // ── Load admin users for assignment dropdown ──
+  const loadAdminUsers = useCallback(async () => {
+    try {
+      const token = await getIdToken();
+      const data = await fetchUsers({ limit: 60 }, token);
+      const users = data.users || [];
+      const admins = users
+        .filter((u) => (u.groups || []).some((g) => g.name === 'Admin'))
+        .map((u) => ({
+          email: u.email || u.username,
+          name: [u.given_name, u.family_name].filter(Boolean).join(' ') || u.email || u.username,
+        }));
+      setAdminUsers(admins);
+    } catch {
+      // Non-critical
+    }
+  }, [getIdToken]);
+
   useEffect(() => {
     loadTickets();
     loadStats();
-  }, [loadTickets, loadStats]);
+    loadAdminUsers();
+  }, [loadTickets, loadStats, loadAdminUsers]);
 
   // ── Load ticket detail ──
   const loadTicketDetail = useCallback(async (id) => {
@@ -263,7 +286,7 @@ export default function SupportAdmin() {
     try {
       const token = await getIdToken();
       await addTicketMessage(expandedId, {
-        message: replyText.trim(),
+        content: replyText.trim(),
         internal: isInternal,
       }, token);
       setReplyText('');
@@ -298,14 +321,14 @@ export default function SupportAdmin() {
   };
 
   // ── Assign ticket ──
-  const handleAssign = async (assignTo) => {
+  const handleAssign = async (assignTo, assignName) => {
     if (!expandedId) return;
     setSavingUpdate(true);
     try {
       const token = await getIdToken();
-      await assignTicket(expandedId, { assignedTo: assignTo }, token);
+      await assignTicket(expandedId, { assignedTo: assignTo, assignedName: assignName || assignTo }, token);
       setAssignInput(assignTo);
-      showSuccess(assignTo ? `Assigned to ${assignTo}` : 'Unassigned');
+      showSuccess(assignTo ? `Assigned to ${assignName || assignTo}` : 'Unassigned');
       loadTicketDetail(expandedId);
       loadTickets();
     } catch (err) {
@@ -315,7 +338,10 @@ export default function SupportAdmin() {
     }
   };
 
-  const handleSelfAssign = () => handleAssign(adminEmail);
+  const handleSelfAssign = () => {
+    const me = adminUsers.find((a) => a.email === adminEmail);
+    handleAssign(adminEmail, me?.name || adminEmail);
+  };
 
   // ── Quick reply ──
   const handleQuickReply = (e) => {
@@ -368,19 +394,19 @@ export default function SupportAdmin() {
         <div className="admin-stats">
           <div className="admin-stat-card">
             <div className="stat-label">Open Tickets</div>
-            <div className="stat-value">{stats.openTickets ?? 0}</div>
+            <div className="stat-value">{stats.openCount ?? 0}</div>
           </div>
           <div className="admin-stat-card">
             <div className="stat-label">Unassigned</div>
-            <div className="stat-value">{stats.unassigned ?? 0}</div>
+            <div className="stat-value">{stats.unassignedCount ?? 0}</div>
           </div>
           <div className="admin-stat-card">
             <div className="stat-label">High Priority</div>
-            <div className="stat-value">{stats.highPriority ?? 0}</div>
+            <div className="stat-value">{stats.highPriorityCount ?? 0}</div>
           </div>
           <div className="admin-stat-card">
             <div className="stat-label">Resolved</div>
-            <div className="stat-value">{stats.resolved ?? 0}</div>
+            <div className="stat-value">{stats.resolvedCount ?? 0}</div>
           </div>
         </div>
       )}
@@ -638,19 +664,22 @@ export default function SupportAdmin() {
                             <div className="support-manage-field">
                               <label>Assigned To</label>
                               <div className="support-assign-row">
-                                <input
-                                  type="text"
-                                  placeholder="Email or name..."
+                                <select
                                   value={assignInput}
-                                  onChange={(e) => setAssignInput(e.target.value)}
-                                />
-                                <button
-                                  className="btn ghost small"
-                                  onClick={() => handleAssign(assignInput)}
-                                  disabled={savingUpdate}
+                                  onChange={(e) => {
+                                    const val = e.target.value;
+                                    setAssignInput(val);
+                                    const admin = adminUsers.find((a) => a.email === val);
+                                    handleAssign(val, admin?.name || val);
+                                  }}
                                 >
-                                  Assign
-                                </button>
+                                  <option value="">Unassigned</option>
+                                  {adminUsers.map((a) => (
+                                    <option key={a.email} value={a.email}>
+                                      {a.name}
+                                    </option>
+                                  ))}
+                                </select>
                                 <button
                                   className="btn ghost small"
                                   onClick={handleSelfAssign}

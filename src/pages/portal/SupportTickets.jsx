@@ -29,11 +29,6 @@ function statusColor(status) {
   return '#6b7280';
 }
 
-function priorityLabel(priority) {
-  if (priority === 'high') return { text: 'High', color: '#dc2626' };
-  if (priority === 'medium') return { text: 'Medium', color: '#d97706' };
-  return { text: 'Low', color: '#6b7280' };
-}
 
 function slaIndicator(createdAt, status) {
   if (status === 'resolved' || status === 'closed') return null;
@@ -149,8 +144,6 @@ export default function SupportTickets() {
         <div className="support-ticket-list">
           {sorted.map((ticket) => {
             const sla = slaIndicator(ticket.createdAt, ticket.status);
-            const prio = priorityLabel(ticket.priority);
-
             return (
               <Link
                 key={ticket.id}
@@ -189,15 +182,6 @@ export default function SupportTickets() {
                       }}
                     >
                       {statusLabel(ticket.status)}
-                    </span>
-                    <span
-                      className="support-priority-badge"
-                      style={{
-                        background: `${prio.color}18`,
-                        color: prio.color,
-                      }}
-                    >
-                      {prio.text}
                     </span>
                   </div>
 
