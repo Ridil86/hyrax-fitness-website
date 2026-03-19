@@ -165,11 +165,23 @@ async function handleCheckoutCompleted(session: Stripe.Checkout.Session) {
   const tierName = tierId ? await getTierName(tierId) : 'Pup';
   const now = new Date().toISOString();
 
-  // Retrieve the subscription to get period details
-  const stripe = getStripe();
-  const subscription = await stripe.subscriptions.retrieve(
-    session.subscription as string
-  );
+  // Retrieve the subscription to get period details (guarded against null fields)
+  let currentPeriodEnd = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString();
+  let cancelAtPeriodEnd = false;
+  const stripeSubId = session.subscription as string;
+
+  if (stripeSubId) {
+    try {
+      const stripe = getStripe();
+      const subscription = await stripe.subscriptions.retrieve(stripeSubId);
+      if (subscription.current_period_end) {
+        currentPeriodEnd = new Date(subscription.current_period_end * 1000).toISOString();
+      }
+      cancelAtPeriodEnd = subscription.cancel_at_period_end || false;
+    } catch (err) {
+      console.warn('Could not retrieve subscription details, using defaults:', err);
+    }
+  }
 
   // Update subscription record
   await client.send(
@@ -179,11 +191,11 @@ async function handleCheckoutCompleted(session: Stripe.Checkout.Session) {
         pk: `USER#${cognitoSub}`,
         sk: 'SUBSCRIPTION',
         stripeCustomerId: session.customer as string,
-        stripeSubscriptionId: session.subscription as string,
+        stripeSubscriptionId: stripeSubId || '',
         tierId,
         status: 'active',
-        currentPeriodEnd: new Date(subscription.current_period_end * 1000).toISOString(),
-        cancelAtPeriodEnd: false,
+        currentPeriodEnd,
+        cancelAtPeriodEnd,
         gsi1pk: 'SUBSCRIPTION',
         gsi1sk: `active#${cognitoSub}`,
         createdAt: now,
@@ -263,7 +275,9 @@ async function handleSubscriptionUpdated(subscription: Stripe.Subscription) {
         'SET #st = :st, currentPeriodEnd = :cpe, cancelAtPeriodEnd = :cap, tierId = :tid, gsi1sk = :gsi, updatedAt = :now',
       ExpressionAttributeValues: {
         ':st': status,
-        ':cpe': new Date(subscription.current_period_end * 1000).toISOString(),
+        ':cpe': subscription.current_period_end
+          ? new Date(subscription.current_period_end * 1000).toISOString()
+          : new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString(),
         ':cap': cancelAtPeriodEnd,
         ':tid': tierId,
         ':gsi': `${gsiStatus}#${cognitoSub}`,

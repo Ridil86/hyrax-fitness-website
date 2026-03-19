@@ -69,12 +69,24 @@ export default function PortalSubscription() {
     const status = searchParams.get('status');
     if (status === 'success') {
       setSuccessMsg('Your subscription has been activated! Welcome aboard.');
-      // Refresh tier data
-      if (refreshTier) refreshTier();
       loadSubscription();
+      // Poll refreshTier to catch webhook update (arrives within 1-5s typically)
+      let attempts = 0;
+      const maxAttempts = 5;
+      const pollTier = () => {
+        if (attempts >= maxAttempts) return;
+        attempts++;
+        if (refreshTier) refreshTier();
+        loadSubscription();
+        if (attempts < maxAttempts) {
+          setTimeout(pollTier, 2000);
+        }
+      };
+      // Start polling after a short initial delay for webhook to arrive
+      setTimeout(pollTier, 1500);
       // Clean up URL
       setSearchParams({}, { replace: true });
-      setTimeout(() => setSuccessMsg(''), 8000);
+      setTimeout(() => setSuccessMsg(''), 10000);
     } else if (status === 'cancelled') {
       setError('Checkout was cancelled. No changes were made.');
       setSearchParams({}, { replace: true });
