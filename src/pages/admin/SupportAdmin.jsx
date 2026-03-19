@@ -149,7 +149,7 @@ function CategoryLabel({ category }) {
 
 export default function SupportAdmin() {
   const { user, getIdToken } = useAuth();
-  const adminEmail = user?.email || user?.username || '';
+  const adminEmail = user?.signInDetails?.loginId || user?.email || '';
 
   const [activeTab, setActiveTab] = useState('all');
 
