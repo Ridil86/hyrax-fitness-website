@@ -1,0 +1,252 @@
+/* ── Support Ticket List ── */
+
+.support-tickets {
+  max-width: 820px;
+  margin: 0 auto;
+}
+
+.support-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 24px;
+}
+
+.support-header h1 {
+  font-size: 1.8rem;
+  margin: 0;
+  color: var(--ink);
+}
+
+/* ── Status Tabs ── */
+.support-tabs {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 24px;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+  padding-bottom: 4px;
+}
+
+.support-tab {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  padding: 7px 16px;
+  border-radius: 999px;
+  border: 1px solid rgba(27, 18, 10, .12);
+  background: #fff;
+  cursor: pointer;
+  font: inherit;
+  font-size: .85rem;
+  color: var(--rock);
+  white-space: nowrap;
+  transition: background .15s, color .15s, border-color .15s;
+}
+
+.support-tab.active {
+  background: var(--sunset);
+  color: #fff;
+  border-color: var(--sunset);
+}
+
+.support-tab:hover:not(.active) {
+  border-color: var(--sand);
+  background: rgba(27, 18, 10, .03);
+}
+
+/* ── Ticket List ── */
+.support-ticket-list {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.support-ticket-card-link {
+  text-decoration: none;
+  color: inherit;
+  display: block;
+}
+
+.support-ticket-card {
+  background: rgba(255, 255, 255, .55);
+  border: 1px solid rgba(27, 18, 10, .08);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow-soft);
+  padding: 20px 24px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  transition: transform .2s, box-shadow .2s;
+}
+
+.support-ticket-card:hover {
+  transform: translateY(-2px);
+  box-shadow: var(--shadow);
+}
+
+/* ── Card Top Row ── */
+.support-ticket-card-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.support-ticket-ref {
+  font-size: .78rem;
+  font-weight: 600;
+  color: var(--rock);
+  opacity: .6;
+  font-family: monospace;
+  letter-spacing: .03em;
+}
+
+.support-ticket-badges {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+/* ── SLA Badge ── */
+.support-sla-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  font-size: .75rem;
+  font-weight: 600;
+  color: var(--ink);
+}
+
+.support-sla-dot {
+  display: inline-block;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+/* ── Title ── */
+.support-ticket-title {
+  margin: 0;
+  font-size: 1.05rem;
+  color: var(--ink);
+  line-height: 1.35;
+}
+
+/* ── Meta Badges ── */
+.support-ticket-meta {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.support-category-badge {
+  display: inline-block;
+  padding: 2px 10px;
+  border-radius: 999px;
+  font-size: .72rem;
+  font-weight: 600;
+  background: rgba(101, 76, 43, .1);
+  color: var(--earth);
+  white-space: nowrap;
+}
+
+.support-status-badge {
+  display: inline-block;
+  padding: 2px 10px;
+  border-radius: 999px;
+  font-size: .72rem;
+  font-weight: 700;
+  white-space: nowrap;
+  text-transform: capitalize;
+}
+
+.support-priority-badge {
+  display: inline-block;
+  padding: 2px 10px;
+  border-radius: 999px;
+  font-size: .72rem;
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+/* ── Footer ── */
+.support-ticket-footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  font-size: .8rem;
+  color: var(--rock);
+}
+
+.support-ticket-messages {
+  opacity: .7;
+}
+
+.support-ticket-time {
+  opacity: .6;
+  white-space: nowrap;
+}
+
+/* ── Loading / Empty ── */
+.support-loading,
+.support-empty {
+  text-align: center;
+  padding: 56px 20px;
+  color: var(--rock);
+}
+
+.support-empty-icon {
+  display: block;
+  font-size: 2.5rem;
+  margin-bottom: 12px;
+  opacity: .3;
+}
+
+.support-empty h3 {
+  margin: 0 0 6px;
+  color: var(--ink);
+}
+
+.support-empty p {
+  margin: 0;
+  font-size: .92rem;
+}
+
+/* ── Responsive ── */
+@media (max-width: 768px) {
+  .support-header h1 {
+    font-size: 1.4rem;
+  }
+
+  .support-tabs {
+    flex-wrap: nowrap;
+    overflow-x: auto;
+  }
+
+  .support-ticket-card {
+    padding: 16px 18px;
+  }
+
+  .support-ticket-meta {
+    gap: 6px;
+  }
+}
+
+@media (max-width: 480px) {
+  .support-tab {
+    padding: 6px 12px;
+    font-size: .8rem;
+  }
+
+  .support-ticket-title {
+    font-size: .95rem;
+  }
+
+  .support-ticket-footer {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 4px;
+  }
+}

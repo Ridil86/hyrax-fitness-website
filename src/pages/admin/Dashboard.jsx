@@ -6,12 +6,13 @@ import { fetchFaqs } from '../../api/faq';
 import { fetchWorkouts } from '../../api/workouts';
 import { fetchVideos } from '../../api/videos';
 import { fetchCommunityStats } from '../../api/community';
+import { fetchSupportStats } from '../../api/support';
 import './admin.css';
 import './dashboard.css';
 
 export default function Dashboard() {
   const { getIdToken } = useAuth();
-  const [stats, setStats] = useState({ users: null, faq: null, workouts: null, videos: null, threads: null, pendingReports: null });
+  const [stats, setStats] = useState({ users: null, faq: null, workouts: null, videos: null, threads: null, pendingReports: null, openTickets: null });
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -20,12 +21,13 @@ export default function Dashboard() {
     async function loadStats() {
       try {
         const token = await getIdToken();
-        const [usersResult, faqResult, workoutsResult, videosResult, communityResult] = await Promise.allSettled([
+        const [usersResult, faqResult, workoutsResult, videosResult, communityResult, supportResult] = await Promise.allSettled([
           fetchUsers({ limit: 60 }, token),
           fetchFaqs(),
           fetchWorkouts(token),
           fetchVideos(token),
           fetchCommunityStats(token),
+          fetchSupportStats(token),
         ]);
 
         if (cancelled) return;
@@ -57,7 +59,11 @@ export default function Dashboard() {
           ? communityResult.value.pendingReports
           : null;
 
-        setStats({ users: userCount, faq: faqCount, workouts: workoutCount, videos: videoCount, threads: threadCount, pendingReports });
+        const openTickets = supportResult.status === 'fulfilled'
+          ? supportResult.value.openCount
+          : null;
+
+        setStats({ users: userCount, faq: faqCount, workouts: workoutCount, videos: videoCount, threads: threadCount, pendingReports, openTickets });
       } catch {
         // Stats load is best-effort
       } finally {
@@ -111,6 +117,14 @@ export default function Dashboard() {
             {loading ? <span className="stat-loading" /> : (stats.threads ?? '--')}
           </div>
         </div>
+        {stats.openTickets > 0 && (
+          <div className="admin-stat-card">
+            <div className="stat-label">Open Tickets</div>
+            <div className="stat-value" style={{ color: '#2563eb' }}>
+              {stats.openTickets}
+            </div>
+          </div>
+        )}
         {stats.pendingReports > 0 && (
           <div className="admin-stat-card">
             <div className="stat-label">Pending Reports</div>
@@ -178,6 +192,13 @@ export default function Dashboard() {
             <div>
               <strong>Tier Management</strong>
               <p>Edit subscription tier names, pricing, and features</p>
+            </div>
+          </Link>
+          <Link to="/admin/support" className="dashboard-link-card">
+            <span className="dashboard-link-icon">&#10067;</span>
+            <div>
+              <strong>Support Tickets</strong>
+              <p>View and manage customer support requests</p>
             </div>
           </Link>
           <Link to="/admin/community" className="dashboard-link-card">

@@ -171,6 +171,10 @@ export default function PortalDashboard() {
             <span className="portal-link-icon">&#9881;</span>
             Settings
           </Link>
+          <Link to="/portal/support" className="portal-link">
+            <span className="portal-link-icon">&#127915;</span>
+            Support
+          </Link>
           <Link to="/faq" className="portal-link">
             <span className="portal-link-icon">&#10067;</span>
             FAQ

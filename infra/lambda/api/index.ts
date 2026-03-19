@@ -22,6 +22,10 @@ import {
   toggleReaction, createReport,
   getAdminQueue, moderateThread, resolveReport, togglePin, getCommunityStats,
 } from './routes/community';
+import {
+  listTickets, createTicket, getTicket, updateTicket,
+  addMessage, assignTicket, getSupportStats,
+} from './routes/support';
 import { notFound, serverError } from './utils/response';
 
 export const handler = async (
@@ -287,6 +291,36 @@ export const handler = async (
       if (method === 'GET') return getThread(event);
       if (method === 'PUT') return updateThread(event);
       if (method === 'DELETE') return deleteThread(event);
+    }
+
+    // ── Support Ticket Routes ──
+    if (path === '/api/support/stats' && method === 'GET') {
+      return getSupportStats(event);
+    }
+
+    const supportAssignMatch = path.match(/^\/api\/support\/admin\/assign\/([^/]+)$/);
+    if (supportAssignMatch && method === 'PUT') {
+      event.pathParameters = { ...event.pathParameters, id: supportAssignMatch[1] };
+      return assignTicket(event);
+    }
+
+    // /api/support/tickets/{id}/messages
+    const supportMsgMatch = path.match(/^\/api\/support\/tickets\/([^/]+)\/messages$/);
+    if (supportMsgMatch && method === 'POST') {
+      event.pathParameters = { ...event.pathParameters, id: supportMsgMatch[1] };
+      return addMessage(event);
+    }
+
+    if (path === '/api/support/tickets') {
+      if (method === 'GET') return listTickets(event);
+      if (method === 'POST') return createTicket(event);
+    }
+
+    const supportTicketMatch = path.match(/^\/api\/support\/tickets\/([^/]+)$/);
+    if (supportTicketMatch) {
+      event.pathParameters = { ...event.pathParameters, id: supportTicketMatch[1] };
+      if (method === 'GET') return getTicket(event);
+      if (method === 'PUT') return updateTicket(event);
     }
 
     return notFound(`No route found for ${method} ${path}`);

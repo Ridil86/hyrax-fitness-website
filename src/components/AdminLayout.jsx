@@ -6,6 +6,7 @@ import './AdminLayout.css';
 import '../pages/admin/video-admin.css';
 import '../pages/admin/workout-admin.css';
 import '../pages/admin/community-admin.css';
+import '../pages/admin/support-admin.css';
 
 const navItems = [
   { to: '/admin', label: 'Dashboard', icon: '\u2302' },       // house
@@ -15,6 +16,7 @@ const navItems = [
   { to: '/admin/workouts', label: 'Workouts', icon: '\u270A' },
   { to: '/admin/videos', label: 'Videos', icon: '\u25B6' },
   { to: '/admin/community', label: 'Community', icon: '\u2709' },
+  { to: '/admin/support', label: 'Support', icon: '\u2753' },
   { to: '/admin/billing', label: 'Billing', icon: '$' },
   { to: '/admin/tiers', label: 'Tiers', icon: '\u2261' },
   { to: '/admin/merch', label: 'Merch', icon: '\u2605' },      // star

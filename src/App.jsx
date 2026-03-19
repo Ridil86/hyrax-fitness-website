@@ -52,6 +52,12 @@ const CommunityThread = lazy(() => import('./pages/portal/CommunityThread'));
 const CommunityNewThread = lazy(() => import('./pages/portal/CommunityNewThread'));
 const CommunityAdmin = lazy(() => import('./pages/admin/CommunityAdmin'));
 
+// Support pages
+const SupportTickets = lazy(() => import('./pages/portal/SupportTickets'));
+const SupportTicket = lazy(() => import('./pages/portal/SupportTicket'));
+const NewSupportTicket = lazy(() => import('./pages/portal/NewSupportTicket'));
+const SupportAdmin = lazy(() => import('./pages/admin/SupportAdmin'));
+
 // Legal pages
 const TermsOfUse = lazy(() => import('./pages/TermsOfUse'));
 const PrivacyPolicy = lazy(() => import('./pages/PrivacyPolicy'));
@@ -159,6 +165,9 @@ export default function App() {
               <Route path="community" element={<LazySection><Community /></LazySection>} />
               <Route path="community/new" element={<LazySection><CommunityNewThread /></LazySection>} />
               <Route path="community/:id" element={<LazySection><CommunityThread /></LazySection>} />
+              <Route path="support" element={<LazySection><SupportTickets /></LazySection>} />
+              <Route path="support/new" element={<LazySection><NewSupportTicket /></LazySection>} />
+              <Route path="support/:id" element={<LazySection><SupportTicket /></LazySection>} />
               <Route path="profile" element={<LazySection><PortalProfile /></LazySection>} />
               <Route path="subscription" element={<LazySection><PortalSubscription /></LazySection>} />
               <Route path="settings" element={<LazySection><PortalSettings /></LazySection>} />
@@ -181,6 +190,7 @@ export default function App() {
               <Route path="billing" element={<LazySection><Billing /></LazySection>} />
               <Route path="tiers" element={<LazySection><TierAdmin /></LazySection>} />
               <Route path="community" element={<LazySection><CommunityAdmin /></LazySection>} />
+              <Route path="support" element={<LazySection><SupportAdmin /></LazySection>} />
               <Route path="merch" element={<LazySection><Merch /></LazySection>} />
             </Route>
           </Routes>

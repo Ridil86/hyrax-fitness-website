@@ -450,6 +450,48 @@ export class BackendStack extends cdk.Stack {
       authorizationType: apigateway.AuthorizationType.COGNITO,
     });
 
+    // Support ticket routes (all authenticated)
+    const supportResource = apiResource.addResource('support');
+
+    const supportTickets = supportResource.addResource('tickets');
+    supportTickets.addMethod('GET', lambdaIntegration, {
+      authorizer,
+      authorizationType: apigateway.AuthorizationType.COGNITO,
+    });
+    supportTickets.addMethod('POST', lambdaIntegration, {
+      authorizer,
+      authorizationType: apigateway.AuthorizationType.COGNITO,
+    });
+
+    const supportTicketItem = supportTickets.addResource('{id}');
+    supportTicketItem.addMethod('GET', lambdaIntegration, {
+      authorizer,
+      authorizationType: apigateway.AuthorizationType.COGNITO,
+    });
+    supportTicketItem.addMethod('PUT', lambdaIntegration, {
+      authorizer,
+      authorizationType: apigateway.AuthorizationType.COGNITO,
+    });
+
+    const supportMessages = supportTicketItem.addResource('messages');
+    supportMessages.addMethod('POST', lambdaIntegration, {
+      authorizer,
+      authorizationType: apigateway.AuthorizationType.COGNITO,
+    });
+
+    const supportStats = supportResource.addResource('stats');
+    supportStats.addMethod('GET', lambdaIntegration, {
+      authorizer,
+      authorizationType: apigateway.AuthorizationType.COGNITO,
+    });
+
+    const supportAdmin = supportResource.addResource('admin');
+    const supportAssign = supportAdmin.addResource('assign').addResource('{id}');
+    supportAssign.addMethod('PUT', lambdaIntegration, {
+      authorizer,
+      authorizationType: apigateway.AuthorizationType.COGNITO,
+    });
+
     // Upload route (admin-only)
     const uploadResource = apiResource.addResource('upload');
     uploadResource.addMethod('POST', lambdaIntegration, {
