@@ -27,6 +27,7 @@ const EMPTY_WORKOUT = {
   difficulty: 'intermediate',
   duration: '',
   exercises: [],
+  tags: [],
   imageUrl: '',
   requiredTier: 'Pup',
   status: 'draft',
@@ -90,6 +91,7 @@ export default function WorkoutAdmin() {
     setEditing({
       ...workout,
       exercises: workout.exercises || [],
+      tags: workout.tags || [],
     });
     setError(null);
     setSaveMsg('');
@@ -115,7 +117,8 @@ export default function WorkoutAdmin() {
     setSaveMsg('');
     try {
       const token = await getIdToken();
-      const payload = { ...editing };
+      const cleanTags = editing.tags.filter((t) => t.trim());
+      const payload = { ...editing, tags: cleanTags };
 
       if (editing.id) {
         await updateWorkout(editing.id, payload, token);
@@ -160,6 +163,26 @@ export default function WorkoutAdmin() {
 
   const updateEditing = (field, value) => {
     setEditing((prev) => ({ ...prev, [field]: value }));
+  };
+
+  // Tag helpers
+  const addTag = () => {
+    setEditing((prev) => ({ ...prev, tags: [...prev.tags, ''] }));
+  };
+
+  const updateTag = (index, value) => {
+    setEditing((prev) => {
+      const tags = [...prev.tags];
+      tags[index] = value;
+      return { ...prev, tags };
+    });
+  };
+
+  const removeTag = (index) => {
+    setEditing((prev) => ({
+      ...prev,
+      tags: prev.tags.filter((_, i) => i !== index),
+    }));
   };
 
   // Exercise picker handlers
@@ -306,6 +329,11 @@ export default function WorkoutAdmin() {
                     <span className="workout-admin-exercises">
                       {w.exercises?.length || 0} exercise{(w.exercises?.length || 0) !== 1 ? 's' : ''}
                     </span>
+                    {w.tags?.length > 0 && (
+                      <span className="workout-admin-tags">
+                        {w.tags.join(', ')}
+                      </span>
+                    )}
                   </div>
                 </div>
 
@@ -490,6 +518,22 @@ export default function WorkoutAdmin() {
               />
             )}
           </div>
+        </div>
+
+        {/* Tags */}
+        <div className="workout-editor-card">
+          <h3>Tags</h3>
+          {editing.tags.map((tag, i) => (
+            <div key={i} className="content-inline-group">
+              <input
+                value={tag}
+                onChange={(e) => updateTag(i, e.target.value)}
+                placeholder="e.g., Indoor, Outdoor, Home, Gym"
+              />
+              <button className="content-remove-btn" onClick={() => removeTag(i)}>x</button>
+            </div>
+          ))}
+          <button className="btn ghost content-add-btn" onClick={addTag}>+ Add Tag</button>
         </div>
 
         {/* Exercises */}

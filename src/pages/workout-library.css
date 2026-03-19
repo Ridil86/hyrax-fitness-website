@@ -300,3 +300,21 @@
     gap: 16px;
   }
 }
+
+/* Tag badges on workout cards */
+.workout-card-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  margin-top: 6px;
+}
+
+.workout-card-tag {
+  display: inline-block;
+  padding: 2px 8px;
+  border-radius: 999px;
+  font-size: .72rem;
+  font-weight: 500;
+  background: rgba(242, 133, 1, .1);
+  color: var(--earth);
+}

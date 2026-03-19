@@ -87,6 +87,11 @@
   color: var(--sand);
 }
 
+.exercise-admin-tags {
+  font-size: .78rem;
+  color: var(--sand);
+}
+
 /* Actions */
 .exercise-admin-actions {
   display: flex;

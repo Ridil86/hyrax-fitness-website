@@ -16,7 +16,7 @@ const DIFFICULTIES = ['beginner', 'intermediate', 'advanced', 'elite'];
 const EMPTY_MODIFICATION = { subName: '', description: '', imageUrl: '', notes: '', equipment: [] };
 
 const EMPTY_EXERCISE = {
-  name: '', description: '', imageUrl: '', notes: '', sortOrder: 999,
+  name: '', description: '', imageUrl: '', notes: '', sortOrder: 999, tags: [],
   modifications: {
     beginner: { ...EMPTY_MODIFICATION },
     intermediate: { ...EMPTY_MODIFICATION },
@@ -95,6 +95,7 @@ export default function ExerciseAdmin() {
   const handleEdit = (item) => {
     setEditing({
       ...item,
+      tags: item.tags || [],
       modifications: mergeModifications(item.modifications),
     });
     setExpandedPanels({});
@@ -120,7 +121,8 @@ export default function ExerciseAdmin() {
     setSaveMsg('');
     try {
       const token = await getIdToken();
-      const payload = { ...editing };
+      const cleanTags = editing.tags.filter((t) => t.trim());
+      const payload = { ...editing, tags: cleanTags };
 
       if (editing.id) {
         await updateExerciseApi(editing.id, payload, token);
@@ -184,6 +186,25 @@ export default function ExerciseAdmin() {
 
   const updateEditing = (field, value) => {
     setEditing((prev) => ({ ...prev, [field]: value }));
+  };
+
+  const addTag = () => {
+    setEditing((prev) => ({ ...prev, tags: [...prev.tags, ''] }));
+  };
+
+  const updateTag = (index, value) => {
+    setEditing((prev) => {
+      const tags = [...prev.tags];
+      tags[index] = value;
+      return { ...prev, tags };
+    });
+  };
+
+  const removeTag = (index) => {
+    setEditing((prev) => ({
+      ...prev,
+      tags: prev.tags.filter((_, i) => i !== index),
+    }));
   };
 
   const updateModification = (difficulty, field, value) => {
@@ -293,6 +314,11 @@ export default function ExerciseAdmin() {
                       <span className="exercise-admin-mod-count">
                         {countFilledModifications(item.modifications)}/4 modifications
                       </span>
+                      {item.tags?.length > 0 && (
+                        <span className="exercise-admin-tags">
+                          {item.tags.length} tag{item.tags.length !== 1 ? 's' : ''}
+                        </span>
+                      )}
                       {item.sortOrder !== undefined && (
                         <span className="exercise-admin-sort">
                           Sort: {item.sortOrder}
@@ -445,6 +471,22 @@ export default function ExerciseAdmin() {
               style={{ maxWidth: 120 }}
             />
           </div>
+        </div>
+
+        {/* Tags */}
+        <div className="exercise-admin-editor-card">
+          <h3>Tags</h3>
+          {editing.tags.map((tag, i) => (
+            <div key={i} className="content-inline-group">
+              <input
+                value={tag}
+                onChange={(e) => updateTag(i, e.target.value)}
+                placeholder="e.g., Indoor, Outdoor, Home, Gym"
+              />
+              <button className="content-remove-btn" onClick={() => removeTag(i)}>x</button>
+            </div>
+          ))}
+          <button className="btn ghost content-add-btn" onClick={addTag}>+ Add Tag</button>
         </div>
 
         {/* Section 2 - Modifications */}

@@ -171,6 +171,9 @@ export default function WorkoutDetail() {
                 </span>
               ))}
             </span>
+            {workout.tags?.length > 0 && workout.tags.map((tag, i) => (
+              <span key={i} className="workout-detail-badge">{tag}</span>
+            ))}
           </motion.div>
         </div>
       </div>

@@ -527,6 +527,13 @@
   padding: 3px 0;
 }
 
+.workout-admin-tags {
+  font-size: .78rem;
+  color: var(--sand);
+  margin-top: 4px;
+  display: block;
+}
+
 .workout-derived-empty {
   font-size: .85rem;
   color: var(--sand);

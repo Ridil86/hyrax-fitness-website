@@ -99,6 +99,7 @@ export async function createExercise(
       imageUrl: body.imageUrl || '',
       notes: body.notes || '',
       modifications: body.modifications || {},
+      tags: body.tags || [],
       sortOrder: body.sortOrder ?? 999,
       createdAt: now,
       updatedAt: now,
@@ -138,7 +139,7 @@ export async function updateExercise(
       ':updatedAt': new Date().toISOString(),
     };
 
-    const allowedFields = ['name', 'description', 'imageUrl', 'notes', 'modifications', 'sortOrder'];
+    const allowedFields = ['name', 'description', 'imageUrl', 'notes', 'modifications', 'tags', 'sortOrder'];
 
     for (const field of allowedFields) {
       if (body[field] !== undefined) {

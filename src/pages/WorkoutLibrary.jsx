@@ -43,7 +43,8 @@ export default function WorkoutLibrary() {
         (w) =>
           w.title?.toLowerCase().includes(q) ||
           w.description?.toLowerCase().includes(q) ||
-          w.category?.toLowerCase().includes(q)
+          w.category?.toLowerCase().includes(q) ||
+          w.tags?.some((t) => t.toLowerCase().includes(q))
       );
     }
 
@@ -204,6 +205,16 @@ export default function WorkoutLibrary() {
                             {DIFFICULTY_ICONS[workout.difficulty] || ''}
                           </span>
                         </div>
+                        {workout.tags?.length > 0 && (
+                          <div className="workout-card-tags">
+                            {workout.tags.slice(0, 3).map((tag, ti) => (
+                              <span key={ti} className="workout-card-tag">{tag}</span>
+                            ))}
+                            {workout.tags.length > 3 && (
+                              <span className="workout-card-tag">+{workout.tags.length - 3}</span>
+                            )}
+                          </div>
+                        )}
                       </div>
                     </article>
                   </Link>
