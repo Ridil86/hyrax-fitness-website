@@ -218,6 +218,13 @@ export default function Dashboard() {
               <p>View compliance events and cookie consent tracking</p>
             </div>
           </Link>
+          <Link to="/admin/analytics" className="dashboard-link-card">
+            <span className="dashboard-link-icon">&#128202;</span>
+            <div>
+              <strong>Analytics</strong>
+              <p>Platform-wide completion trends, popular content, and user engagement</p>
+            </div>
+          </Link>
           <Link to="/admin/billing" className="dashboard-link-card">
             <span className="dashboard-link-icon">&#128176;</span>
             <div>

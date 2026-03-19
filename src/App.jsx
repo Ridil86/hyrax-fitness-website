@@ -40,6 +40,7 @@ const WorkoutAdmin = lazy(() => import('./pages/admin/WorkoutAdmin'));
 const VideoAdmin = lazy(() => import('./pages/admin/VideoAdmin'));
 const Billing = lazy(() => import('./pages/admin/Billing'));
 const TierAdmin = lazy(() => import('./pages/admin/TierAdmin'));
+const Analytics = lazy(() => import('./pages/admin/Analytics'));
 
 // Workout library pages
 const WorkoutLibrary = lazy(() => import('./pages/WorkoutLibrary'));
@@ -201,6 +202,7 @@ export default function App() {
               <Route path="videos" element={<LazySection><VideoAdmin /></LazySection>} />
               <Route path="billing" element={<LazySection><Billing /></LazySection>} />
               <Route path="tiers" element={<LazySection><TierAdmin /></LazySection>} />
+              <Route path="analytics" element={<LazySection><Analytics /></LazySection>} />
               <Route path="community" element={<LazySection><CommunityAdmin /></LazySection>} />
               <Route path="support" element={<LazySection><SupportAdmin /></LazySection>} />
               <Route path="merch" element={<LazySection><Merch /></LazySection>} />

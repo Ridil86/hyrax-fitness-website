@@ -9,6 +9,7 @@ import '../pages/admin/exercise-admin.css';
 import '../pages/admin/workout-admin.css';
 import '../pages/admin/community-admin.css';
 import '../pages/admin/support-admin.css';
+import '../pages/admin/analytics.css';
 
 const navItems = [
   { to: '/admin', label: 'Dashboard', icon: '\u2302' },       // house
@@ -21,6 +22,7 @@ const navItems = [
   { to: '/admin/videos', label: 'Videos', icon: '\u25B6' },
   { to: '/admin/community', label: 'Community', icon: '\u2709' },
   { to: '/admin/support', label: 'Support', icon: '\u2753' },
+  { to: '/admin/analytics', label: 'Analytics', icon: '\u{1F4CA}' },
   { to: '/admin/billing', label: 'Billing', icon: '$' },
   { to: '/admin/tiers', label: 'Tiers', icon: '\u2261' },
   { to: '/admin/merch', label: 'Merch', icon: '\u2605' },      // star

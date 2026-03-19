@@ -680,6 +680,20 @@ export class BackendStack extends cdk.Stack {
 
     // Admin billing routes
     const adminResource = apiResource.addResource('admin');
+
+    // Admin analytics routes
+    const analyticsResource = adminResource.addResource('analytics');
+    const analyticsOverview = analyticsResource.addResource('overview');
+    analyticsOverview.addMethod('GET', lambdaIntegration, {
+      authorizer,
+      authorizationType: apigateway.AuthorizationType.COGNITO,
+    });
+    const analyticsTrends = analyticsResource.addResource('trends');
+    analyticsTrends.addMethod('GET', lambdaIntegration, {
+      authorizer,
+      authorizationType: apigateway.AuthorizationType.COGNITO,
+    });
+
     const billingResource = adminResource.addResource('billing');
 
     const billingStats = billingResource.addResource('stats');

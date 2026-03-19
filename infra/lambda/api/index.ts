@@ -32,6 +32,7 @@ import {
 import {
   createLog, createWorkoutLog, listUserLogs, getLogStats, getExerciseHistory, getCalendarData, deleteLog,
 } from './routes/completion-log';
+import { getAnalyticsOverview, getAnalyticsTrends } from './routes/admin-analytics';
 import { notFound, serverError } from './utils/response';
 
 export const handler = async (
@@ -243,6 +244,15 @@ export const handler = async (
 
     if (path === '/api/stripe/cancel-subscription' && method === 'POST') {
       return cancelSubscription(event);
+    }
+
+    // ── Admin Analytics Routes ──
+    if (path === '/api/admin/analytics/overview' && method === 'GET') {
+      return getAnalyticsOverview(event);
+    }
+
+    if (path === '/api/admin/analytics/trends' && method === 'GET') {
+      return getAnalyticsTrends(event);
     }
 
     // ── Admin Billing Routes ──

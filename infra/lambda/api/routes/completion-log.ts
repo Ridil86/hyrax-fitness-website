@@ -4,6 +4,7 @@ import {
   QueryCommand,
   PutCommand,
   DeleteCommand,
+  UpdateCommand,
   BatchWriteCommand,
 } from '@aws-sdk/lib-dynamodb';
 import type { APIGatewayProxyEvent, APIGatewayProxyResult } from 'aws-lambda';
@@ -13,6 +14,70 @@ import { randomUUID } from 'crypto';
 
 const client = DynamoDBDocumentClient.from(new DynamoDBClient({}));
 const TABLE_NAME = process.env.TABLE_NAME!;
+
+/**
+ * Update pre-computed aggregate stats records.
+ * Called after creating or deleting a log. `delta` is +1 or -1.
+ */
+async function updateAggregates(
+  log: { exerciseId?: string; workoutId?: string; userSub?: string; sets?: number; reps?: number; rpe?: number; completedAt?: string },
+  delta: number
+) {
+  const date = (log.completedAt || new Date().toISOString()).slice(0, 10);
+  const month = date.slice(0, 7);
+
+  const updates = [];
+
+  // Daily total
+  updates.push(
+    client.send(new UpdateCommand({
+      TableName: TABLE_NAME,
+      Key: { pk: 'STATS', sk: `DAILY#${date}` },
+      UpdateExpression: 'ADD #cnt :d',
+      ExpressionAttributeNames: { '#cnt': 'count' },
+      ExpressionAttributeValues: { ':d': delta },
+    }))
+  );
+
+  // Monthly total
+  updates.push(
+    client.send(new UpdateCommand({
+      TableName: TABLE_NAME,
+      Key: { pk: 'STATS', sk: `MONTHLY#${month}` },
+      UpdateExpression: 'ADD #cnt :d',
+      ExpressionAttributeNames: { '#cnt': 'count' },
+      ExpressionAttributeValues: { ':d': delta },
+    }))
+  );
+
+  // Per-exercise monthly
+  if (log.exerciseId) {
+    updates.push(
+      client.send(new UpdateCommand({
+        TableName: TABLE_NAME,
+        Key: { pk: 'STATS', sk: `EXERCISE#${log.exerciseId}#${month}` },
+        UpdateExpression: 'ADD #cnt :d, #sets :s, #reps :r SET #name = if_not_exists(#name, :empty)',
+        ExpressionAttributeNames: { '#cnt': 'count', '#sets': 'totalSets', '#reps': 'totalReps', '#name': 'exerciseName' },
+        ExpressionAttributeValues: { ':d': delta, ':s': (log.sets || 0) * delta, ':r': (log.reps || 0) * delta, ':empty': '' },
+      }))
+    );
+  }
+
+  // Per-workout monthly
+  if (log.workoutId) {
+    updates.push(
+      client.send(new UpdateCommand({
+        TableName: TABLE_NAME,
+        Key: { pk: 'STATS', sk: `WORKOUT#${log.workoutId}#${month}` },
+        UpdateExpression: 'ADD #cnt :d SET #name = if_not_exists(#name, :empty)',
+        ExpressionAttributeNames: { '#cnt': 'count', '#name': 'workoutTitle' },
+        ExpressionAttributeValues: { ':d': delta, ':empty': '' },
+      }))
+    );
+  }
+
+  await Promise.allSettled(updates);
+}
 
 /**
  * POST /api/logs - Create a single exercise completion log
@@ -68,6 +133,9 @@ export async function createLog(
     await client.send(
       new PutCommand({ TableName: TABLE_NAME, Item: cleanItem })
     );
+
+    // Update aggregates (fire-and-forget)
+    updateAggregates(item, 1).catch(() => {});
 
     return created(cleanItem);
   } catch (error) {
@@ -150,6 +218,9 @@ export async function createWorkoutLog(
         })
       );
     }
+
+    // Update aggregates for each log (fire-and-forget)
+    Promise.allSettled(logs.map((log) => updateAggregates(log as any, 1))).catch(() => {});
 
     return created({ sessionId, count: logs.length, logs });
   } catch (error) {
@@ -397,6 +468,9 @@ export async function deleteLog(
         Key: { pk: log.pk, sk: log.sk },
       })
     );
+
+    // Decrement aggregates (fire-and-forget)
+    updateAggregates(log, -1).catch(() => {});
 
     return success({ deleted: true, id });
   } catch (error) {
