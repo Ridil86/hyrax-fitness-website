@@ -1,0 +1,424 @@
+/* ── Exercise Admin ── */
+
+/* Toolbar */
+.exercise-admin-toolbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 20px;
+}
+
+.exercise-admin-count {
+  font-size: .88rem;
+  color: var(--rock);
+}
+
+/* Card list */
+.exercise-admin-list {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.exercise-admin-card {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 18px 20px;
+  border-radius: var(--radius);
+  border: 1px solid rgba(27, 18, 10, .08);
+  background: rgba(255, 255, 255, .55);
+  box-shadow: var(--shadow-soft);
+  transition: border-color .15s;
+}
+
+.exercise-admin-card:hover {
+  border-color: var(--sand);
+}
+
+.exercise-admin-card-main {
+  display: flex;
+  gap: 16px;
+  flex: 1;
+  min-width: 0;
+}
+
+.exercise-admin-thumb {
+  width: 72px;
+  height: 72px;
+  border-radius: 10px;
+  object-fit: cover;
+  flex-shrink: 0;
+}
+
+.exercise-admin-card-info {
+  flex: 1;
+  min-width: 0;
+}
+
+.exercise-admin-card-info h3 {
+  margin: 0 0 6px;
+  font-size: 1rem;
+  color: var(--ink);
+}
+
+.exercise-admin-desc {
+  margin: 0 0 6px;
+  font-size: .85rem;
+  color: var(--rock);
+  line-height: 1.4;
+}
+
+.exercise-admin-meta {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.exercise-admin-mod-count {
+  font-size: .8rem;
+  color: var(--earth);
+  font-weight: 600;
+}
+
+.exercise-admin-sort {
+  font-size: .78rem;
+  color: var(--sand);
+}
+
+/* Actions */
+.exercise-admin-actions {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  flex-shrink: 0;
+}
+
+.exercise-admin-actions .btn.small {
+  font-size: .8rem;
+  padding: 5px 14px;
+}
+
+.exercise-admin-actions .btn.danger {
+  color: #dc2626;
+}
+
+.exercise-confirm-delete {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: .8rem;
+  color: #dc2626;
+}
+
+/* ── Editor ── */
+.exercise-admin-editor {
+  max-width: 840px;
+}
+
+/* Card-based editor sections */
+.exercise-admin-editor-card {
+  background: #fff;
+  border-radius: var(--radius);
+  box-shadow: var(--shadow-soft);
+  padding: 28px;
+  margin-bottom: 20px;
+}
+
+.exercise-admin-editor-card h3 {
+  font-size: 1rem;
+  margin: 0 0 20px;
+  color: var(--ink);
+  border-bottom: 1px solid rgba(27, 18, 10, .08);
+  padding-bottom: 10px;
+}
+
+/* Form field overrides inside editor cards */
+.exercise-admin-editor-card .content-field {
+  margin-bottom: 16px;
+}
+
+.exercise-admin-editor-card .content-field label {
+  display: block;
+  font-size: .82rem;
+  font-weight: 600;
+  color: rgba(27, 18, 10, .55);
+  margin-bottom: 4px;
+  text-transform: uppercase;
+  letter-spacing: .03em;
+}
+
+.exercise-admin-editor-card .content-field input,
+.exercise-admin-editor-card .content-field textarea {
+  display: block;
+  width: 100%;
+  padding: 8px 12px;
+  border: 1px solid rgba(27, 18, 10, .12);
+  border-radius: 8px;
+  font: inherit;
+  font-size: .92rem;
+  background: #fff;
+  resize: vertical;
+}
+
+.exercise-admin-editor-card .content-field input:focus,
+.exercise-admin-editor-card .content-field textarea:focus {
+  outline: none;
+  border-color: var(--sunset);
+  box-shadow: var(--ring);
+}
+
+/* Image field */
+.exercise-admin-image-field {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+}
+
+.exercise-admin-image-field input {
+  flex: 1;
+}
+
+.exercise-admin-image-preview-wrap {
+  margin-top: 10px;
+  display: flex;
+  align-items: flex-end;
+  gap: 12px;
+}
+
+.exercise-admin-image-preview {
+  max-width: 220px;
+  max-height: 130px;
+  border-radius: 10px;
+  object-fit: cover;
+  border: 1px solid rgba(27, 18, 10, .08);
+}
+
+/* Editor actions bar */
+.exercise-admin-editor-actions {
+  background: #fff;
+  border-radius: var(--radius);
+  box-shadow: var(--shadow-soft);
+  padding: 18px 28px;
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 10px;
+}
+
+/* ── Modification Panels ── */
+.exercise-admin-mod-panel {
+  border: 1px solid rgba(27, 18, 10, .08);
+  border-radius: 12px;
+  margin-bottom: 12px;
+  overflow: hidden;
+}
+
+.exercise-admin-mod-panel:last-child {
+  margin-bottom: 0;
+}
+
+.exercise-admin-mod-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+  padding: 14px 18px;
+  background: rgba(27, 18, 10, .02);
+  border: none;
+  cursor: pointer;
+  font: inherit;
+  text-align: left;
+  transition: background .15s;
+}
+
+.exercise-admin-mod-header:hover {
+  background: rgba(27, 18, 10, .05);
+}
+
+.exercise-admin-mod-header-left {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.exercise-admin-mod-dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+.exercise-admin-mod-dot.filled {
+  background: #22c55e;
+}
+
+.exercise-admin-mod-dot.empty {
+  background: #d1d5db;
+}
+
+.exercise-admin-mod-title {
+  font-weight: 600;
+  font-size: .95rem;
+  color: var(--ink);
+}
+
+.exercise-admin-mod-sub {
+  font-size: .82rem;
+  color: var(--rock);
+  font-style: italic;
+}
+
+.exercise-admin-mod-chevron {
+  font-size: .7rem;
+  color: var(--rock);
+  transition: transform .2s ease;
+}
+
+.exercise-admin-mod-chevron.open {
+  transform: rotate(180deg);
+}
+
+/* Collapsible body */
+.exercise-admin-mod-body {
+  max-height: 0;
+  overflow: hidden;
+  transition: max-height .3s ease;
+}
+
+.exercise-admin-mod-body.expanded {
+  max-height: 1200px;
+}
+
+.exercise-admin-mod-body-inner {
+  padding: 18px;
+  border-top: 1px solid rgba(27, 18, 10, .06);
+}
+
+/* ── Equipment Multi-Select ── */
+.exercise-admin-equip-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-bottom: 10px;
+}
+
+.exercise-admin-equip-tag {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 10px;
+  background: var(--sand);
+  color: var(--ink);
+  border-radius: 20px;
+  font-size: .82rem;
+  font-weight: 500;
+}
+
+.exercise-admin-equip-tag-remove {
+  background: none;
+  border: none;
+  cursor: pointer;
+  font-size: 1rem;
+  line-height: 1;
+  color: var(--rock);
+  padding: 0;
+  display: flex;
+  align-items: center;
+  transition: color .15s;
+}
+
+.exercise-admin-equip-tag-remove:hover {
+  color: #dc2626;
+}
+
+.exercise-admin-equip-search {
+  display: block;
+  width: 100%;
+  padding: 7px 12px;
+  border: 1px solid rgba(27, 18, 10, .12);
+  border-radius: 8px;
+  font: inherit;
+  font-size: .88rem;
+  background: #fff;
+  margin-bottom: 8px;
+}
+
+.exercise-admin-equip-search:focus {
+  outline: none;
+  border-color: var(--sunset);
+  box-shadow: var(--ring);
+}
+
+.exercise-admin-equip-list {
+  max-height: 180px;
+  overflow-y: auto;
+  border: 1px solid rgba(27, 18, 10, .08);
+  border-radius: 8px;
+  background: rgba(255, 255, 255, .6);
+}
+
+.exercise-admin-equip-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 7px 12px;
+  cursor: pointer;
+  font-size: .88rem;
+  color: var(--ink);
+  transition: background .1s;
+}
+
+.exercise-admin-equip-item:hover {
+  background: rgba(27, 18, 10, .03);
+}
+
+.exercise-admin-equip-item input[type="checkbox"] {
+  accent-color: var(--sunset);
+  width: 16px;
+  height: 16px;
+  flex-shrink: 0;
+}
+
+.exercise-admin-equip-empty {
+  padding: 12px;
+  text-align: center;
+  font-size: .84rem;
+  color: var(--rock);
+  margin: 0;
+}
+
+/* ── Responsive ── */
+@media (max-width: 768px) {
+  .exercise-admin-card {
+    flex-direction: column;
+  }
+
+  .exercise-admin-actions {
+    flex-direction: row;
+    width: 100%;
+  }
+
+  .exercise-admin-editor-card {
+    padding: 20px;
+  }
+
+  .exercise-admin-editor-actions {
+    padding: 14px 20px;
+  }
+
+  .exercise-admin-mod-body-inner {
+    padding: 14px;
+  }
+}
+
+@media (max-width: 480px) {
+  .exercise-admin-editor-card {
+    padding: 16px;
+  }
+
+  .exercise-admin-mod-header {
+    padding: 12px 14px;
+  }
+}

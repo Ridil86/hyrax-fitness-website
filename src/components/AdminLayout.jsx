@@ -4,6 +4,8 @@ import './AdminLayout.css';
 
 /* Pre-load CSS for lazy-loaded admin pages to prevent FOUC race condition */
 import '../pages/admin/video-admin.css';
+import '../pages/admin/equipment-admin.css';
+import '../pages/admin/exercise-admin.css';
 import '../pages/admin/workout-admin.css';
 import '../pages/admin/community-admin.css';
 import '../pages/admin/support-admin.css';
@@ -13,6 +15,8 @@ const navItems = [
   { to: '/admin/users', label: 'Users', icon: '\u263A' },     // smiley
   { to: '/admin/content', label: 'Content', icon: '\u270E' }, // pencil
   { to: '/admin/faq', label: 'FAQ', icon: '?' },
+  { to: '/admin/equipment', label: 'Equipment', icon: '\u2692' },
+  { to: '/admin/exercises', label: 'Exercises', icon: '\u26A1' },
   { to: '/admin/workouts', label: 'Workouts', icon: '\u270A' },
   { to: '/admin/videos', label: 'Videos', icon: '\u25B6' },
   { to: '/admin/community', label: 'Community', icon: '\u2709' },

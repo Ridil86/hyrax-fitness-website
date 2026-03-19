@@ -3,6 +3,8 @@ import { Link } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import { fetchUsers } from '../../api/users';
 import { fetchFaqs } from '../../api/faq';
+import { fetchEquipment } from '../../api/equipment';
+import { fetchExercises } from '../../api/exercises';
 import { fetchWorkouts } from '../../api/workouts';
 import { fetchVideos } from '../../api/videos';
 import { fetchCommunityStats } from '../../api/community';
@@ -12,7 +14,7 @@ import './dashboard.css';
 
 export default function Dashboard() {
   const { getIdToken } = useAuth();
-  const [stats, setStats] = useState({ users: null, faq: null, workouts: null, videos: null, threads: null, pendingReports: null, openTickets: null });
+  const [stats, setStats] = useState({ users: null, faq: null, equipment: null, exercises: null, workouts: null, videos: null, threads: null, pendingReports: null, openTickets: null });
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -21,9 +23,11 @@ export default function Dashboard() {
     async function loadStats() {
       try {
         const token = await getIdToken();
-        const [usersResult, faqResult, workoutsResult, videosResult, communityResult, supportResult] = await Promise.allSettled([
+        const [usersResult, faqResult, equipmentResult, exercisesResult, workoutsResult, videosResult, communityResult, supportResult] = await Promise.allSettled([
           fetchUsers({ limit: 60 }, token),
           fetchFaqs(),
+          fetchEquipment(token),
+          fetchExercises(token),
           fetchWorkouts(token),
           fetchVideos(token),
           fetchCommunityStats(token),
@@ -41,6 +45,14 @@ export default function Dashboard() {
 
         const faqCount = faqResult.status === 'fulfilled'
           ? (faqResult.value || []).length
+          : null;
+
+        const equipmentCount = equipmentResult.status === 'fulfilled'
+          ? (equipmentResult.value || []).length
+          : null;
+
+        const exerciseCount = exercisesResult.status === 'fulfilled'
+          ? (exercisesResult.value || []).length
           : null;
 
         const workoutCount = workoutsResult.status === 'fulfilled'
@@ -63,7 +75,7 @@ export default function Dashboard() {
           ? supportResult.value.openCount
           : null;
 
-        setStats({ users: userCount, faq: faqCount, workouts: workoutCount, videos: videoCount, threads: threadCount, pendingReports, openTickets });
+        setStats({ users: userCount, faq: faqCount, equipment: equipmentCount, exercises: exerciseCount, workouts: workoutCount, videos: videoCount, threads: threadCount, pendingReports, openTickets });
       } catch {
         // Stats load is best-effort
       } finally {
@@ -97,6 +109,18 @@ export default function Dashboard() {
           <div className="stat-label">FAQ Items</div>
           <div className="stat-value">
             {loading ? <span className="stat-loading" /> : (stats.faq ?? '--')}
+          </div>
+        </div>
+        <div className="admin-stat-card">
+          <div className="stat-label">Equipment</div>
+          <div className="stat-value">
+            {loading ? <span className="stat-loading" /> : (stats.equipment ?? '--')}
+          </div>
+        </div>
+        <div className="admin-stat-card">
+          <div className="stat-label">Exercises</div>
+          <div className="stat-value">
+            {loading ? <span className="stat-loading" /> : (stats.exercises ?? '--')}
           </div>
         </div>
         <div className="admin-stat-card">
@@ -157,6 +181,20 @@ export default function Dashboard() {
             <div>
               <strong>Content CMS</strong>
               <p>Edit site content, text, and images for all sections</p>
+            </div>
+          </Link>
+          <Link to="/admin/equipment" className="dashboard-link-card">
+            <span className="dashboard-link-icon">&#9874;</span>
+            <div>
+              <strong>Equipment</strong>
+              <p>Manage equipment types used in exercises and workouts</p>
+            </div>
+          </Link>
+          <Link to="/admin/exercises" className="dashboard-link-card">
+            <span className="dashboard-link-icon">&#9889;</span>
+            <div>
+              <strong>Exercises</strong>
+              <p>Create exercises with difficulty modifications and equipment</p>
             </div>
           </Link>
           <Link to="/admin/workouts" className="dashboard-link-card">

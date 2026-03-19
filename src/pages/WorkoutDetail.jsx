@@ -1,11 +1,14 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { useAuth } from '../context/AuthContext';
 import { fetchWorkout } from '../api/workouts';
+import { fetchExercises } from '../api/exercises';
 import { downloadWorkoutPdf } from '../utils/workoutPdf';
 import { hasTierAccess, getRequiredTierInfo } from '../utils/tiers';
 import './workout-detail.css';
+
+const DIFFICULTIES = ['beginner', 'intermediate', 'advanced', 'elite'];
 
 const DIFFICULTY_STARS = {
   beginner: 1,
@@ -21,6 +24,11 @@ export default function WorkoutDetail() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
+  // Difficulty adjustment state
+  const [activeDifficulty, setActiveDifficulty] = useState(null);
+  const [exerciseOverrides, setExerciseOverrides] = useState({});
+  const [exerciseData, setExerciseData] = useState({});
+
   useEffect(() => {
     let cancelled = false;
 
@@ -30,7 +38,24 @@ export default function WorkoutDetail() {
       try {
         const token = await getIdToken();
         const data = await fetchWorkout(id, token);
-        if (!cancelled) setWorkout(data);
+        if (!cancelled) {
+          setWorkout(data);
+          setActiveDifficulty(data.difficulty);
+        }
+
+        // Load full exercise data for referenced exercises
+        if (data.exercises?.some((e) => e.exerciseId)) {
+          try {
+            const allExercises = await fetchExercises(token);
+            if (!cancelled) {
+              const map = {};
+              allExercises.forEach((e) => { map[e.id] = e; });
+              setExerciseData(map);
+            }
+          } catch {
+            // Exercise data is best-effort
+          }
+        }
       } catch (err) {
         if (!cancelled) setError(err.message || 'Failed to load workout');
       } finally {
@@ -41,6 +66,30 @@ export default function WorkoutDetail() {
     load();
     return () => { cancelled = true; };
   }, [id, getIdToken]);
+
+  // Derive equipment from exercises at current difficulty
+  const derivedEquipment = useMemo(() => {
+    if (!workout?.exercises) return [];
+    const equipMap = new Map();
+
+    workout.exercises.forEach((ex) => {
+      if (!ex.exerciseId) return;
+      const full = exerciseData[ex.exerciseId];
+      if (!full?.modifications) return;
+      const diff = exerciseOverrides[ex.exerciseId] || activeDifficulty || workout.difficulty;
+      const mod = full.modifications[diff];
+      if (mod?.equipment) {
+        mod.equipment.forEach((eq) => {
+          equipMap.set(eq.equipmentId, eq.equipmentName);
+        });
+      }
+    });
+
+    return Array.from(equipMap.values());
+  }, [workout, exerciseData, exerciseOverrides, activeDifficulty]);
+
+  // Check if we have any referenced exercises (vs all legacy)
+  const hasReferencedExercises = workout?.exercises?.some((e) => e.exerciseId);
 
   if (loading) {
     return (
@@ -71,9 +120,14 @@ export default function WorkoutDetail() {
     );
   }
 
-  const stars = DIFFICULTY_STARS[workout.difficulty] || 2;
+  const stars = DIFFICULTY_STARS[activeDifficulty || workout.difficulty] || 2;
   const locked = !isAdmin && !hasTierAccess(userTier, workout.requiredTier);
   const requiredInfo = locked ? getRequiredTierInfo(workout.requiredTier) : null;
+
+  // Show legacy equipment or derived equipment
+  const equipmentList = hasReferencedExercises
+    ? derivedEquipment
+    : (workout.equipment || []);
 
   return (
     <div className="workout-detail">
@@ -106,7 +160,7 @@ export default function WorkoutDetail() {
             transition={{ duration: 0.45, delay: 0.1 }}
           >
             <span className="workout-detail-badge">{workout.category}</span>
-            <span className="workout-detail-badge">{workout.difficulty}</span>
+            <span className="workout-detail-badge">{activeDifficulty || workout.difficulty}</span>
             {workout.duration && (
               <span className="workout-detail-badge">&#9201; {workout.duration}</span>
             )}
@@ -167,6 +221,36 @@ export default function WorkoutDetail() {
                 </motion.section>
               )}
 
+              {/* Difficulty Selector */}
+              {hasReferencedExercises && (
+                <motion.section
+                  className="workout-detail-section"
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ duration: 0.4, delay: 0.18 }}
+                >
+                  <h2>Workout Difficulty</h2>
+                  <div className="workout-difficulty-selector">
+                    {DIFFICULTIES.map((d) => (
+                      <button
+                        key={d}
+                        className={`workout-difficulty-btn${(activeDifficulty || workout.difficulty) === d ? ' active' : ''}`}
+                        onClick={() => {
+                          setActiveDifficulty(d);
+                          setExerciseOverrides({});
+                        }}
+                      >
+                        {d.charAt(0).toUpperCase() + d.slice(1)}
+                      </button>
+                    ))}
+                  </div>
+                  <p className="workout-difficulty-hint">
+                    Is an exercise too difficult? Adjust the difficulty to see a modification that meets your current fitness level.
+                    You can also adjust individual exercises below.
+                  </p>
+                </motion.section>
+              )}
+
               {/* Exercises */}
               {workout.exercises && workout.exercises.length > 0 && (
                 <motion.section
@@ -177,45 +261,107 @@ export default function WorkoutDetail() {
                 >
                   <h2>Exercises</h2>
                   <div className="workout-exercises-list">
-                    {workout.exercises.map((exercise, i) => (
-                      <div key={i} className="workout-exercise-item">
-                        <div className="workout-exercise-number">{i + 1}</div>
-                        <div className="workout-exercise-content">
-                          <h3>{exercise.name}</h3>
+                    {workout.exercises.map((exercise, i) => {
+                      const isLegacy = !exercise.exerciseId;
+                      const full = isLegacy ? null : exerciseData[exercise.exerciseId];
+                      const effectiveDiff = isLegacy
+                        ? null
+                        : exerciseOverrides[exercise.exerciseId] || activeDifficulty || workout.difficulty;
+                      const mod = full?.modifications?.[effectiveDiff];
+                      const displayName = isLegacy ? exercise.name : exercise.exerciseName;
+                      const modImage = mod?.imageUrl || full?.imageUrl;
 
-                          <div className="workout-exercise-stats">
-                            {exercise.sets && (
-                              <div className="workout-stat">
-                                <span className="workout-stat-label">Sets</span>
-                                <span className="workout-stat-value">{exercise.sets}</span>
-                              </div>
+                      return (
+                        <div key={exercise.exerciseId || i} className="workout-exercise-item">
+                          <div className="workout-exercise-number">{i + 1}</div>
+                          <div className="workout-exercise-content">
+                            <div className="workout-exercise-title-row">
+                              <h3>{displayName}</h3>
+                              {!isLegacy && (
+                                <select
+                                  className="workout-exercise-diff-select"
+                                  value={exerciseOverrides[exercise.exerciseId] || effectiveDiff}
+                                  onChange={(e) =>
+                                    setExerciseOverrides((prev) => ({
+                                      ...prev,
+                                      [exercise.exerciseId]: e.target.value,
+                                    }))
+                                  }
+                                >
+                                  {DIFFICULTIES.map((d) => (
+                                    <option key={d} value={d}>
+                                      {d.charAt(0).toUpperCase() + d.slice(1)}
+                                    </option>
+                                  ))}
+                                </select>
+                              )}
+                            </div>
+
+                            {mod?.subName && (
+                              <p className="workout-exercise-mod-name">
+                                Modification: {mod.subName}
+                              </p>
                             )}
-                            {exercise.reps && (
-                              <div className="workout-stat">
-                                <span className="workout-stat-label">Reps</span>
-                                <span className="workout-stat-value">{exercise.reps}</span>
-                              </div>
+
+                            {modImage && (
+                              <img
+                                src={modImage}
+                                alt={mod?.subName || displayName}
+                                className="workout-exercise-mod-image"
+                              />
                             )}
-                            {exercise.rest && (
-                              <div className="workout-stat">
-                                <span className="workout-stat-label">Rest</span>
-                                <span className="workout-stat-value">{exercise.rest}</span>
-                              </div>
+
+                            {mod?.description && (
+                              <p className="workout-exercise-mod-desc">{mod.description}</p>
                             )}
-                            {exercise.duration && (
-                              <div className="workout-stat">
-                                <span className="workout-stat-label">Duration</span>
-                                <span className="workout-stat-value">{exercise.duration}</span>
+
+                            <div className="workout-exercise-stats">
+                              {exercise.sets && (
+                                <div className="workout-stat">
+                                  <span className="workout-stat-label">Sets</span>
+                                  <span className="workout-stat-value">{exercise.sets}</span>
+                                </div>
+                              )}
+                              {exercise.reps && (
+                                <div className="workout-stat">
+                                  <span className="workout-stat-label">Reps</span>
+                                  <span className="workout-stat-value">{exercise.reps}</span>
+                                </div>
+                              )}
+                              {exercise.rest && (
+                                <div className="workout-stat">
+                                  <span className="workout-stat-label">Rest</span>
+                                  <span className="workout-stat-value">{exercise.rest}</span>
+                                </div>
+                              )}
+                              {exercise.duration && (
+                                <div className="workout-stat">
+                                  <span className="workout-stat-label">Duration</span>
+                                  <span className="workout-stat-value">{exercise.duration}</span>
+                                </div>
+                              )}
+                            </div>
+
+                            {(mod?.notes || exercise.notes) && (
+                              <p className="workout-exercise-notes">
+                                {mod?.notes || exercise.notes}
+                              </p>
+                            )}
+
+                            {mod?.equipment && mod.equipment.length > 0 && (
+                              <div className="workout-exercise-equipment">
+                                <span className="workout-exercise-equip-label">Equipment:</span>
+                                {mod.equipment.map((eq) => (
+                                  <span key={eq.equipmentId} className="workout-exercise-equip-tag">
+                                    {eq.equipmentName}
+                                  </span>
+                                ))}
                               </div>
                             )}
                           </div>
-
-                          {exercise.notes && (
-                            <p className="workout-exercise-notes">{exercise.notes}</p>
-                          )}
                         </div>
-                      </div>
-                    ))}
+                      );
+                    })}
                   </div>
                 </motion.section>
               )}
@@ -226,7 +372,7 @@ export default function WorkoutDetail() {
               <div className="workout-sidebar-card">
                 <button
                   className="btn primary workout-download-btn"
-                  onClick={() => downloadWorkoutPdf(workout)}
+                  onClick={() => downloadWorkoutPdf(workout, null, exerciseData)}
                 >
                   &#128196; Download PDF
                 </button>
@@ -236,11 +382,11 @@ export default function WorkoutDetail() {
               </div>
 
               {/* Equipment */}
-              {workout.equipment && workout.equipment.length > 0 && (
+              {equipmentList.length > 0 && (
                 <div className="workout-sidebar-card">
                   <h4>Equipment Needed</h4>
                   <ul className="workout-equipment-list">
-                    {workout.equipment.map((item, i) => (
+                    {equipmentList.map((item, i) => (
                       <li key={i}>{item}</li>
                     ))}
                   </ul>
@@ -257,7 +403,7 @@ export default function WorkoutDetail() {
                   </div>
                   <div>
                     <span className="workout-qs-label">Difficulty</span>
-                    <span className="workout-qs-value">{workout.difficulty}</span>
+                    <span className="workout-qs-value">{activeDifficulty || workout.difficulty}</span>
                   </div>
                   {workout.duration && (
                     <div>

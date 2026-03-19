@@ -1,0 +1,225 @@
+/* ── Equipment Admin ── */
+
+/* Toolbar */
+.equipment-admin-toolbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 20px;
+}
+
+.equipment-admin-count {
+  font-size: .88rem;
+  color: var(--rock);
+}
+
+/* Card list */
+.equipment-admin-list {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.equipment-admin-card {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 18px 20px;
+  border-radius: var(--radius);
+  border: 1px solid rgba(27, 18, 10, .08);
+  background: rgba(255, 255, 255, .55);
+  box-shadow: var(--shadow-soft);
+  transition: border-color .15s;
+}
+
+.equipment-admin-card:hover {
+  border-color: var(--sand);
+}
+
+.equipment-admin-card-main {
+  display: flex;
+  gap: 16px;
+  flex: 1;
+  min-width: 0;
+}
+
+.equipment-admin-thumb {
+  width: 72px;
+  height: 72px;
+  border-radius: 10px;
+  object-fit: cover;
+  flex-shrink: 0;
+}
+
+.equipment-admin-card-info {
+  flex: 1;
+  min-width: 0;
+}
+
+.equipment-admin-card-info h3 {
+  margin: 0 0 6px;
+  font-size: 1rem;
+  color: var(--ink);
+}
+
+.equipment-admin-desc {
+  margin: 0 0 4px;
+  font-size: .85rem;
+  color: var(--rock);
+  line-height: 1.4;
+}
+
+.equipment-admin-notes {
+  margin: 0;
+  font-size: .8rem;
+  color: var(--sand);
+  line-height: 1.4;
+  font-style: italic;
+}
+
+/* Actions */
+.equipment-admin-actions {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  flex-shrink: 0;
+}
+
+.equipment-admin-actions .btn.small {
+  font-size: .8rem;
+  padding: 5px 14px;
+}
+
+.equipment-admin-actions .btn.danger {
+  color: #dc2626;
+}
+
+.equipment-confirm-delete {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: .8rem;
+  color: #dc2626;
+}
+
+/* ── Editor ── */
+.equipment-editor {
+  max-width: 840px;
+}
+
+/* Card-based editor sections */
+.equipment-editor-card {
+  background: #fff;
+  border-radius: var(--radius);
+  box-shadow: var(--shadow-soft);
+  padding: 28px;
+  margin-bottom: 20px;
+}
+
+.equipment-editor-card h3 {
+  font-size: 1rem;
+  margin: 0 0 20px;
+  color: var(--ink);
+  border-bottom: 1px solid rgba(27, 18, 10, .08);
+  padding-bottom: 10px;
+}
+
+/* Form field overrides inside editor cards */
+.equipment-editor-card .content-field {
+  margin-bottom: 16px;
+}
+
+.equipment-editor-card .content-field label {
+  display: block;
+  font-size: .82rem;
+  font-weight: 600;
+  color: rgba(27, 18, 10, .55);
+  margin-bottom: 4px;
+  text-transform: uppercase;
+  letter-spacing: .03em;
+}
+
+.equipment-editor-card .content-field input,
+.equipment-editor-card .content-field textarea {
+  display: block;
+  width: 100%;
+  padding: 8px 12px;
+  border: 1px solid rgba(27, 18, 10, .12);
+  border-radius: 8px;
+  font: inherit;
+  font-size: .92rem;
+  background: #fff;
+  resize: vertical;
+}
+
+.equipment-editor-card .content-field input:focus,
+.equipment-editor-card .content-field textarea:focus {
+  outline: none;
+  border-color: var(--sunset);
+  box-shadow: var(--ring);
+}
+
+/* Image field */
+.equipment-image-field {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+}
+
+.equipment-image-field input {
+  flex: 1;
+}
+
+.equipment-image-preview-wrap {
+  margin-top: 10px;
+  display: flex;
+  align-items: flex-end;
+  gap: 12px;
+}
+
+.equipment-image-preview {
+  max-width: 220px;
+  max-height: 130px;
+  border-radius: 10px;
+  object-fit: cover;
+  border: 1px solid rgba(27, 18, 10, .08);
+}
+
+/* Editor actions bar */
+.equipment-editor-actions {
+  background: #fff;
+  border-radius: var(--radius);
+  box-shadow: var(--shadow-soft);
+  padding: 18px 28px;
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 10px;
+}
+
+/* ── Responsive ── */
+@media (max-width: 768px) {
+  .equipment-admin-card {
+    flex-direction: column;
+  }
+
+  .equipment-admin-actions {
+    flex-direction: row;
+    width: 100%;
+  }
+
+  .equipment-editor-card {
+    padding: 20px;
+  }
+
+  .equipment-editor-actions {
+    padding: 14px 20px;
+  }
+}
+
+@media (max-width: 480px) {
+  .equipment-editor-card {
+    padding: 16px;
+  }
+}

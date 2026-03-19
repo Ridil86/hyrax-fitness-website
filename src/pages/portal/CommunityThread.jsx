@@ -81,7 +81,7 @@ function categoryLabel(catId) {
 
 export default function CommunityThread() {
   const { id } = useParams();
-  const { user, getIdToken } = useAuth();
+  const { getIdToken } = useAuth();
   const [thread, setThread] = useState(null);
   const [replies, setReplies] = useState([]);
   const [loading, setLoading] = useState(true);

@@ -389,3 +389,123 @@
     flex-direction: column;
   }
 }
+
+/* ── Difficulty Selector ── */
+.workout-difficulty-selector {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+  margin-bottom: 12px;
+}
+
+.workout-difficulty-btn {
+  padding: 8px 18px;
+  border-radius: 999px;
+  border: 1px solid rgba(27, 18, 10, .12);
+  background: rgba(255, 255, 255, .6);
+  font: inherit;
+  font-size: .88rem;
+  font-weight: 500;
+  cursor: pointer;
+  color: var(--rock);
+  transition: all .15s;
+}
+
+.workout-difficulty-btn:hover {
+  border-color: var(--sand);
+  background: rgba(242, 133, 1, .06);
+}
+
+.workout-difficulty-btn.active {
+  background: linear-gradient(135deg, var(--sunset), var(--sunrise));
+  color: #fff;
+  border-color: transparent;
+  font-weight: 600;
+}
+
+.workout-difficulty-hint {
+  font-size: .85rem;
+  color: var(--rock);
+  margin: 0;
+  line-height: 1.5;
+  font-style: italic;
+}
+
+/* Exercise title row with per-exercise difficulty selector */
+.workout-exercise-title-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.workout-exercise-title-row h3 {
+  margin: 0;
+  flex: 1;
+}
+
+.workout-exercise-diff-select {
+  padding: 4px 10px;
+  border-radius: 8px;
+  border: 1px solid rgba(27, 18, 10, .12);
+  font: inherit;
+  font-size: .8rem;
+  background: #fff;
+  color: var(--rock);
+  cursor: pointer;
+}
+
+.workout-exercise-diff-select:focus {
+  outline: none;
+  border-color: var(--sunset);
+}
+
+/* Modification display */
+.workout-exercise-mod-name {
+  font-size: .88rem;
+  font-weight: 600;
+  color: var(--sunset);
+  margin: 4px 0 8px;
+}
+
+.workout-exercise-mod-image {
+  width: 100%;
+  max-width: 320px;
+  border-radius: 12px;
+  object-fit: cover;
+  margin-bottom: 10px;
+  border: 1px solid rgba(27, 18, 10, .06);
+}
+
+.workout-exercise-mod-desc {
+  font-size: .88rem;
+  color: var(--rock);
+  line-height: 1.5;
+  margin: 0 0 10px;
+}
+
+/* Equipment tags per exercise */
+.workout-exercise-equipment {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  align-items: center;
+  margin-top: 8px;
+}
+
+.workout-exercise-equip-label {
+  font-size: .78rem;
+  font-weight: 600;
+  color: var(--rock);
+  text-transform: uppercase;
+  letter-spacing: .03em;
+}
+
+.workout-exercise-equip-tag {
+  display: inline-block;
+  padding: 2px 10px;
+  border-radius: 999px;
+  font-size: .78rem;
+  background: rgba(242, 133, 1, .1);
+  color: var(--earth);
+}

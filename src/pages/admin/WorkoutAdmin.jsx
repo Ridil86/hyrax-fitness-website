@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useMemo } from 'react';
 import { useAuth } from '../../context/AuthContext';
 import {
   fetchWorkouts,
@@ -6,6 +6,7 @@ import {
   updateWorkout,
   deleteWorkoutApi,
 } from '../../api/workouts';
+import { fetchExercises } from '../../api/exercises';
 import { uploadFile } from '../../api/upload';
 import { downloadWorkoutPdf } from '../../utils/workoutPdf';
 import './admin.css';
@@ -19,16 +20,13 @@ const TIER_OPTIONS = [
   { value: 'Iron Dassie', label: 'Iron Dassie ($20/mo)' },
 ];
 
-const EMPTY_EXERCISE = { name: '', sets: '', reps: '', rest: '', duration: '', notes: '' };
-
 const EMPTY_WORKOUT = {
   title: '',
   description: '',
   category: 'general',
   difficulty: 'intermediate',
   duration: '',
-  equipment: [],
-  exercises: [{ ...EMPTY_EXERCISE }],
+  exercises: [],
   imageUrl: '',
   requiredTier: 'Pup',
   status: 'draft',
@@ -42,10 +40,15 @@ export default function WorkoutAdmin() {
   const [saveMsg, setSaveMsg] = useState('');
 
   // Editor state
-  const [editing, setEditing] = useState(null); // null = list view, object = editor
+  const [editing, setEditing] = useState(null);
   const [saving, setSaving] = useState(false);
   const [confirmDelete, setConfirmDelete] = useState(null);
   const [uploading, setUploading] = useState(false);
+
+  // Exercise picker state
+  const [allExercises, setAllExercises] = useState([]);
+  const [exercisePickerOpen, setExercisePickerOpen] = useState(false);
+  const [exerciseSearch, setExerciseSearch] = useState('');
 
   const loadWorkouts = useCallback(async () => {
     setLoading(true);
@@ -65,26 +68,40 @@ export default function WorkoutAdmin() {
     loadWorkouts();
   }, [loadWorkouts]);
 
+  // Load exercises when entering editor
+  const loadExercises = useCallback(async () => {
+    try {
+      const token = await getIdToken();
+      const data = await fetchExercises(token);
+      setAllExercises(data);
+    } catch {
+      // Exercises load is best-effort
+    }
+  }, [getIdToken]);
+
   const handleNew = () => {
-    setEditing({ ...EMPTY_WORKOUT, exercises: [{ ...EMPTY_EXERCISE }], equipment: [] });
+    setEditing({ ...EMPTY_WORKOUT, exercises: [] });
     setError(null);
     setSaveMsg('');
+    loadExercises();
   };
 
   const handleEdit = (workout) => {
     setEditing({
       ...workout,
-      exercises: workout.exercises?.length ? workout.exercises : [{ ...EMPTY_EXERCISE }],
-      equipment: workout.equipment || [],
+      exercises: workout.exercises || [],
     });
     setError(null);
     setSaveMsg('');
+    loadExercises();
   };
 
   const handleCancel = () => {
     setEditing(null);
     setError(null);
     setSaveMsg('');
+    setExercisePickerOpen(false);
+    setExerciseSearch('');
   };
 
   const handleSave = async () => {
@@ -93,29 +110,12 @@ export default function WorkoutAdmin() {
       return;
     }
 
-    // Check for exercises with content but no name
-    const hasContentNoName = editing.exercises.some(
-      (e) =>
-        !e.name.trim() &&
-        (e.sets || e.reps || e.rest || e.duration || e.notes)
-    );
-    if (hasContentNoName) {
-      setError(
-        'All exercises must have a name. Please fill in missing exercise names.'
-      );
-      return;
-    }
-
     setSaving(true);
     setError(null);
     setSaveMsg('');
     try {
       const token = await getIdToken();
-      // Filter out completely empty exercises (no fields filled at all)
-      const cleanExercises = editing.exercises.filter(
-        (e) => e.name.trim() || e.sets || e.reps || e.rest || e.duration || e.notes
-      );
-      const payload = { ...editing, exercises: cleanExercises };
+      const payload = { ...editing };
 
       if (editing.id) {
         await updateWorkout(editing.id, payload, token);
@@ -162,19 +162,33 @@ export default function WorkoutAdmin() {
     setEditing((prev) => ({ ...prev, [field]: value }));
   };
 
-  const updateExercise = (index, field, value) => {
+  // Exercise picker handlers
+  const addExerciseRef = (exercise) => {
+    setEditing((prev) => ({
+      ...prev,
+      exercises: [
+        ...prev.exercises,
+        {
+          exerciseId: exercise.id,
+          exerciseName: exercise.name,
+          sets: '',
+          reps: '',
+          rest: '',
+          duration: '',
+          notes: '',
+        },
+      ],
+    }));
+    setExercisePickerOpen(false);
+    setExerciseSearch('');
+  };
+
+  const updateExerciseField = (index, field, value) => {
     setEditing((prev) => {
       const exercises = [...prev.exercises];
       exercises[index] = { ...exercises[index], [field]: value };
       return { ...prev, exercises };
     });
-  };
-
-  const addExercise = () => {
-    setEditing((prev) => ({
-      ...prev,
-      exercises: [...prev.exercises, { ...EMPTY_EXERCISE }],
-    }));
   };
 
   const removeExercise = (index) => {
@@ -194,27 +208,36 @@ export default function WorkoutAdmin() {
     });
   };
 
-  const addEquipment = () => {
-    setEditing((prev) => ({
-      ...prev,
-      equipment: [...prev.equipment, ''],
-    }));
-  };
-
-  const updateEquipment = (index, value) => {
-    setEditing((prev) => {
-      const equipment = [...prev.equipment];
-      equipment[index] = value;
-      return { ...prev, equipment };
+  // Derive equipment from exercises at current difficulty
+  const derivedEquipment = useMemo(() => {
+    if (!editing) return [];
+    const equipMap = new Map();
+    editing.exercises.forEach((ex) => {
+      // Find the full exercise data to get modifications
+      const full = allExercises.find((e) => e.id === ex.exerciseId);
+      if (!full?.modifications) return;
+      const mod = full.modifications[editing.difficulty];
+      if (mod?.equipment) {
+        mod.equipment.forEach((eq) => {
+          equipMap.set(eq.equipmentId, eq.equipmentName);
+        });
+      }
     });
-  };
+    // Also include legacy equipment if present
+    if (editing.equipment) {
+      editing.equipment.forEach((name, i) => {
+        equipMap.set(`legacy-${i}`, name);
+      });
+    }
+    return Array.from(equipMap.entries()).map(([id, name]) => ({ id, name }));
+  }, [editing, allExercises]);
 
-  const removeEquipment = (index) => {
-    setEditing((prev) => ({
-      ...prev,
-      equipment: prev.equipment.filter((_, i) => i !== index),
-    }));
-  };
+  // Filter exercises for picker
+  const filteredExercises = useMemo(() => {
+    if (!exerciseSearch.trim()) return allExercises;
+    const q = exerciseSearch.toLowerCase();
+    return allExercises.filter((e) => e.name.toLowerCase().includes(q));
+  }, [allExercises, exerciseSearch]);
 
   // ── List View ──
   if (!editing) {
@@ -469,126 +492,188 @@ export default function WorkoutAdmin() {
           </div>
         </div>
 
-        {/* Equipment */}
-        <div className="workout-editor-card">
-          <h3>Equipment</h3>
-          {editing.equipment.map((item, i) => (
-            <div key={i} className="content-inline-group">
-              <input
-                value={item}
-                onChange={(e) => updateEquipment(i, e.target.value)}
-                placeholder="e.g., Kettlebell (24kg)"
-              />
-              <button
-                className="content-remove-btn"
-                onClick={() => removeEquipment(i)}
-              >
-                x
-              </button>
-            </div>
-          ))}
-          <button className="btn ghost content-add-btn" onClick={addEquipment}>
-            + Add Equipment
-          </button>
-        </div>
-
         {/* Exercises */}
         <div className="workout-editor-card">
           <h3>
             Exercises ({editing.exercises.length})
           </h3>
 
-          {editing.exercises.map((exercise, i) => (
-            <div key={i} className="workout-exercise-card">
-              <div className="workout-exercise-header">
-                <span className="workout-exercise-num">{i + 1}</span>
+          {editing.exercises.map((exercise, i) => {
+            const fullExercise = allExercises.find((e) => e.id === exercise.exerciseId);
+            const isLegacy = !exercise.exerciseId;
+
+            return (
+              <div key={exercise.exerciseId || i} className="workout-exercise-card">
+                <div className="workout-exercise-header">
+                  <span className="workout-exercise-num">{i + 1}</span>
+                  {isLegacy ? (
+                    <span className="workout-exercise-name-label">
+                      {exercise.name || 'Unnamed exercise'}{' '}
+                      <em style={{ fontSize: '0.75rem', color: 'var(--rock)' }}>(legacy)</em>
+                    </span>
+                  ) : (
+                    <span className="workout-exercise-name-label">
+                      {exercise.exerciseName}
+                      {fullExercise?.imageUrl && (
+                        <img
+                          src={fullExercise.imageUrl}
+                          alt=""
+                          className="workout-exercise-mini-thumb"
+                        />
+                      )}
+                    </span>
+                  )}
+                  <div className="workout-exercise-controls">
+                    <button
+                      className="workout-move-btn"
+                      onClick={() => moveExercise(i, -1)}
+                      disabled={i === 0}
+                      title="Move up"
+                    >
+                      &#9650;
+                    </button>
+                    <button
+                      className="workout-move-btn"
+                      onClick={() => moveExercise(i, 1)}
+                      disabled={i === editing.exercises.length - 1}
+                      title="Move down"
+                    >
+                      &#9660;
+                    </button>
+                    <button
+                      className="content-remove-btn"
+                      onClick={() => removeExercise(i)}
+                    >
+                      x
+                    </button>
+                  </div>
+                </div>
+
+                <div className="workout-exercise-details">
+                  <div className="content-field">
+                    <label>Sets</label>
+                    <input
+                      value={exercise.sets}
+                      onChange={(e) => updateExerciseField(i, 'sets', e.target.value)}
+                      placeholder="e.g., 4"
+                    />
+                  </div>
+                  <div className="content-field">
+                    <label>Reps</label>
+                    <input
+                      value={exercise.reps}
+                      onChange={(e) => updateExerciseField(i, 'reps', e.target.value)}
+                      placeholder="e.g., 12"
+                    />
+                  </div>
+                  <div className="content-field">
+                    <label>Rest</label>
+                    <input
+                      value={exercise.rest}
+                      onChange={(e) => updateExerciseField(i, 'rest', e.target.value)}
+                      placeholder="e.g., 60s"
+                    />
+                  </div>
+                  <div className="content-field">
+                    <label>Duration</label>
+                    <input
+                      value={exercise.duration}
+                      onChange={(e) => updateExerciseField(i, 'duration', e.target.value)}
+                      placeholder="e.g., 30s"
+                    />
+                  </div>
+                </div>
+
+                <div className="content-field">
+                  <label>Notes</label>
+                  <textarea
+                    value={exercise.notes}
+                    onChange={(e) => updateExerciseField(i, 'notes', e.target.value)}
+                    rows={2}
+                    placeholder="Form cues, variations, scaling options..."
+                  />
+                </div>
+              </div>
+            );
+          })}
+
+          {/* Exercise Picker */}
+          <div className="workout-exercise-picker">
+            {exercisePickerOpen ? (
+              <div className="workout-picker-dropdown">
                 <input
-                  className={`workout-exercise-name${
-                    !exercise.name.trim() &&
-                    (exercise.sets || exercise.reps || exercise.rest || exercise.duration || exercise.notes)
-                      ? ' invalid'
-                      : ''
-                  }`}
-                  value={exercise.name}
-                  onChange={(e) => updateExercise(i, 'name', e.target.value)}
-                  placeholder="Exercise name *"
+                  className="workout-picker-search"
+                  value={exerciseSearch}
+                  onChange={(e) => setExerciseSearch(e.target.value)}
+                  placeholder="Search exercises..."
+                  autoFocus
                 />
-                <div className="workout-exercise-controls">
-                  <button
-                    className="workout-move-btn"
-                    onClick={() => moveExercise(i, -1)}
-                    disabled={i === 0}
-                    title="Move up"
-                  >
-                    &#9650;
-                  </button>
-                  <button
-                    className="workout-move-btn"
-                    onClick={() => moveExercise(i, 1)}
-                    disabled={i === editing.exercises.length - 1}
-                    title="Move down"
-                  >
-                    &#9660;
-                  </button>
-                  <button
-                    className="content-remove-btn"
-                    onClick={() => removeExercise(i)}
-                  >
-                    x
-                  </button>
+                <div className="workout-picker-list">
+                  {filteredExercises.length === 0 ? (
+                    <div className="workout-picker-empty">
+                      No exercises found. Create exercises in the Exercise Library first.
+                    </div>
+                  ) : (
+                    filteredExercises.map((ex) => {
+                      const alreadyAdded = editing.exercises.some(
+                        (e) => e.exerciseId === ex.id
+                      );
+                      return (
+                        <button
+                          key={ex.id}
+                          className={`workout-picker-item${alreadyAdded ? ' added' : ''}`}
+                          onClick={() => !alreadyAdded && addExerciseRef(ex)}
+                          disabled={alreadyAdded}
+                        >
+                          {ex.imageUrl && (
+                            <img src={ex.imageUrl} alt="" className="workout-picker-thumb" />
+                          )}
+                          <span className="workout-picker-name">{ex.name}</span>
+                          {alreadyAdded && <span className="workout-picker-check">&#10003;</span>}
+                        </button>
+                      );
+                    })
+                  )}
                 </div>
+                <button
+                  className="btn ghost small"
+                  onClick={() => {
+                    setExercisePickerOpen(false);
+                    setExerciseSearch('');
+                  }}
+                  style={{ marginTop: 8 }}
+                >
+                  Close
+                </button>
               </div>
+            ) : (
+              <button
+                className="btn ghost content-add-btn"
+                onClick={() => setExercisePickerOpen(true)}
+              >
+                + Add Exercise
+              </button>
+            )}
+          </div>
+        </div>
 
-              <div className="workout-exercise-details">
-                <div className="content-field">
-                  <label>Sets</label>
-                  <input
-                    value={exercise.sets}
-                    onChange={(e) => updateExercise(i, 'sets', e.target.value)}
-                    placeholder="e.g., 4"
-                  />
-                </div>
-                <div className="content-field">
-                  <label>Reps</label>
-                  <input
-                    value={exercise.reps}
-                    onChange={(e) => updateExercise(i, 'reps', e.target.value)}
-                    placeholder="e.g., 12"
-                  />
-                </div>
-                <div className="content-field">
-                  <label>Rest</label>
-                  <input
-                    value={exercise.rest}
-                    onChange={(e) => updateExercise(i, 'rest', e.target.value)}
-                    placeholder="e.g., 60s"
-                  />
-                </div>
-                <div className="content-field">
-                  <label>Duration</label>
-                  <input
-                    value={exercise.duration}
-                    onChange={(e) => updateExercise(i, 'duration', e.target.value)}
-                    placeholder="e.g., 30s"
-                  />
-                </div>
-              </div>
-
-              <div className="content-field">
-                <label>Notes</label>
-                <textarea
-                  value={exercise.notes}
-                  onChange={(e) => updateExercise(i, 'notes', e.target.value)}
-                  rows={2}
-                  placeholder="Form cues, variations, scaling options..."
-                />
-              </div>
-            </div>
-          ))}
-
-          <button className="btn ghost content-add-btn" onClick={addExercise}>
-            + Add Exercise
-          </button>
+        {/* Derived Equipment */}
+        <div className="workout-editor-card">
+          <h3>Equipment</h3>
+          <p className="workout-derived-note">
+            Equipment is derived from the exercises&apos; modifications at the <strong>{editing.difficulty}</strong> difficulty level.
+          </p>
+          {derivedEquipment.length > 0 ? (
+            <ul className="workout-derived-list">
+              {derivedEquipment.map((eq) => (
+                <li key={eq.id}>{eq.name}</li>
+              ))}
+            </ul>
+          ) : (
+            <p className="workout-derived-empty">
+              No equipment needed, or no exercises with equipment at this difficulty level.
+            </p>
+          )}
         </div>
 
         {/* Save Bar */}

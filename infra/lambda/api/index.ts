@@ -11,6 +11,8 @@ import { getUserUploadUrl } from './routes/user-upload';
 import { logAuditEvent, listAuditLogs, getAuditStats } from './routes/audit';
 import { createAccount } from './routes/signup';
 import { getProfile, createProfile, updateProfile } from './routes/profile';
+import { listEquipment, getEquipment, createEquipment, updateEquipment, deleteEquipment } from './routes/equipment';
+import { listExercises, getExercise, createExercise, updateExercise, deleteExercise } from './routes/exercises';
 import { listWorkouts, getWorkout, createWorkout, updateWorkout, deleteWorkout } from './routes/workouts';
 import { listVideos, getVideo, createVideo, updateVideo, deleteVideo } from './routes/videos';
 import { listTiers, updateTier, updateComparisonFeatures } from './routes/tiers';
@@ -119,6 +121,34 @@ export const handler = async (
         username: userDeleteMatch[1],
       };
       return deleteUser(event);
+    }
+
+    // ── Equipment Routes ──
+    if (path === '/api/equipment') {
+      if (method === 'GET') return listEquipment(event);
+      if (method === 'POST') return createEquipment(event);
+    }
+
+    const equipmentMatch = path.match(/^\/api\/equipment\/([^/]+)$/);
+    if (equipmentMatch) {
+      event.pathParameters = { ...event.pathParameters, id: equipmentMatch[1] };
+      if (method === 'GET') return getEquipment(event);
+      if (method === 'PUT') return updateEquipment(event);
+      if (method === 'DELETE') return deleteEquipment(event);
+    }
+
+    // ── Exercise Routes ──
+    if (path === '/api/exercises') {
+      if (method === 'GET') return listExercises(event);
+      if (method === 'POST') return createExercise(event);
+    }
+
+    const exerciseMatch = path.match(/^\/api\/exercises\/([^/]+)$/);
+    if (exerciseMatch) {
+      event.pathParameters = { ...event.pathParameters, id: exerciseMatch[1] };
+      if (method === 'GET') return getExercise(event);
+      if (method === 'PUT') return updateExercise(event);
+      if (method === 'DELETE') return deleteExercise(event);
     }
 
     // ── Workout Routes ──

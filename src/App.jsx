@@ -33,6 +33,8 @@ const FAQAdmin = lazy(() => import('./pages/admin/FAQAdmin'));
 const Merch = lazy(() => import('./pages/admin/Merch'));
 const UserProfile = lazy(() => import('./pages/admin/UserProfile'));
 const AuditLog = lazy(() => import('./pages/admin/AuditLog'));
+const EquipmentAdmin = lazy(() => import('./pages/admin/EquipmentAdmin'));
+const ExerciseAdmin = lazy(() => import('./pages/admin/ExerciseAdmin'));
 const WorkoutAdmin = lazy(() => import('./pages/admin/WorkoutAdmin'));
 const VideoAdmin = lazy(() => import('./pages/admin/VideoAdmin'));
 const Billing = lazy(() => import('./pages/admin/Billing'));
@@ -185,6 +187,8 @@ export default function App() {
               <Route path="content" element={<LazySection><Content /></LazySection>} />
               <Route path="faq" element={<LazySection><FAQAdmin /></LazySection>} />
               <Route path="audit" element={<LazySection><AuditLog /></LazySection>} />
+              <Route path="equipment" element={<LazySection><EquipmentAdmin /></LazySection>} />
+              <Route path="exercises" element={<LazySection><ExerciseAdmin /></LazySection>} />
               <Route path="workouts" element={<LazySection><WorkoutAdmin /></LazySection>} />
               <Route path="videos" element={<LazySection><VideoAdmin /></LazySection>} />
               <Route path="billing" element={<LazySection><Billing /></LazySection>} />
