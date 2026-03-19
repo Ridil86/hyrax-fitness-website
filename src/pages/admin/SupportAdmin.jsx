@@ -235,11 +235,18 @@ export default function SupportAdmin() {
           email: u.email || u.username,
           name: [u.given_name, u.family_name].filter(Boolean).join(' ') || u.email || u.username,
         }));
+      // Ensure current admin is always in the list
+      if (adminEmail && !admins.some((a) => a.email === adminEmail)) {
+        admins.push({ email: adminEmail, name: adminEmail });
+      }
       setAdminUsers(admins);
     } catch {
-      // Non-critical
+      // Fallback: at least include the current admin
+      if (adminEmail) {
+        setAdminUsers([{ email: adminEmail, name: adminEmail }]);
+      }
     }
-  }, [getIdToken]);
+  }, [getIdToken, adminEmail]);
 
   useEffect(() => {
     loadTickets();
@@ -532,7 +539,7 @@ export default function SupportAdmin() {
                       <SLADot createdAt={ticket.createdAt} status={ticket.status} />
                       {ticket.assignedTo && (
                         <span className="support-assigned-label">
-                          {ticket.assignedTo}
+                          {ticket.assignedName || ticket.assignedTo}
                         </span>
                       )}
                       <span className="support-ticket-date">
@@ -663,6 +670,11 @@ export default function SupportAdmin() {
                             </div>
                             <div className="support-manage-field">
                               <label>Assigned To</label>
+                              {expandedTicket.assignedTo && (
+                                <div className="support-current-assigned">
+                                  Currently assigned to: <strong>{expandedTicket.assignedName || expandedTicket.assignedTo}</strong>
+                                </div>
+                              )}
                               <div className="support-assign-row">
                                 <select
                                   value={assignInput}

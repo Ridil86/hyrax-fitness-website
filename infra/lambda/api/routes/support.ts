@@ -284,6 +284,7 @@ export async function updateTicket(
       const allowed =
         (current === 'resolved' && body.status === 'open') ||
         (current === 'open' && body.status === 'closed') ||
+        (current === 'in_progress' && body.status === 'closed') ||
         (current === 'resolved' && body.status === 'closed');
       if (!allowed) {
         return badRequest(`Cannot change status from ${current} to ${body.status}`);

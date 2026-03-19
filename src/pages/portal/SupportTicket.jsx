@@ -274,7 +274,7 @@ export default function SupportTicket() {
 
           {/* Thread messages */}
           {messages.map((msg) => {
-            const isAdmin = msg.senderType === 'admin' || msg.senderType === 'support';
+            const isAdmin = msg.authorType === 'admin' || msg.senderType === 'admin';
             return (
               <article
                 key={msg.id}
