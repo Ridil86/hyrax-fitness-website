@@ -230,10 +230,10 @@ export default function SupportAdmin() {
       const data = await fetchUsers({ limit: 60 }, token);
       const users = data.users || [];
       const admins = users
-        .filter((u) => (u.groups || []).some((g) => g.name === 'Admin'))
+        .filter((u) => (u.groups || []).includes('Admin'))
         .map((u) => ({
           email: u.email || u.username,
-          name: [u.given_name, u.family_name].filter(Boolean).join(' ') || u.email || u.username,
+          name: [u.givenName, u.familyName].filter(Boolean).join(' ') || u.email || u.username,
         }));
       // Ensure current admin is always in the list
       if (adminEmail && !admins.some((a) => a.email === adminEmail)) {
