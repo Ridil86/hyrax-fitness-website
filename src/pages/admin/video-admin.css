@@ -298,3 +298,131 @@
     flex-wrap: wrap;
   }
 }
+
+/* ── Linked Content ── */
+.video-linked-section {
+  margin-bottom: 20px;
+}
+
+.video-linked-section h4 {
+  font-size: .9rem;
+  margin: 0 0 10px;
+  color: var(--ink);
+}
+
+.video-linked-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 14px;
+  border: 1px solid rgba(27, 18, 10, .08);
+  border-radius: 10px;
+  margin-bottom: 8px;
+  background: rgba(251, 247, 230, .35);
+}
+
+.video-linked-name {
+  flex: 1;
+  font-weight: 600;
+  font-size: .9rem;
+}
+
+.video-linked-diff {
+  padding: 4px 10px;
+  border-radius: 8px;
+  border: 1px solid rgba(27, 18, 10, .12);
+  font: inherit;
+  font-size: .8rem;
+  background: #fff;
+  color: var(--ink);
+  cursor: pointer;
+}
+
+.video-linked-diff:focus {
+  outline: none;
+  border-color: var(--sunset);
+  box-shadow: var(--ring);
+}
+
+/* ── Video Picker Dropdown ── */
+.video-picker-wrapper {
+  margin-top: 4px;
+}
+
+.video-picker-dropdown {
+  border: 1px solid rgba(27, 18, 10, .12);
+  border-radius: 10px;
+  overflow: hidden;
+  background: #fff;
+  box-shadow: var(--shadow-soft);
+}
+
+.video-picker-search {
+  width: 100%;
+  padding: 10px 14px;
+  border: none;
+  border-bottom: 1px solid rgba(27, 18, 10, .08);
+  font: inherit;
+  font-size: .88rem;
+  color: var(--ink);
+  box-sizing: border-box;
+}
+
+.video-picker-search:focus {
+  outline: none;
+  background: rgba(242, 133, 1, .03);
+}
+
+.video-picker-list {
+  max-height: 260px;
+  overflow-y: auto;
+  padding: 4px 0;
+}
+
+.video-picker-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  padding: 8px 14px;
+  border: none;
+  background: none;
+  font: inherit;
+  font-size: .88rem;
+  color: var(--ink);
+  cursor: pointer;
+  text-align: left;
+}
+
+.video-picker-item:hover:not(:disabled) {
+  background: rgba(242, 133, 1, .06);
+}
+
+.video-picker-item.added {
+  opacity: .5;
+  cursor: default;
+}
+
+.video-picker-thumb {
+  width: 32px;
+  height: 32px;
+  border-radius: 6px;
+  object-fit: cover;
+}
+
+.video-picker-name {
+  flex: 1;
+  font-weight: 500;
+}
+
+.video-picker-check {
+  color: #16a34a;
+  font-size: .9rem;
+}
+
+.video-picker-empty {
+  padding: 20px;
+  text-align: center;
+  color: var(--sand);
+  font-size: .85rem;
+}

@@ -7,6 +7,8 @@ import {
   deleteVideoApi,
 } from '../../api/videos';
 import { uploadFile } from '../../api/upload';
+import { fetchExercises } from '../../api/exercises';
+import { fetchWorkouts } from '../../api/workouts';
 import './admin.css';
 import './video-admin.css';
 
@@ -30,6 +32,8 @@ const TIER_OPTIONS = [
   { value: 'Iron Dassie', label: 'Iron Dassie ($20/mo)' },
 ];
 
+const DIFFICULTIES = ['beginner', 'intermediate', 'advanced', 'elite'];
+
 const EMPTY_VIDEO = {
   title: '',
   description: '',
@@ -41,6 +45,8 @@ const EMPTY_VIDEO = {
   status: 'draft',
   sortOrder: 999,
   tags: [],
+  exercises: [],
+  workouts: [],
 };
 
 export default function VideoAdmin() {
@@ -61,6 +67,14 @@ export default function VideoAdmin() {
   const [thumbSeconds, setThumbSeconds] = useState(0);
   const [videoDurationSecs, setVideoDurationSecs] = useState(0);
   const videoPreviewRef = useRef(null);
+
+  // Linked content state
+  const [allExercises, setAllExercises] = useState([]);
+  const [allWorkouts, setAllWorkouts] = useState([]);
+  const [exercisePickerOpen, setExercisePickerOpen] = useState(false);
+  const [workoutPickerOpen, setWorkoutPickerOpen] = useState(false);
+  const [exerciseSearch, setExerciseSearch] = useState('');
+  const [workoutSearch, setWorkoutSearch] = useState('');
 
   // Filters
   const [filterCategory, setFilterCategory] = useState('all');
@@ -84,19 +98,35 @@ export default function VideoAdmin() {
     loadVideos();
   }, [loadVideos]);
 
+  const loadLinkedContent = useCallback(async () => {
+    try {
+      const token = await getIdToken();
+      const [exData, wkData] = await Promise.allSettled([
+        fetchExercises(token),
+        fetchWorkouts(token),
+      ]);
+      if (exData.status === 'fulfilled') setAllExercises(exData.value);
+      if (wkData.status === 'fulfilled') setAllWorkouts(wkData.value);
+    } catch { /* best effort */ }
+  }, [getIdToken]);
+
   const handleNew = () => {
-    setEditing({ ...EMPTY_VIDEO, tags: [] });
+    setEditing({ ...EMPTY_VIDEO, tags: [], exercises: [], workouts: [] });
     setError(null);
     setSaveMsg('');
+    loadLinkedContent();
   };
 
   const handleEdit = (video) => {
     setEditing({
       ...video,
       tags: video.tags || [],
+      exercises: video.exercises || [],
+      workouts: video.workouts || [],
     });
     setError(null);
     setSaveMsg('');
+    loadLinkedContent();
   };
 
   const handleCancel = () => {
@@ -254,6 +284,50 @@ export default function VideoAdmin() {
       ...prev,
       tags: prev.tags.filter((_, i) => i !== index),
     }));
+  };
+
+  // Linked exercise helpers
+  const addLinkedExercise = (exercise) => {
+    setEditing((prev) => ({
+      ...prev,
+      exercises: [...prev.exercises, { exerciseId: exercise.id, exerciseName: exercise.name, difficulty: 'intermediate' }],
+    }));
+    setExercisePickerOpen(false);
+    setExerciseSearch('');
+  };
+
+  const updateLinkedExerciseDifficulty = (index, difficulty) => {
+    setEditing((prev) => {
+      const exercises = [...prev.exercises];
+      exercises[index] = { ...exercises[index], difficulty };
+      return { ...prev, exercises };
+    });
+  };
+
+  const removeLinkedExercise = (index) => {
+    setEditing((prev) => ({ ...prev, exercises: prev.exercises.filter((_, i) => i !== index) }));
+  };
+
+  // Linked workout helpers
+  const addLinkedWorkout = (workout) => {
+    setEditing((prev) => ({
+      ...prev,
+      workouts: [...prev.workouts, { workoutId: workout.id, workoutTitle: workout.title, difficulty: 'intermediate' }],
+    }));
+    setWorkoutPickerOpen(false);
+    setWorkoutSearch('');
+  };
+
+  const updateLinkedWorkoutDifficulty = (index, difficulty) => {
+    setEditing((prev) => {
+      const workouts = [...prev.workouts];
+      workouts[index] = { ...workouts[index], difficulty };
+      return { ...prev, workouts };
+    });
+  };
+
+  const removeLinkedWorkout = (index) => {
+    setEditing((prev) => ({ ...prev, workouts: prev.workouts.filter((_, i) => i !== index) }));
   };
 
   // Filtered list
@@ -678,6 +752,145 @@ export default function VideoAdmin() {
           <button className="btn ghost content-add-btn" onClick={addTag}>
             + Add Tag
           </button>
+        </div>
+
+        {/* Linked Content */}
+        <div className="workout-editor-card">
+          <h3>Linked Content</h3>
+
+          {/* Exercises */}
+          <div className="video-linked-section">
+            <h4>Exercises ({editing.exercises.length})</h4>
+            {editing.exercises.map((ex, i) => (
+              <div key={i} className="video-linked-item">
+                <span className="video-linked-name">{ex.exerciseName}</span>
+                <select
+                  className="video-linked-diff"
+                  value={ex.difficulty}
+                  onChange={(e) => updateLinkedExerciseDifficulty(i, e.target.value)}
+                >
+                  {DIFFICULTIES.map((d) => (
+                    <option key={d} value={d}>{d.charAt(0).toUpperCase() + d.slice(1)}</option>
+                  ))}
+                </select>
+                <button className="content-remove-btn" onClick={() => removeLinkedExercise(i)}>x</button>
+              </div>
+            ))}
+            <div className="video-picker-wrapper">
+              {exercisePickerOpen ? (
+                <div className="video-picker-dropdown">
+                  <input
+                    className="video-picker-search"
+                    value={exerciseSearch}
+                    onChange={(e) => setExerciseSearch(e.target.value)}
+                    placeholder="Search exercises..."
+                    autoFocus
+                  />
+                  <div className="video-picker-list">
+                    {allExercises
+                      .filter((ex) => ex.name.toLowerCase().includes(exerciseSearch.toLowerCase()))
+                      .length === 0 ? (
+                      <div className="video-picker-empty">No exercises found.</div>
+                    ) : (
+                      allExercises
+                        .filter((ex) => ex.name.toLowerCase().includes(exerciseSearch.toLowerCase()))
+                        .map((ex) => {
+                          const alreadyAdded = editing.exercises.some((e) => e.exerciseId === ex.id);
+                          return (
+                            <button
+                              key={ex.id}
+                              className={`video-picker-item${alreadyAdded ? ' added' : ''}`}
+                              onClick={() => !alreadyAdded && addLinkedExercise(ex)}
+                              disabled={alreadyAdded}
+                            >
+                              {ex.imageUrl && (
+                                <img src={ex.imageUrl} alt="" className="video-picker-thumb" />
+                              )}
+                              <span className="video-picker-name">{ex.name}</span>
+                              {alreadyAdded && <span className="video-picker-check">&#10003;</span>}
+                            </button>
+                          );
+                        })
+                    )}
+                  </div>
+                  <button className="btn ghost small" onClick={() => { setExercisePickerOpen(false); setExerciseSearch(''); }}>
+                    Close
+                  </button>
+                </div>
+              ) : (
+                <button className="btn ghost content-add-btn" onClick={() => setExercisePickerOpen(true)}>
+                  + Add Exercise
+                </button>
+              )}
+            </div>
+          </div>
+
+          {/* Workouts */}
+          <div className="video-linked-section">
+            <h4>Workouts ({editing.workouts.length})</h4>
+            {editing.workouts.map((wk, i) => (
+              <div key={i} className="video-linked-item">
+                <span className="video-linked-name">{wk.workoutTitle}</span>
+                <select
+                  className="video-linked-diff"
+                  value={wk.difficulty}
+                  onChange={(e) => updateLinkedWorkoutDifficulty(i, e.target.value)}
+                >
+                  {DIFFICULTIES.map((d) => (
+                    <option key={d} value={d}>{d.charAt(0).toUpperCase() + d.slice(1)}</option>
+                  ))}
+                </select>
+                <button className="content-remove-btn" onClick={() => removeLinkedWorkout(i)}>x</button>
+              </div>
+            ))}
+            <div className="video-picker-wrapper">
+              {workoutPickerOpen ? (
+                <div className="video-picker-dropdown">
+                  <input
+                    className="video-picker-search"
+                    value={workoutSearch}
+                    onChange={(e) => setWorkoutSearch(e.target.value)}
+                    placeholder="Search workouts..."
+                    autoFocus
+                  />
+                  <div className="video-picker-list">
+                    {allWorkouts
+                      .filter((wk) => (wk.title || '').toLowerCase().includes(workoutSearch.toLowerCase()))
+                      .length === 0 ? (
+                      <div className="video-picker-empty">No workouts found.</div>
+                    ) : (
+                      allWorkouts
+                        .filter((wk) => (wk.title || '').toLowerCase().includes(workoutSearch.toLowerCase()))
+                        .map((wk) => {
+                          const alreadyAdded = editing.workouts.some((w) => w.workoutId === wk.id);
+                          return (
+                            <button
+                              key={wk.id}
+                              className={`video-picker-item${alreadyAdded ? ' added' : ''}`}
+                              onClick={() => !alreadyAdded && addLinkedWorkout(wk)}
+                              disabled={alreadyAdded}
+                            >
+                              {wk.imageUrl && (
+                                <img src={wk.imageUrl} alt="" className="video-picker-thumb" />
+                              )}
+                              <span className="video-picker-name">{wk.title}</span>
+                              {alreadyAdded && <span className="video-picker-check">&#10003;</span>}
+                            </button>
+                          );
+                        })
+                    )}
+                  </div>
+                  <button className="btn ghost small" onClick={() => { setWorkoutPickerOpen(false); setWorkoutSearch(''); }}>
+                    Close
+                  </button>
+                </div>
+              ) : (
+                <button className="btn ghost content-add-btn" onClick={() => setWorkoutPickerOpen(true)}>
+                  + Add Workout
+                </button>
+              )}
+            </div>
+          </div>
         </div>
 
         {/* Save Bar */}

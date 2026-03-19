@@ -4,6 +4,7 @@ import { motion } from 'framer-motion';
 import Hls from 'hls.js';
 import { useAuth } from '../../context/AuthContext';
 import { fetchVideo, fetchVideos } from '../../api/videos';
+import { fetchExercises } from '../../api/exercises';
 import { hasTierAccess, getRequiredTierInfo } from '../../utils/tiers';
 import './video-detail.css';
 
@@ -18,6 +19,7 @@ export default function VideoDetail() {
   const { getIdToken, userTier, isAdmin } = useAuth();
   const [video, setVideo] = useState(null);
   const [related, setRelated] = useState([]);
+  const [exerciseData, setExerciseData] = useState({});
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const videoRef = useRef(null);
@@ -33,6 +35,16 @@ export default function VideoDetail() {
         const data = await fetchVideo(id, token);
         if (!cancelled) {
           setVideo(data);
+
+          // Load exercise details if video has exercises
+          if (data.exercises?.some(e => e.exerciseId)) {
+            try {
+              const allExercises = await fetchExercises(token);
+              const map = {};
+              allExercises.forEach(e => { map[e.id] = e; });
+              if (!cancelled) setExerciseData(map);
+            } catch { /* best effort */ }
+          }
 
           // Load related videos (same category, exclude current)
           try {
@@ -274,6 +286,57 @@ export default function VideoDetail() {
                 </div>
               </div>
             </motion.div>
+
+            {/* Linked Exercises */}
+            {video.exercises?.length > 0 && (
+              <section className="video-detail-linked">
+                <h2>Exercises in this Video</h2>
+                <div className="video-linked-exercises">
+                  {video.exercises.map((ex, i) => {
+                    const full = exerciseData[ex.exerciseId];
+                    const mod = full?.modifications?.[ex.difficulty];
+                    return (
+                      <div key={i} className="video-linked-exercise-card">
+                        {(mod?.imageUrl || full?.imageUrl) && (
+                          <img src={mod?.imageUrl || full?.imageUrl} alt={ex.exerciseName} className="video-linked-exercise-img" />
+                        )}
+                        <div className="video-linked-exercise-info">
+                          <h3>{ex.exerciseName}</h3>
+                          {mod?.subName && <p className="video-linked-mod-name">{mod.subName}</p>}
+                          <span className="video-linked-diff-badge">{ex.difficulty}</span>
+                          {mod?.description && <p className="video-linked-mod-desc">{mod.description}</p>}
+                          {mod?.equipment?.length > 0 && (
+                            <div className="video-linked-equipment">
+                              {mod.equipment.map(eq => (
+                                <span key={eq.equipmentId} className="video-linked-equip-tag">{eq.equipmentName}</span>
+                              ))}
+                            </div>
+                          )}
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              </section>
+            )}
+
+            {/* Linked Workouts */}
+            {video.workouts?.length > 0 && (
+              <section className="video-detail-linked">
+                <h2>Workouts in this Video</h2>
+                <div className="video-linked-workouts">
+                  {video.workouts.map((wk, i) => (
+                    <Link key={i} to={`/portal/workouts/${wk.workoutId}`} className="video-linked-workout-card">
+                      <div className="video-linked-workout-info">
+                        <h3>{wk.workoutTitle}</h3>
+                        <span className="video-linked-diff-badge">{wk.difficulty}</span>
+                      </div>
+                      <span className="video-linked-workout-arrow">&rarr;</span>
+                    </Link>
+                  ))}
+                </div>
+              </section>
+            )}
 
             {/* Related Videos */}
             {related.length > 0 && (
