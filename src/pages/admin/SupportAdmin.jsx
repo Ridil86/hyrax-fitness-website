@@ -387,7 +387,7 @@ export default function SupportAdmin() {
     (t) => t.status === 'open' || t.status === 'in_progress'
   ).length;
 
-  const myCount = tickets.filter((t) => t.assignedTo === adminEmail).length;
+  const myCount = tickets.filter((t) => t.assignedTo === adminEmail && (t.status === 'open' || t.status === 'in_progress')).length;
 
   return (
     <div>
@@ -569,6 +569,9 @@ export default function SupportAdmin() {
                           <div className="support-description">
                             <h4>Description</h4>
                             <p>{expandedTicket.description}</p>
+                            {expandedTicket.attachmentUrl && (
+                              <img src={expandedTicket.attachmentUrl} alt="Ticket attachment" style={{ maxWidth: '100%', borderRadius: 10, marginTop: 10 }} />
+                            )}
                           </div>
                         )}
 
@@ -596,6 +599,9 @@ export default function SupportAdmin() {
                                     </span>
                                   </div>
                                   <div className="support-message-body">{msg.message || msg.text || msg.content}</div>
+                                  {msg.attachmentUrl && (
+                                    <img src={msg.attachmentUrl} alt="Attachment" style={{ maxWidth: '100%', maxHeight: 300, borderRadius: 10, marginTop: 8 }} />
+                                  )}
                                 </div>
                               ))}
                             </div>
