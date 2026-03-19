@@ -238,13 +238,22 @@ export default function SupportTicket() {
             </button>
           )}
           {isResolved && (
-            <button
-              className="btn ghost"
-              onClick={() => handleStatusUpdate('open')}
-              disabled={updatingStatus}
-            >
-              {updatingStatus ? 'Updating...' : 'Reopen Ticket'}
-            </button>
+            <>
+              <button
+                className="btn ghost"
+                onClick={() => handleStatusUpdate('open')}
+                disabled={updatingStatus}
+              >
+                {updatingStatus ? 'Updating...' : 'Reopen Ticket'}
+              </button>
+              <button
+                className="btn ghost"
+                onClick={() => handleStatusUpdate('closed')}
+                disabled={updatingStatus}
+              >
+                {updatingStatus ? 'Updating...' : 'Close Ticket'}
+              </button>
+            </>
           )}
         </div>
       </div>
