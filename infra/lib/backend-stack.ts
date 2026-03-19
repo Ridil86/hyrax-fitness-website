@@ -405,6 +405,35 @@ export class BackendStack extends cdk.Stack {
       authorizationType: apigateway.AuthorizationType.COGNITO,
     });
 
+    // Completion log routes (all authenticated)
+    const logsResource = apiResource.addResource('logs');
+    logsResource.addMethod('GET', lambdaIntegration, {
+      authorizer,
+      authorizationType: apigateway.AuthorizationType.COGNITO,
+    });
+    logsResource.addMethod('POST', lambdaIntegration, {
+      authorizer,
+      authorizationType: apigateway.AuthorizationType.COGNITO,
+    });
+
+    const logsWorkout = logsResource.addResource('workout');
+    logsWorkout.addMethod('POST', lambdaIntegration, {
+      authorizer,
+      authorizationType: apigateway.AuthorizationType.COGNITO,
+    });
+
+    const logsStats = logsResource.addResource('stats');
+    logsStats.addMethod('GET', lambdaIntegration, {
+      authorizer,
+      authorizationType: apigateway.AuthorizationType.COGNITO,
+    });
+
+    const logItem = logsResource.addResource('{id}');
+    logItem.addMethod('DELETE', lambdaIntegration, {
+      authorizer,
+      authorizationType: apigateway.AuthorizationType.COGNITO,
+    });
+
     // Community routes (all authenticated)
     const communityResource = apiResource.addResource('community');
 

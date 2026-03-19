@@ -4,8 +4,10 @@ import { motion } from 'framer-motion';
 import { useAuth } from '../context/AuthContext';
 import { fetchWorkout } from '../api/workouts';
 import { fetchExercises } from '../api/exercises';
+import { fetchUserLogs } from '../api/completionLog';
 import { downloadWorkoutPdf } from '../utils/workoutPdf';
 import { hasTierAccess, getRequiredTierInfo } from '../utils/tiers';
+import CompletionForm from '../components/CompletionForm';
 import './workout-detail.css';
 
 const DIFFICULTIES = ['beginner', 'intermediate', 'advanced', 'elite'];
@@ -29,6 +31,10 @@ export default function WorkoutDetail() {
   const [exerciseOverrides, setExerciseOverrides] = useState({});
   const [exerciseData, setExerciseData] = useState({});
 
+  // Completion form state
+  const [showCompletionForm, setShowCompletionForm] = useState(false);
+  const [completionCount, setCompletionCount] = useState(null);
+
   useEffect(() => {
     let cancelled = false;
 
@@ -42,6 +48,13 @@ export default function WorkoutDetail() {
           setWorkout(data);
           setActiveDifficulty(data.difficulty);
         }
+
+        // Load completion count
+        fetchUserLogs({ workoutId: id, limit: 500 }, token)
+          .then((logs) => {
+            if (!cancelled) setCompletionCount(logs.length);
+          })
+          .catch(() => {});
 
         // Load full exercise data for referenced exercises
         if (data.exercises?.some((e) => e.exerciseId)) {
@@ -382,6 +395,44 @@ export default function WorkoutDetail() {
                 <p className="workout-download-hint">
                   Get a branded, print-ready PDF of this workout.
                 </p>
+              </div>
+
+              {/* Completion logging */}
+              <div className="workout-sidebar-card">
+                {showCompletionForm ? (
+                  <CompletionForm
+                    exercises={(workout.exercises || []).map((ex) => ({
+                      exerciseId: ex.exerciseId || '',
+                      exerciseName: ex.exerciseName || ex.name,
+                      sets: ex.sets,
+                      reps: ex.reps,
+                      difficulty: activeDifficulty || workout.difficulty,
+                    }))}
+                    source="workout"
+                    sourceId={id}
+                    workoutId={id}
+                    workoutTitle={workout.title}
+                    getIdToken={getIdToken}
+                    onComplete={() => {
+                      setCompletionCount((c) => (c ?? 0) + 1);
+                      setShowCompletionForm(false);
+                    }}
+                  />
+                ) : (
+                  <>
+                    <button
+                      className="btn primary workout-download-btn"
+                      onClick={() => setShowCompletionForm(true)}
+                    >
+                      Log Workout Completion
+                    </button>
+                    {completionCount !== null && completionCount > 0 && (
+                      <p className="workout-download-hint">
+                        Completed {completionCount} {completionCount === 1 ? 'time' : 'times'}
+                      </p>
+                    )}
+                  </>
+                )}
               </div>
 
               {/* Equipment */}

@@ -5,6 +5,8 @@ import Hls from 'hls.js';
 import { useAuth } from '../../context/AuthContext';
 import { fetchVideo, fetchVideos } from '../../api/videos';
 import { fetchExercises } from '../../api/exercises';
+import { fetchUserLogs } from '../../api/completionLog';
+import CompletionForm from '../../components/CompletionForm';
 import { hasTierAccess, getRequiredTierInfo } from '../../utils/tiers';
 import './video-detail.css';
 
@@ -22,6 +24,8 @@ export default function VideoDetail() {
   const [exerciseData, setExerciseData] = useState({});
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [showCompletionForm, setShowCompletionForm] = useState(false);
+  const [completionCount, setCompletionCount] = useState(0);
   const videoRef = useRef(null);
 
   useEffect(() => {
@@ -43,6 +47,18 @@ export default function VideoDetail() {
               const map = {};
               allExercises.forEach(e => { map[e.id] = e; });
               if (!cancelled) setExerciseData(map);
+            } catch { /* best effort */ }
+          }
+
+          // Load completion count for this video
+          if (data.exercises?.length > 0 || data.workouts?.length > 0) {
+            try {
+              const logsData = await fetchUserLogs({}, token);
+              const allLogs = Array.isArray(logsData) ? logsData : logsData?.logs || [];
+              const count = allLogs.filter(
+                (l) => l.source === 'video' && l.sourceId === data.id
+              ).length;
+              if (!cancelled) setCompletionCount(count);
             } catch { /* best effort */ }
           }
 
@@ -335,6 +351,49 @@ export default function VideoDetail() {
                     </Link>
                   ))}
                 </div>
+              </section>
+            )}
+
+            {/* Completion Logging */}
+            {(video.exercises?.length > 0 || video.workouts?.length > 0) && (
+              <section className="video-detail-linked">
+                <div className="video-completion-card">
+                  <div className="video-completion-header">
+                    <h2>Log Completion</h2>
+                    {completionCount > 0 && (
+                      <span className="video-completion-count">{completionCount}</span>
+                    )}
+                  </div>
+                  <p className="video-completion-desc">
+                    Track your progress by logging a completion for the exercises in this video.
+                  </p>
+                  <button
+                    className="btn primary"
+                    onClick={() => setShowCompletionForm(true)}
+                  >
+                    Log Completion
+                  </button>
+                </div>
+                {showCompletionForm && (
+                  <CompletionForm
+                    exercises={
+                      video.exercises?.map((ex) => ({
+                        exerciseId: ex.exerciseId,
+                        exerciseName: ex.exerciseName,
+                        sets: 1,
+                        reps: 0,
+                        difficulty: ex.difficulty,
+                      })) || []
+                    }
+                    source="video"
+                    sourceId={video.id}
+                    onClose={() => setShowCompletionForm(false)}
+                    onComplete={() => {
+                      setShowCompletionForm(false);
+                      setCompletionCount((c) => c + 1);
+                    }}
+                  />
+                )}
               </section>
             )}
 

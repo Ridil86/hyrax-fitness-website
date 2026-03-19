@@ -29,6 +29,9 @@ import {
   listTickets, createTicket, getTicket, updateTicket,
   addMessage, assignTicket, getSupportStats,
 } from './routes/support';
+import {
+  createLog, createWorkoutLog, listUserLogs, getLogStats, deleteLog,
+} from './routes/completion-log';
 import { notFound, serverError } from './utils/response';
 
 export const handler = async (
@@ -356,6 +359,26 @@ export const handler = async (
       event.pathParameters = { ...event.pathParameters, id: supportTicketMatch[1] };
       if (method === 'GET') return getTicket(event);
       if (method === 'PUT') return updateTicket(event);
+    }
+
+    // ── Completion Log Routes ──
+    if (path === '/api/logs/workout' && method === 'POST') {
+      return createWorkoutLog(event);
+    }
+
+    if (path === '/api/logs/stats' && method === 'GET') {
+      return getLogStats(event);
+    }
+
+    if (path === '/api/logs') {
+      if (method === 'GET') return listUserLogs(event);
+      if (method === 'POST') return createLog(event);
+    }
+
+    const logMatch = path.match(/^\/api\/logs\/([^/]+)$/);
+    if (logMatch) {
+      event.pathParameters = { ...event.pathParameters, id: logMatch[1] };
+      if (method === 'DELETE') return deleteLog(event);
     }
 
     return notFound(`No route found for ${method} ${path}`);

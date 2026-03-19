@@ -73,6 +73,7 @@ const PortalDashboard = lazy(() => import('./pages/portal/PortalDashboard'));
 const PortalProfile = lazy(() => import('./pages/portal/PortalProfile'));
 const PortalSettings = lazy(() => import('./pages/portal/PortalSettings'));
 const PortalSubscription = lazy(() => import('./pages/portal/PortalSubscription'));
+const ActivityLog = lazy(() => import('./pages/portal/ActivityLog'));
 
 // Cookie consent
 const CookieConsent = lazy(() => import('./components/CookieConsent'));
@@ -172,6 +173,7 @@ export default function App() {
               <Route path="support/:id" element={<LazySection><SupportTicket /></LazySection>} />
               <Route path="profile" element={<LazySection><PortalProfile /></LazySection>} />
               <Route path="subscription" element={<LazySection><PortalSubscription /></LazySection>} />
+              <Route path="activity" element={<LazySection><ActivityLog /></LazySection>} />
               <Route path="settings" element={<LazySection><PortalSettings /></LazySection>} />
             </Route>
 

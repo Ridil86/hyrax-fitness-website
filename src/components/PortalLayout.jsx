@@ -10,6 +10,7 @@ const navItems = [
   { to: '/portal/support', label: 'Support', icon: '\u2753' },
   { to: '/portal/profile', label: 'Profile', icon: '\u263A' },
   { to: '/portal/subscription', label: 'Subscription', icon: '\u2606' },
+  { to: '/portal/activity', label: 'Activity', icon: '\u{1F4CA}' },
   { to: '/portal/settings', label: 'Settings', icon: '\u2699' },
 ];
 
