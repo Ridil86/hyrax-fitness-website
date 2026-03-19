@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { createWorkoutLog } from '../api/completionLog';
+import { trackWorkoutComplete, trackExerciseComplete } from '../utils/analytics';
 import './completion-form.css';
 
 const RPE_OPTIONS = [
@@ -75,6 +76,15 @@ export default function CompletionForm({
       };
 
       await createWorkoutLog(payload, token);
+
+      // Analytics: track completion
+      if (workoutId) {
+        trackWorkoutComplete(workoutId, rows.length, rows[0]?.difficulty);
+      }
+      rows.forEach((row) => {
+        trackExerciseComplete(row.exerciseId, row.exerciseName, row.difficulty, row.rpe);
+      });
+
       setSuccess(true);
       setRows(
         exercises.map((ex) => ({

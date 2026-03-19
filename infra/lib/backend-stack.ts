@@ -428,6 +428,18 @@ export class BackendStack extends cdk.Stack {
       authorizationType: apigateway.AuthorizationType.COGNITO,
     });
 
+    const logsExerciseHistory = logsResource.addResource('exercise-history');
+    logsExerciseHistory.addMethod('GET', lambdaIntegration, {
+      authorizer,
+      authorizationType: apigateway.AuthorizationType.COGNITO,
+    });
+
+    const logsCalendar = logsResource.addResource('calendar');
+    logsCalendar.addMethod('GET', lambdaIntegration, {
+      authorizer,
+      authorizationType: apigateway.AuthorizationType.COGNITO,
+    });
+
     const logItem = logsResource.addResource('{id}');
     logItem.addMethod('DELETE', lambdaIntegration, {
       authorizer,

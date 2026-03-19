@@ -9,6 +9,7 @@ import {
   cancelSubscription,
 } from '../../api/subscription';
 import { motion } from 'framer-motion';
+import { trackSubscriptionUpgrade } from '../../utils/analytics';
 import './portal-subscription.css';
 
 function tierClass(name) {
@@ -85,6 +86,8 @@ export default function PortalSubscription() {
     setActionLoading(tierId);
     setError(null);
     try {
+      const selectedTier = tiers.find((t) => t.id === tierId);
+      trackSubscriptionUpgrade(userTier || 'Pup', selectedTier?.name || tierId);
       const token = await getIdToken();
       const result = await createCheckoutSession(token, tierId);
 
@@ -103,7 +106,7 @@ export default function PortalSubscription() {
     } finally {
       setActionLoading(null);
     }
-  }, [getIdToken, refreshTier, loadSubscription]);
+  }, [getIdToken, refreshTier, loadSubscription, tiers, userTier]);
 
   // Handle pending upgrade from /programs page
   useEffect(() => {

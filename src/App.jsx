@@ -8,6 +8,7 @@ import Footer from './components/Footer';
 import ProtectedRoute from './components/ProtectedRoute';
 import ErrorBoundary from './components/ErrorBoundary';
 import GoogleOAuthHandler from './components/GoogleOAuthHandler';
+import { trackPageView } from './utils/analytics';
 import './styles/global.css';
 
 const Dassie = lazy(() => import('./components/Dassie'));
@@ -74,6 +75,7 @@ const PortalProfile = lazy(() => import('./pages/portal/PortalProfile'));
 const PortalSettings = lazy(() => import('./pages/portal/PortalSettings'));
 const PortalSubscription = lazy(() => import('./pages/portal/PortalSubscription'));
 const ActivityLog = lazy(() => import('./pages/portal/ActivityLog'));
+const ProgressDashboard = lazy(() => import('./pages/portal/ProgressDashboard'));
 
 // Cookie consent
 const CookieConsent = lazy(() => import('./components/CookieConsent'));
@@ -98,6 +100,9 @@ function ScrollManager() {
   const location = useLocation();
 
   useEffect(() => {
+    // GA4 page view
+    trackPageView(location.pathname + location.hash, document.title);
+
     if (location.hash) {
       const id = location.hash.slice(1);
       // Small delay lets lazy-loaded sections render before scrolling
@@ -174,6 +179,7 @@ export default function App() {
               <Route path="profile" element={<LazySection><PortalProfile /></LazySection>} />
               <Route path="subscription" element={<LazySection><PortalSubscription /></LazySection>} />
               <Route path="activity" element={<LazySection><ActivityLog /></LazySection>} />
+              <Route path="progress" element={<LazySection><ProgressDashboard /></LazySection>} />
               <Route path="settings" element={<LazySection><PortalSettings /></LazySection>} />
             </Route>
 

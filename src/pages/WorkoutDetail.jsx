@@ -7,6 +7,7 @@ import { fetchExercises } from '../api/exercises';
 import { fetchUserLogs } from '../api/completionLog';
 import { downloadWorkoutPdf } from '../utils/workoutPdf';
 import { hasTierAccess, getRequiredTierInfo } from '../utils/tiers';
+import { trackWorkoutView, trackDifficultyChange } from '../utils/analytics';
 import CompletionForm from '../components/CompletionForm';
 import './workout-detail.css';
 
@@ -47,6 +48,7 @@ export default function WorkoutDetail() {
         if (!cancelled) {
           setWorkout(data);
           setActiveDifficulty(data.difficulty);
+          trackWorkoutView(id, data.title, data.difficulty);
         }
 
         // Load completion count
@@ -252,6 +254,10 @@ export default function WorkoutDetail() {
                         key={d}
                         className={`workout-difficulty-btn${(activeDifficulty || workout.difficulty) === d ? ' active' : ''}`}
                         onClick={() => {
+                          const oldDifficulty = activeDifficulty || workout.difficulty;
+                          if (oldDifficulty !== d) {
+                            trackDifficultyChange(id, oldDifficulty, d);
+                          }
                           setActiveDifficulty(d);
                           setExerciseOverrides({});
                         }}

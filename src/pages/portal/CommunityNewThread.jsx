@@ -3,6 +3,7 @@ import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import { createThread } from '../../api/community';
 import { uploadUserFile } from '../../api/upload';
+import { trackCommunityPost } from '../../utils/analytics';
 import './community-new-thread.css';
 
 const CATEGORIES = [
@@ -77,6 +78,7 @@ export default function CommunityNewThread() {
       if (imageUrl) data.imageUrl = imageUrl;
 
       const result = await createThread(data, token);
+      trackCommunityPost(category);
       const newId = result.id || result.threadId;
       navigate(`/portal/community/${newId}`);
     } catch (err) {

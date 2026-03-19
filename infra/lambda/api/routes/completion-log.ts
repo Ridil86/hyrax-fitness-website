@@ -284,6 +284,86 @@ export async function getLogStats(
 }
 
 /**
+ * GET /api/logs/exercise-history?exerciseId=X - Get logs for a specific exercise
+ * Returns chronological logs for charting weight/volume/RPE progression
+ */
+export async function getExerciseHistory(
+  event: APIGatewayProxyEvent
+): Promise<APIGatewayProxyResult> {
+  const claims = extractClaims(event);
+  if (!claims?.sub) return forbidden('Authentication required');
+
+  const exerciseId = event.queryStringParameters?.exerciseId;
+  if (!exerciseId) return badRequest('exerciseId query parameter is required');
+
+  try {
+    const result = await client.send(
+      new QueryCommand({
+        TableName: TABLE_NAME,
+        KeyConditionExpression: 'pk = :pk AND begins_with(sk, :skPrefix)',
+        ExpressionAttributeValues: {
+          ':pk': `USER#${claims.sub}`,
+          ':skPrefix': 'LOG#',
+        },
+        ScanIndexForward: true, // oldest first for charting
+      })
+    );
+
+    const items = (result.Items || []).filter((i) => i.exerciseId === exerciseId);
+
+    return success(items);
+  } catch (error) {
+    console.error('getExerciseHistory error:', error);
+    return serverError('Failed to fetch exercise history');
+  }
+}
+
+/**
+ * GET /api/logs/calendar?year=2026&month=3 - Get day-level activity counts
+ * Returns { "2026-03-01": 5, "2026-03-03": 2, ... }
+ */
+export async function getCalendarData(
+  event: APIGatewayProxyEvent
+): Promise<APIGatewayProxyResult> {
+  const claims = extractClaims(event);
+  if (!claims?.sub) return forbidden('Authentication required');
+
+  const params = event.queryStringParameters || {};
+  const year = params.year || new Date().getFullYear().toString();
+  const month = params.month ? params.month.padStart(2, '0') : (new Date().getMonth() + 1).toString().padStart(2, '0');
+
+  const from = `${year}-${month}-01`;
+  const to = `${year}-${month}-31`;
+
+  try {
+    const result = await client.send(
+      new QueryCommand({
+        TableName: TABLE_NAME,
+        KeyConditionExpression: 'pk = :pk AND sk BETWEEN :skFrom AND :skTo',
+        ExpressionAttributeValues: {
+          ':pk': `USER#${claims.sub}`,
+          ':skFrom': `LOG#${from}`,
+          ':skTo': `LOG#${to}~`,
+        },
+      })
+    );
+
+    const dayCounts: Record<string, number> = {};
+    (result.Items || []).forEach((item) => {
+      const day = (item.completedAt || '').slice(0, 10);
+      if (day) {
+        dayCounts[day] = (dayCounts[day] || 0) + 1;
+      }
+    });
+
+    return success(dayCounts);
+  } catch (error) {
+    console.error('getCalendarData error:', error);
+    return serverError('Failed to fetch calendar data');
+  }
+}
+
+/**
  * DELETE /api/logs/{id} - Delete own completion log
  */
 export async function deleteLog(

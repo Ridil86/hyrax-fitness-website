@@ -1,0 +1,365 @@
+/* ── Progress Dashboard ── */
+
+.progress-dashboard {
+  max-width: 960px;
+  margin: 0 auto;
+}
+
+.progress-header {
+  margin-bottom: 24px;
+}
+
+.progress-header h1 {
+  font-size: 1.8rem;
+  margin: 0;
+  color: var(--ink);
+}
+
+.progress-loading {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 80px 20px;
+  gap: 12px;
+  color: var(--rock);
+}
+
+/* ── Stats Cards ── */
+.progress-stats {
+  display: grid;
+  grid-template-columns: repeat(5, 1fr);
+  gap: 12px;
+  margin-bottom: 32px;
+}
+
+.progress-stat-card {
+  background: rgba(255, 255, 255, .55);
+  border: 1px solid rgba(27, 18, 10, .08);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow-soft);
+  padding: 18px 12px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  text-align: center;
+}
+
+.progress-stat-value {
+  font-size: 1.6rem;
+  font-weight: 700;
+  color: var(--sunset);
+}
+
+.progress-stat-label {
+  font-size: .72rem;
+  color: var(--rock);
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: .04em;
+}
+
+/* ── Section ── */
+.progress-section {
+  margin-bottom: 36px;
+}
+
+.progress-section-title {
+  font-size: 1.25rem;
+  color: var(--ink);
+  margin: 0 0 16px;
+}
+
+/* ── Filters ── */
+.progress-filters {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+  flex-wrap: wrap;
+  margin-bottom: 20px;
+}
+
+.progress-exercise-select {
+  flex: 1;
+  min-width: 200px;
+  padding: 10px 14px;
+  border: 1px solid rgba(27, 18, 10, .15);
+  border-radius: var(--radius);
+  background: #fff;
+  color: var(--ink);
+  font-size: .9rem;
+  outline: none;
+  cursor: pointer;
+}
+
+.progress-exercise-select:focus {
+  box-shadow: var(--ring);
+  border-color: var(--sunset);
+}
+
+.progress-time-btns {
+  display: flex;
+  gap: 6px;
+}
+
+.progress-time-btn {
+  padding: 7px 16px;
+  border: 1px solid rgba(27, 18, 10, .12);
+  border-radius: 999px;
+  background: rgba(255, 255, 255, .6);
+  color: var(--rock);
+  font-size: .82rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all .2s;
+}
+
+.progress-time-btn:hover {
+  border-color: var(--sunset);
+  color: var(--sunset);
+}
+
+.progress-time-btn--active {
+  background: linear-gradient(135deg, var(--sunset), var(--sunrise));
+  color: #fff;
+  border-color: transparent;
+}
+
+/* ── Charts ── */
+.progress-charts {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+}
+
+.progress-chart-card {
+  background: rgba(255, 255, 255, .55);
+  border: 1px solid rgba(27, 18, 10, .08);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow-soft);
+  padding: 20px;
+}
+
+.progress-chart-card h3 {
+  font-size: .95rem;
+  color: var(--ink);
+  margin: 0 0 12px;
+}
+
+.progress-chart-wrap {
+  position: relative;
+  min-height: 300px;
+}
+
+.progress-chart-placeholder {
+  background: rgba(255, 255, 255, .55);
+  border: 1px solid rgba(27, 18, 10, .08);
+  border-radius: var(--radius);
+  padding: 60px 20px;
+  text-align: center;
+  color: var(--rock);
+  font-size: .95rem;
+}
+
+/* ── Activity Calendar ── */
+.progress-calendar-nav {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 16px;
+  margin-bottom: 16px;
+}
+
+.progress-cal-nav-btn {
+  background: rgba(255, 255, 255, .6);
+  border: 1px solid rgba(27, 18, 10, .12);
+  border-radius: 50%;
+  width: 36px;
+  height: 36px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  color: var(--ink);
+  font-size: 1rem;
+  font-weight: 600;
+  transition: all .2s;
+}
+
+.progress-cal-nav-btn:hover {
+  border-color: var(--sunset);
+  color: var(--sunset);
+}
+
+.progress-cal-month-label {
+  font-size: 1.05rem;
+  font-weight: 600;
+  color: var(--ink);
+  min-width: 160px;
+  text-align: center;
+}
+
+.progress-calendar {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: 4px;
+  margin-bottom: 24px;
+}
+
+.progress-cal-header {
+  font-size: .72rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  color: var(--rock);
+  text-align: center;
+  padding: 6px 0;
+  letter-spacing: .04em;
+}
+
+.progress-cal-day {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 8px 4px;
+  gap: 4px;
+  min-height: 48px;
+  border-radius: 8px;
+  transition: background .15s;
+}
+
+.progress-cal-day:not(.progress-cal-day--empty):hover {
+  background: rgba(27, 18, 10, .04);
+}
+
+.progress-cal-day--empty {
+  min-height: 48px;
+}
+
+.progress-cal-day-num {
+  font-size: .78rem;
+  color: var(--ink);
+  font-weight: 500;
+}
+
+.progress-cal-dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+.progress-cal-tooltip {
+  position: absolute;
+  bottom: 100%;
+  left: 50%;
+  transform: translateX(-50%);
+  background: var(--ink);
+  color: #fff;
+  font-size: .72rem;
+  padding: 4px 10px;
+  border-radius: 6px;
+  white-space: nowrap;
+  pointer-events: none;
+  z-index: 5;
+}
+
+/* ── Recent Activity Feed ── */
+.progress-recent {
+  background: rgba(255, 255, 255, .55);
+  border: 1px solid rgba(27, 18, 10, .08);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow-soft);
+  padding: 20px;
+}
+
+.progress-recent-title {
+  font-size: .95rem;
+  color: var(--ink);
+  margin: 0 0 12px;
+}
+
+.progress-recent-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.progress-recent-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 0;
+  border-bottom: 1px solid rgba(27, 18, 10, .06);
+}
+
+.progress-recent-item:last-child {
+  border-bottom: none;
+}
+
+.progress-recent-name {
+  font-weight: 600;
+  color: var(--ink);
+  font-size: .88rem;
+  flex: 1;
+}
+
+.progress-recent-detail {
+  color: var(--rock);
+  font-size: .82rem;
+}
+
+.progress-recent-time {
+  color: var(--sand);
+  font-size: .78rem;
+  white-space: nowrap;
+}
+
+/* ── Responsive ── */
+@media (max-width: 768px) {
+  .progress-stats {
+    grid-template-columns: repeat(3, 1fr);
+  }
+
+  .progress-charts {
+    grid-template-columns: 1fr;
+  }
+
+  .progress-filters {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .progress-exercise-select {
+    min-width: 0;
+  }
+
+  .progress-time-btns {
+    justify-content: center;
+  }
+}
+
+@media (max-width: 480px) {
+  .progress-stats {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  .progress-stat-value {
+    font-size: 1.3rem;
+  }
+
+  .progress-chart-wrap {
+    min-height: 240px;
+  }
+
+  .progress-recent-item {
+    flex-wrap: wrap;
+    gap: 4px;
+  }
+
+  .progress-recent-detail {
+    order: 3;
+    width: 100%;
+  }
+}

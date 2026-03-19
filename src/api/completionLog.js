@@ -23,6 +23,14 @@ export function fetchLogStats(token) {
   return apiGet('/api/logs/stats', token);
 }
 
+export function fetchExerciseHistory(exerciseId, token) {
+  return apiGet(`/api/logs/exercise-history?exerciseId=${exerciseId}`, token);
+}
+
+export function fetchCalendarData(year, month, token) {
+  return apiGet(`/api/logs/calendar?year=${year}&month=${month}`, token);
+}
+
 export function deleteLogApi(id, token) {
   return apiDelete(`/api/logs/${id}`, token);
 }

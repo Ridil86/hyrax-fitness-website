@@ -3,6 +3,7 @@ import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import { createTicket } from '../../api/support';
 import { uploadUserFile } from '../../api/upload';
+import { trackSupportTicket } from '../../utils/analytics';
 import './new-support-ticket.css';
 
 const CATEGORIES = [
@@ -75,6 +76,7 @@ export default function NewSupportTicket() {
       if (attachmentUrl) data.attachmentUrl = attachmentUrl;
 
       const result = await createTicket(data, token);
+      trackSupportTicket(category);
       const newId = result.id || result.ticketId;
       navigate(`/portal/support/${newId}`);
     } catch (err) {

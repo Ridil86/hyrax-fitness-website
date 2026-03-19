@@ -30,7 +30,7 @@ import {
   addMessage, assignTicket, getSupportStats,
 } from './routes/support';
 import {
-  createLog, createWorkoutLog, listUserLogs, getLogStats, deleteLog,
+  createLog, createWorkoutLog, listUserLogs, getLogStats, getExerciseHistory, getCalendarData, deleteLog,
 } from './routes/completion-log';
 import { notFound, serverError } from './utils/response';
 
@@ -368,6 +368,14 @@ export const handler = async (
 
     if (path === '/api/logs/stats' && method === 'GET') {
       return getLogStats(event);
+    }
+
+    if (path === '/api/logs/exercise-history' && method === 'GET') {
+      return getExerciseHistory(event);
+    }
+
+    if (path === '/api/logs/calendar' && method === 'GET') {
+      return getCalendarData(event);
     }
 
     if (path === '/api/logs') {

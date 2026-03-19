@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, useCallback } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import Hls from 'hls.js';
@@ -8,6 +8,7 @@ import { fetchExercises } from '../../api/exercises';
 import { fetchUserLogs } from '../../api/completionLog';
 import CompletionForm from '../../components/CompletionForm';
 import { hasTierAccess, getRequiredTierInfo } from '../../utils/tiers';
+import { trackVideoStart, trackVideoProgress, trackVideoComplete } from '../../utils/analytics';
 import './video-detail.css';
 
 const CATEGORY_LABELS = {
@@ -83,6 +84,48 @@ export default function VideoDetail() {
     load();
     return () => { cancelled = true; };
   }, [id, getIdToken]);
+
+  // Video analytics tracking
+  const progressMilestones = useRef(new Set());
+
+  const handlePlay = useCallback(() => {
+    if (video) {
+      trackVideoStart(video.id, video.title, video.category);
+    }
+  }, [video]);
+
+  const handleTimeUpdate = useCallback(() => {
+    const el = videoRef.current;
+    if (!el || !el.duration || !video) return;
+    const pct = (el.currentTime / el.duration) * 100;
+    [25, 50, 75].forEach((milestone) => {
+      if (pct >= milestone && !progressMilestones.current.has(milestone)) {
+        progressMilestones.current.add(milestone);
+        trackVideoProgress(video.id, milestone);
+      }
+    });
+  }, [video]);
+
+  const handleEnded = useCallback(() => {
+    const el = videoRef.current;
+    if (video && el) {
+      trackVideoComplete(video.id, el.currentTime, el.duration);
+    }
+  }, [video]);
+
+  useEffect(() => {
+    const el = videoRef.current;
+    if (!el || !video) return;
+    progressMilestones.current = new Set();
+    el.addEventListener('play', handlePlay);
+    el.addEventListener('timeupdate', handleTimeUpdate);
+    el.addEventListener('ended', handleEnded);
+    return () => {
+      el.removeEventListener('play', handlePlay);
+      el.removeEventListener('timeupdate', handleTimeUpdate);
+      el.removeEventListener('ended', handleEnded);
+    };
+  }, [video, handlePlay, handleTimeUpdate, handleEnded]);
 
   // HLS.js adaptive streaming setup
   const locked = !isAdmin && !hasTierAccess(userTier, video?.requiredTier);
