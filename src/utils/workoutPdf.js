@@ -21,6 +21,27 @@ async function loadLogoBase64() {
   }
 }
 
+/**
+ * Fetch an image URL and convert to base64 data URL.
+ * Returns null on failure (graceful degradation).
+ */
+async function fetchImageAsBase64(url) {
+  if (!url) return null;
+  try {
+    const response = await fetch(url, { mode: 'cors' });
+    if (!response.ok) return null;
+    const blob = await response.blob();
+    return new Promise((resolve) => {
+      const reader = new FileReader();
+      reader.onloadend = () => resolve(reader.result);
+      reader.onerror = () => resolve(null);
+      reader.readAsDataURL(blob);
+    });
+  } catch {
+    return null;
+  }
+}
+
 // Brand colors
 const COLORS = {
   ink: [27, 18, 10],
@@ -36,9 +57,27 @@ const COLORS = {
 /**
  * Generate a branded Hyrax Fitness PDF for a workout.
  * @param {Object} workout - The workout data object
+ * @param {Object} options - Generation options
+ * @param {string} options.logoBase64 - Pre-loaded logo
+ * @param {Object} options.exerciseData - Map of exerciseId -> full exercise objects
+ * @param {string} options.activeDifficulty - User's selected difficulty
+ * @param {Object} options.exerciseOverrides - Per-exercise difficulty overrides
+ * @param {Object} options.userProfile - { givenName, familyName }
+ * @param {Object} options.workoutStats - { completionCount, lastCompleted, logs }
+ * @param {Object} options.imageCache - Pre-fetched exercise images { exerciseId: base64 }
  * @returns {jsPDF} The generated PDF document
  */
-export function generateWorkoutPdf(workout, logoBase64 = null) {
+export function generateWorkoutPdf(workout, options = {}) {
+  const {
+    logoBase64 = null,
+    exerciseData = {},
+    activeDifficulty = 'beginner',
+    exerciseOverrides = {},
+    userProfile = null,
+    workoutStats = null,
+    imageCache = {},
+  } = options;
+
   const doc = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4' });
   const pageWidth = doc.internal.pageSize.getWidth();
   const pageHeight = doc.internal.pageSize.getHeight();
@@ -56,7 +95,7 @@ export function generateWorkoutPdf(workout, logoBase64 = null) {
 
   // Logo in header (actual image is 817x625, ratio 1.307:1)
   const logoHeight = 22;
-  const logoWidth = logoHeight * (817 / 625); // ~28.8mm
+  const logoWidth = logoHeight * (817 / 625);
   const textOffsetX = logoBase64 ? margin + logoWidth + 4 : margin;
   if (logoBase64) {
     doc.addImage(logoBase64, 'PNG', margin, 8, logoWidth, logoHeight);
@@ -74,6 +113,26 @@ export function generateWorkoutPdf(workout, logoBase64 = null) {
   doc.setTextColor(...COLORS.sand);
   doc.text('START-STOP SCRAMBLE & CARRY TRAINING', textOffsetX, 28);
 
+  // User name (right-aligned)
+  if (userProfile?.givenName || userProfile?.familyName) {
+    const userName = [userProfile.givenName, userProfile.familyName].filter(Boolean).join(' ');
+    doc.setFont('helvetica', 'normal');
+    doc.setFontSize(8.5);
+    doc.setTextColor(...COLORS.sand);
+    doc.text(`Prepared for: ${userName}`, pageWidth - margin, 18, { align: 'right' });
+  }
+
+  // Date generated (right-aligned)
+  const dateStr = new Date().toLocaleDateString('en-US', {
+    year: 'numeric',
+    month: 'short',
+    day: 'numeric',
+  });
+  doc.setFont('helvetica', 'normal');
+  doc.setFontSize(7.5);
+  doc.setTextColor(...COLORS.sand);
+  doc.text(`Generated: ${dateStr}`, pageWidth - margin, 24, { align: 'right' });
+
   y = 52;
 
   // ── Title ──
@@ -89,9 +148,13 @@ export function generateWorkoutPdf(workout, logoBase64 = null) {
   doc.setFont('helvetica', 'normal');
   let badgeX = margin;
 
+  const diffLabel = activeDifficulty
+    ? activeDifficulty.charAt(0).toUpperCase() + activeDifficulty.slice(1)
+    : null;
+
   const badges = [
     { label: workout.category, color: COLORS.earth },
-    { label: workout.difficulty, color: COLORS.sunset },
+    { label: diffLabel, color: COLORS.sunset },
     { label: workout.duration, color: COLORS.rock },
   ].filter((b) => b.label);
 
@@ -116,12 +179,79 @@ export function generateWorkoutPdf(workout, logoBase64 = null) {
     y += descLines.length * 5 + 8;
   }
 
-  // ── Equipment ──
-  if (workout.equipment && workout.equipment.length > 0) {
-    y = checkPageBreak(doc, y, 20, pageHeight, margin);
+  // ── Your Progress (personal stats) ──
+  if (workoutStats && workoutStats.completionCount > 0) {
+    y = checkPageBreak(doc, y, 30, pageHeight, margin);
 
+    doc.setFillColor(251, 247, 230); // paper
+    doc.setDrawColor(...COLORS.sunset);
+    doc.setLineWidth(0.5);
+
+    const statsBoxHeight = 22;
+    doc.roundedRect(margin, y - 4, contentWidth, statsBoxHeight, 3, 3, 'FD');
+
+    doc.setFont('helvetica', 'bold');
+    doc.setFontSize(10);
+    doc.setTextColor(...COLORS.sunset);
+    doc.text('YOUR PROGRESS', margin + 5, y + 2);
+
+    doc.setFont('helvetica', 'normal');
+    doc.setFontSize(9);
+    doc.setTextColor(...COLORS.ink);
+
+    const statsLine = [];
+    statsLine.push(`Completed: ${workoutStats.completionCount} time${workoutStats.completionCount === 1 ? '' : 's'}`);
+    if (workoutStats.lastCompleted) {
+      const lastDate = new Date(workoutStats.lastCompleted).toLocaleDateString('en-US', {
+        month: 'short',
+        day: 'numeric',
+        year: 'numeric',
+      });
+      statsLine.push(`Last: ${lastDate}`);
+    }
+    if (workoutStats.streak && workoutStats.streak > 1) {
+      statsLine.push(`Streak: ${workoutStats.streak} days`);
+    }
+    doc.text(statsLine.join('   |   '), margin + 5, y + 11);
+
+    y += statsBoxHeight + 6;
+    doc.setDrawColor(0, 0, 0);
+    doc.setLineWidth(0.2);
+  }
+
+  // ── Warm-Up Section ──
+  y = checkPageBreak(doc, y, 26, pageHeight, margin);
+
+  doc.setFillColor(253, 248, 235); // warm cream
+  const warmUpHeight = 20;
+  doc.roundedRect(margin, y - 4, contentWidth, warmUpHeight, 3, 3, 'F');
+
+  doc.setFont('helvetica', 'bold');
+  doc.setFontSize(10);
+  doc.setTextColor(...COLORS.earth);
+  doc.text('WARM-UP', margin + 5, y + 2);
+
+  doc.setFont('helvetica', 'normal');
+  doc.setFontSize(8.5);
+  doc.setTextColor(...COLORS.ink);
+  const warmUpText = '5 minutes of light movement — walking, arm circles, hip openers, and dynamic stretches to prepare your body for the session ahead.';
+  const warmUpLines = doc.splitTextToSize(warmUpText, contentWidth - 10);
+  doc.text(warmUpLines, margin + 5, y + 9);
+
+  y += warmUpHeight + 6;
+
+  // ── Equipment ──
+  const hasReferencedExercises = workout.exercises?.some((e) => e.exerciseId);
+  const equipmentList = hasReferencedExercises
+    ? deriveEquipment(workout, exerciseData, activeDifficulty, exerciseOverrides)
+    : (workout.equipment || []);
+
+  if (equipmentList.length > 0) {
+    y = checkPageBreak(doc, y, 12 + equipmentList.length * 5.5, pageHeight, margin);
+
+    const equipBoxHeight = 10 + equipmentList.length * 5.5;
     doc.setFillColor(...COLORS.paper);
-    doc.roundedRect(margin, y - 4, contentWidth, 8 + workout.equipment.length * 5.5, 3, 3, 'F');
+    doc.roundedRect(margin, y - 4, contentWidth, equipBoxHeight, 3, 3, 'F');
 
     doc.setFont('helvetica', 'bold');
     doc.setFontSize(11);
@@ -132,7 +262,7 @@ export function generateWorkoutPdf(workout, logoBase64 = null) {
     doc.setFont('helvetica', 'normal');
     doc.setFontSize(10);
     doc.setTextColor(...COLORS.ink);
-    for (const item of workout.equipment) {
+    for (const item of equipmentList) {
       doc.setFillColor(...COLORS.sunset);
       doc.circle(margin + 7, y - 1, 1.2, 'F');
       doc.text(item, margin + 12, y);
@@ -155,7 +285,25 @@ export function generateWorkoutPdf(workout, logoBase64 = null) {
     y += 16;
 
     workout.exercises.forEach((exercise, index) => {
-      y = checkPageBreak(doc, y, 30, pageHeight, margin);
+      y = checkPageBreak(doc, y, 35, pageHeight, margin);
+
+      const isLegacy = !exercise.exerciseId;
+      const full = isLegacy ? null : exerciseData[exercise.exerciseId];
+      const effectiveDiff = isLegacy
+        ? null
+        : exerciseOverrides[exercise.exerciseId] || activeDifficulty;
+      const mod = full?.modifications?.[effectiveDiff];
+      const displayName = isLegacy
+        ? (exercise.name || `Exercise ${index + 1}`)
+        : (exercise.exerciseName || full?.name || `Exercise ${index + 1}`);
+
+      // Check for exercise image
+      const modImageUrl = mod?.imageUrl || full?.imageUrl;
+      const imageB64 = exercise.exerciseId ? imageCache[exercise.exerciseId] : null;
+      const hasImage = !!imageB64;
+      const imgW = 25;
+      const imgH = 25;
+      const textWidth = hasImage ? contentWidth - imgW - 8 : contentWidth - 14;
 
       // Exercise number circle
       doc.setFillColor(...COLORS.sunset);
@@ -165,14 +313,54 @@ export function generateWorkoutPdf(workout, logoBase64 = null) {
       doc.setTextColor(...COLORS.white);
       doc.text(String(index + 1), margin + 5, y + 1, { align: 'center' });
 
+      // Exercise image (right-aligned)
+      const imgStartY = y - 5;
+      if (hasImage) {
+        try {
+          doc.addImage(imageB64, 'JPEG', pageWidth - margin - imgW, imgStartY, imgW, imgH);
+        } catch {
+          // Skip image on failure
+        }
+      }
+
       // Exercise name
       doc.setFont('helvetica', 'bold');
       doc.setFontSize(11);
       doc.setTextColor(...COLORS.ink);
-      doc.text(exercise.name || `Exercise ${index + 1}`, margin + 14, y + 1);
-      y += 7;
+      doc.text(displayName, margin + 14, y + 1);
+      y += 6;
 
-      // Sets / Reps / Rest row
+      // Modification name (subName)
+      if (mod?.subName) {
+        doc.setFont('helvetica', 'italic');
+        doc.setFontSize(9);
+        doc.setTextColor(...COLORS.sunset);
+        doc.text(`Modification: ${mod.subName}`, margin + 14, y);
+        y += 4.5;
+      }
+
+      // Per-exercise difficulty override indicator
+      if (!isLegacy && exerciseOverrides[exercise.exerciseId]) {
+        doc.setFont('helvetica', 'normal');
+        doc.setFontSize(7.5);
+        doc.setTextColor(...COLORS.rock);
+        const overrideLabel = exerciseOverrides[exercise.exerciseId].charAt(0).toUpperCase() +
+          exerciseOverrides[exercise.exerciseId].slice(1);
+        doc.text(`[${overrideLabel}]`, margin + 14, y);
+        y += 4;
+      }
+
+      // Modification description
+      if (mod?.description) {
+        doc.setFont('helvetica', 'normal');
+        doc.setFontSize(8.5);
+        doc.setTextColor(...COLORS.earth);
+        const modDescLines = doc.splitTextToSize(mod.description, textWidth);
+        doc.text(modDescLines, margin + 14, y);
+        y += modDescLines.length * 4 + 2;
+      }
+
+      // Sets / Reps / Rest / Duration row
       const details = [];
       if (exercise.sets) details.push(`Sets: ${exercise.sets}`);
       if (exercise.reps) details.push(`Reps: ${exercise.reps}`);
@@ -188,28 +376,121 @@ export function generateWorkoutPdf(workout, logoBase64 = null) {
       }
 
       // Notes
-      if (exercise.notes) {
+      const noteText = mod?.notes || exercise.notes;
+      if (noteText) {
         doc.setFont('helvetica', 'italic');
         doc.setFontSize(9);
         doc.setTextColor(...COLORS.earth);
-        const noteLines = doc.splitTextToSize(exercise.notes, contentWidth - 14);
+        const noteLines = doc.splitTextToSize(noteText, textWidth);
         doc.text(noteLines, margin + 14, y);
         y += noteLines.length * 4.5;
+      }
+
+      // Equipment for this exercise
+      if (mod?.equipment && mod.equipment.length > 0) {
+        doc.setFont('helvetica', 'normal');
+        doc.setFontSize(8);
+        doc.setTextColor(...COLORS.rock);
+        const equipStr = mod.equipment.map((eq) => eq.equipmentName).join(', ');
+        doc.text(`Equipment: ${equipStr}`, margin + 14, y);
+        y += 4.5;
+      }
+
+      // Progression tip
+      if (workoutStats?.exerciseHistory && exercise.exerciseId) {
+        const exHistory = workoutStats.exerciseHistory[exercise.exerciseId];
+        if (exHistory && exHistory.count >= 8 && effectiveDiff !== 'elite') {
+          const nextDiff = getNextDifficulty(effectiveDiff);
+          if (nextDiff) {
+            doc.setFont('helvetica', 'italic');
+            doc.setFontSize(7.5);
+            doc.setTextColor(...COLORS.sunrise);
+            const tipLabel = nextDiff.charAt(0).toUpperCase() + nextDiff.slice(1);
+            doc.text(
+              `Tip: You've logged this ${exHistory.count} times at this level \u2014 consider trying ${tipLabel}!`,
+              margin + 14, y
+            );
+            y += 4.5;
+          }
+        }
+      }
+
+      // Ensure y is past image if one was drawn
+      if (hasImage) {
+        const imgEndY = imgStartY + imgH + 2;
+        if (y < imgEndY) y = imgEndY;
       }
 
       y += 6;
     });
   }
 
+  // ── Workout Structure Notes ──
+  if (workout.notes) {
+    y = checkPageBreak(doc, y, 20, pageHeight, margin);
+
+    doc.setFillColor(...COLORS.paper);
+    const notesLines = doc.splitTextToSize(workout.notes, contentWidth - 10);
+    const notesBoxHeight = 12 + notesLines.length * 4.5;
+    doc.roundedRect(margin, y - 4, contentWidth, notesBoxHeight, 3, 3, 'F');
+
+    doc.setFont('helvetica', 'bold');
+    doc.setFontSize(10);
+    doc.setTextColor(...COLORS.earth);
+    doc.text('WORKOUT NOTES', margin + 5, y + 2);
+    y += 9;
+
+    doc.setFont('helvetica', 'normal');
+    doc.setFontSize(9);
+    doc.setTextColor(...COLORS.ink);
+    doc.text(notesLines, margin + 5, y);
+    y += notesLines.length * 4.5 + 8;
+  }
+
+  // ── Bask / Cooldown Section ──
+  y = checkPageBreak(doc, y, 26, pageHeight, margin);
+
+  doc.setFillColor(245, 240, 225); // warm neutral
+  const baskHeight = 24;
+  doc.roundedRect(margin, y - 4, contentWidth, baskHeight, 3, 3, 'F');
+
+  doc.setFont('helvetica', 'bold');
+  doc.setFontSize(10);
+  doc.setTextColor(...COLORS.earth);
+  doc.text('BASK \u2014 COOLDOWN', margin + 5, y + 2);
+
+  doc.setFont('helvetica', 'normal');
+  doc.setFontSize(8.5);
+  doc.setTextColor(...COLORS.ink);
+  const baskText = 'Take 5\u201310 minutes to bask in your effort. Slow your breathing, walk it off, and stretch the major muscle groups used. ' +
+    'Hydrate, reflect on what felt strong, and note any areas to focus on next time.';
+  const baskLines = doc.splitTextToSize(baskText, contentWidth - 10);
+  doc.text(baskLines, margin + 5, y + 9);
+
+  y += baskHeight + 6;
+
+  // ── QR Code link back to workout ──
+  y = checkPageBreak(doc, y, 20, pageHeight, margin);
+
+  doc.setFont('helvetica', 'normal');
+  doc.setFontSize(8);
+  doc.setTextColor(...COLORS.rock);
+  const workoutUrl = `https://hyraxfitness.com/portal/workouts/${workout.id || ''}`;
+  doc.text('Log your completion online:', margin, y);
+  doc.setTextColor(...COLORS.sunset);
+  doc.textWithLink(workoutUrl, margin, y + 4.5, { url: workoutUrl });
+
+  y += 14;
+
   // ── Footer on each page ──
   const totalPages = doc.getNumberOfPages();
   for (let i = 1; i <= totalPages; i++) {
     doc.setPage(i);
 
-    // Watermark (very low opacity logo centered on page, correct aspect ratio)
+    // Watermark
     if (logoBase64) {
       const watermarkW = pageWidth * 0.5;
-      const watermarkH = watermarkW * (625 / 817); // maintain aspect ratio
+      const watermarkH = watermarkW * (625 / 817);
       const watermarkX = (pageWidth - watermarkW) / 2;
       const watermarkY = (pageHeight - watermarkH) / 2;
       doc.saveGraphicsState();
@@ -247,16 +528,73 @@ export function generateWorkoutPdf(workout, logoBase64 = null) {
 }
 
 /**
- * Download the PDF for a workout.
+ * Download the PDF for a workout with full context.
+ * @param {Object} workout - The workout data
+ * @param {Object} options - { exerciseData, activeDifficulty, exerciseOverrides, userProfile, workoutStats }
  */
-export async function downloadWorkoutPdf(workout) {
+export async function downloadWorkoutPdf(workout, options = {}) {
   const logoBase64 = await loadLogoBase64();
-  const doc = generateWorkoutPdf(workout, logoBase64);
+
+  // Pre-fetch exercise images
+  const imageCache = {};
+  const { exerciseData = {}, activeDifficulty = 'beginner', exerciseOverrides = {} } = options;
+
+  if (workout.exercises) {
+    const imagePromises = workout.exercises
+      .filter((ex) => ex.exerciseId)
+      .map(async (ex) => {
+        const full = exerciseData[ex.exerciseId];
+        const effectiveDiff = exerciseOverrides[ex.exerciseId] || activeDifficulty;
+        const mod = full?.modifications?.[effectiveDiff];
+        const imgUrl = mod?.imageUrl || full?.imageUrl;
+        if (imgUrl) {
+          const b64 = await fetchImageAsBase64(imgUrl);
+          if (b64) imageCache[ex.exerciseId] = b64;
+        }
+      });
+    await Promise.all(imagePromises);
+  }
+
+  const doc = generateWorkoutPdf(workout, {
+    ...options,
+    logoBase64,
+    imageCache,
+  });
+
   const filename = `hyrax-${(workout.title || 'workout')
     .toLowerCase()
     .replace(/[^a-z0-9]+/g, '-')
     .replace(/^-|-$/g, '')}.pdf`;
   doc.save(filename);
+}
+
+/**
+ * Derive equipment list from exercise modifications at selected difficulty.
+ */
+function deriveEquipment(workout, exerciseData, activeDifficulty, exerciseOverrides) {
+  const equipMap = new Map();
+  (workout.exercises || []).forEach((ex) => {
+    if (!ex.exerciseId) return;
+    const full = exerciseData[ex.exerciseId];
+    if (!full?.modifications) return;
+    const diff = exerciseOverrides[ex.exerciseId] || activeDifficulty;
+    const mod = full.modifications[diff];
+    if (mod?.equipment) {
+      mod.equipment.forEach((eq) => {
+        equipMap.set(eq.equipmentId, eq.equipmentName);
+      });
+    }
+  });
+  return Array.from(equipMap.values());
+}
+
+/**
+ * Get the next difficulty level up.
+ */
+function getNextDifficulty(current) {
+  const levels = ['beginner', 'intermediate', 'advanced', 'elite'];
+  const idx = levels.indexOf(current);
+  return idx >= 0 && idx < levels.length - 1 ? levels[idx + 1] : null;
 }
 
 /**

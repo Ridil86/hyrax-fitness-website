@@ -12,8 +12,7 @@ import { downloadWorkoutPdf } from '../../utils/workoutPdf';
 import './admin.css';
 import './workout-admin.css';
 
-const CATEGORIES = ['general', 'strength', 'cardio', 'hiit', 'mobility', 'endurance', 'scramble'];
-const DIFFICULTIES = ['beginner', 'intermediate', 'advanced', 'elite'];
+const CATEGORIES = ['general', 'home', 'gym', 'outdoors', 'strength', 'cardio', 'hiit', 'mobility', 'endurance', 'scramble'];
 const TIER_OPTIONS = [
   { value: 'Pup', label: 'Pup (Free)' },
   { value: 'Rock Runner', label: 'Rock Runner ($5/mo)' },
@@ -24,7 +23,6 @@ const EMPTY_WORKOUT = {
   title: '',
   description: '',
   category: 'general',
-  difficulty: 'intermediate',
   duration: '',
   exercises: [],
   tags: [],
@@ -231,19 +229,20 @@ export default function WorkoutAdmin() {
     });
   };
 
-  // Derive equipment from exercises at current difficulty
+  // Derive equipment from exercises across all difficulty levels
   const derivedEquipment = useMemo(() => {
     if (!editing) return [];
     const equipMap = new Map();
     editing.exercises.forEach((ex) => {
-      // Find the full exercise data to get modifications
       const full = allExercises.find((e) => e.id === ex.exerciseId);
       if (!full?.modifications) return;
-      const mod = full.modifications[editing.difficulty];
-      if (mod?.equipment) {
-        mod.equipment.forEach((eq) => {
-          equipMap.set(eq.equipmentId, eq.equipmentName);
-        });
+      // Collect equipment from all difficulty levels
+      for (const mod of Object.values(full.modifications)) {
+        if (mod?.equipment) {
+          mod.equipment.forEach((eq) => {
+            equipMap.set(eq.equipmentId, eq.equipmentName);
+          });
+        }
       }
     });
     // Also include legacy equipment if present
@@ -316,7 +315,6 @@ export default function WorkoutAdmin() {
                         {w.status}
                       </span>
                       <span className="workout-badge category">{w.category}</span>
-                      <span className="workout-badge difficulty">{w.difficulty}</span>
                       {w.duration && <span className="workout-badge">{w.duration}</span>}
                       {w.requiredTier && w.requiredTier !== 'Pup' && (
                         <span className="workout-badge tier">{w.requiredTier}</span>
@@ -434,20 +432,6 @@ export default function WorkoutAdmin() {
                 {CATEGORIES.map((c) => (
                   <option key={c} value={c}>
                     {c.charAt(0).toUpperCase() + c.slice(1)}
-                  </option>
-                ))}
-              </select>
-            </div>
-
-            <div className="content-field">
-              <label>Difficulty</label>
-              <select
-                value={editing.difficulty}
-                onChange={(e) => updateEditing('difficulty', e.target.value)}
-              >
-                {DIFFICULTIES.map((d) => (
-                  <option key={d} value={d}>
-                    {d.charAt(0).toUpperCase() + d.slice(1)}
                   </option>
                 ))}
               </select>
@@ -705,7 +689,7 @@ export default function WorkoutAdmin() {
         <div className="workout-editor-card">
           <h3>Equipment</h3>
           <p className="workout-derived-note">
-            Equipment is derived from the exercises&apos; modifications at the <strong>{editing.difficulty}</strong> difficulty level.
+            Equipment is derived from the exercises&apos; modifications across all difficulty levels.
           </p>
           {derivedEquipment.length > 0 ? (
             <ul className="workout-derived-list">
@@ -715,7 +699,7 @@ export default function WorkoutAdmin() {
             </ul>
           ) : (
             <p className="workout-derived-empty">
-              No equipment needed, or no exercises with equipment at this difficulty level.
+              No equipment needed, or no exercises with equipment at any difficulty level.
             </p>
           )}
         </div>

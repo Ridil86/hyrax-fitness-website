@@ -4,7 +4,8 @@ import { motion } from 'framer-motion';
 import { useAuth } from '../context/AuthContext';
 import { fetchWorkout } from '../api/workouts';
 import { fetchExercises } from '../api/exercises';
-import { fetchUserLogs } from '../api/completionLog';
+import { fetchUserLogs, fetchLogStats, fetchExerciseHistory } from '../api/completionLog';
+import { fetchProfile } from '../api/profile';
 import { downloadWorkoutPdf } from '../utils/workoutPdf';
 import { hasTierAccess, getRequiredTierInfo } from '../utils/tiers';
 import { trackWorkoutView, trackDifficultyChange } from '../utils/analytics';
@@ -36,6 +37,10 @@ export default function WorkoutDetail() {
   const [showCompletionForm, setShowCompletionForm] = useState(false);
   const [completionCount, setCompletionCount] = useState(null);
 
+  // PDF personalization state
+  const [userProfile, setUserProfile] = useState(null);
+  const [workoutStats, setWorkoutStats] = useState(null);
+
   useEffect(() => {
     let cancelled = false;
 
@@ -47,16 +52,54 @@ export default function WorkoutDetail() {
         const data = await fetchWorkout(id, token);
         if (!cancelled) {
           setWorkout(data);
-          setActiveDifficulty(data.difficulty);
-          trackWorkoutView(id, data.title, data.difficulty);
+          setActiveDifficulty('beginner');
+          trackWorkoutView(id, data.title, 'beginner');
         }
 
-        // Load completion count
+        // Load completion count + stats for PDF personalization
         fetchUserLogs({ workoutId: id, limit: 500 }, token)
           .then((logs) => {
-            if (!cancelled) setCompletionCount(logs.length);
+            if (cancelled) return;
+            setCompletionCount(logs.length);
+            if (logs.length > 0) {
+              const sorted = [...logs].sort((a, b) => (b.completedAt || '').localeCompare(a.completedAt || ''));
+              setWorkoutStats((prev) => ({
+                ...prev,
+                completionCount: logs.length,
+                lastCompleted: sorted[0]?.completedAt,
+              }));
+            }
           })
           .catch(() => {});
+
+        // Load user profile for PDF header
+        fetchProfile(token)
+          .then((profile) => {
+            if (!cancelled) setUserProfile(profile);
+          })
+          .catch(() => {});
+
+        // Load per-exercise history for progression tips
+        if (data.exercises?.some((e) => e.exerciseId)) {
+          const exerciseIds = data.exercises.filter((e) => e.exerciseId).map((e) => e.exerciseId);
+          Promise.all(
+            exerciseIds.map((eid) =>
+              fetchExerciseHistory(eid, token)
+                .then((history) => ({ eid, history }))
+                .catch(() => ({ eid, history: null }))
+            )
+          ).then((results) => {
+            if (cancelled) return;
+            const historyMap = {};
+            results.forEach(({ eid, history }) => {
+              if (history) historyMap[eid] = { count: history.length || 0 };
+            });
+            setWorkoutStats((prev) => ({
+              ...prev,
+              exerciseHistory: historyMap,
+            }));
+          });
+        }
 
         // Load full exercise data for referenced exercises
         if (data.exercises?.some((e) => e.exerciseId)) {
@@ -91,7 +134,7 @@ export default function WorkoutDetail() {
       if (!ex.exerciseId) return;
       const full = exerciseData[ex.exerciseId];
       if (!full?.modifications) return;
-      const diff = exerciseOverrides[ex.exerciseId] || activeDifficulty || workout.difficulty;
+      const diff = exerciseOverrides[ex.exerciseId] || activeDifficulty;
       const mod = full.modifications[diff];
       if (mod?.equipment) {
         mod.equipment.forEach((eq) => {
@@ -135,7 +178,7 @@ export default function WorkoutDetail() {
     );
   }
 
-  const stars = DIFFICULTY_STARS[activeDifficulty || workout.difficulty] || 2;
+  const stars = DIFFICULTY_STARS[activeDifficulty] || 1;
   const locked = !isAdmin && !hasTierAccess(userTier, workout.requiredTier);
   const requiredInfo = locked ? getRequiredTierInfo(workout.requiredTier) : null;
 
@@ -175,7 +218,7 @@ export default function WorkoutDetail() {
             transition={{ duration: 0.45, delay: 0.1 }}
           >
             <span className="workout-detail-badge">{workout.category}</span>
-            <span className="workout-detail-badge">{activeDifficulty || workout.difficulty}</span>
+            <span className="workout-detail-badge">{activeDifficulty}</span>
             {workout.duration && (
               <span className="workout-detail-badge">&#9201; {workout.duration}</span>
             )}
@@ -252,9 +295,9 @@ export default function WorkoutDetail() {
                     {DIFFICULTIES.map((d) => (
                       <button
                         key={d}
-                        className={`workout-difficulty-btn${(activeDifficulty || workout.difficulty) === d ? ' active' : ''}`}
+                        className={`workout-difficulty-btn${activeDifficulty === d ? ' active' : ''}`}
                         onClick={() => {
-                          const oldDifficulty = activeDifficulty || workout.difficulty;
+                          const oldDifficulty = activeDifficulty;
                           if (oldDifficulty !== d) {
                             trackDifficultyChange(id, oldDifficulty, d);
                           }
@@ -288,7 +331,7 @@ export default function WorkoutDetail() {
                       const full = isLegacy ? null : exerciseData[exercise.exerciseId];
                       const effectiveDiff = isLegacy
                         ? null
-                        : exerciseOverrides[exercise.exerciseId] || activeDifficulty || workout.difficulty;
+                        : exerciseOverrides[exercise.exerciseId] || activeDifficulty;
                       const mod = full?.modifications?.[effectiveDiff];
                       const displayName = isLegacy ? exercise.name : exercise.exerciseName;
                       const modImage = mod?.imageUrl || full?.imageUrl;
@@ -394,7 +437,13 @@ export default function WorkoutDetail() {
               <div className="workout-sidebar-card">
                 <button
                   className="btn primary workout-download-btn"
-                  onClick={() => downloadWorkoutPdf(workout, null, exerciseData)}
+                  onClick={() => downloadWorkoutPdf(workout, {
+                    exerciseData,
+                    activeDifficulty,
+                    exerciseOverrides,
+                    userProfile,
+                    workoutStats,
+                  })}
                 >
                   &#128196; Download PDF
                 </button>
@@ -412,7 +461,7 @@ export default function WorkoutDetail() {
                       exerciseName: ex.exerciseName || ex.name,
                       sets: ex.sets,
                       reps: ex.reps,
-                      difficulty: activeDifficulty || workout.difficulty,
+                      difficulty: activeDifficulty,
                     }))}
                     source="workout"
                     sourceId={id}
@@ -463,7 +512,7 @@ export default function WorkoutDetail() {
                   </div>
                   <div>
                     <span className="workout-qs-label">Difficulty</span>
-                    <span className="workout-qs-value">{activeDifficulty || workout.difficulty}</span>
+                    <span className="workout-qs-value">{activeDifficulty}</span>
                   </div>
                   {workout.duration && (
                     <div>

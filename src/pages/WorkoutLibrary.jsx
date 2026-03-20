@@ -9,19 +9,15 @@ import './workout-library.css';
 const CATEGORY_LABELS = {
   all: 'All',
   general: 'General',
+  home: 'Home',
+  gym: 'Gym',
+  outdoors: 'Outdoors',
   strength: 'Strength',
   cardio: 'Cardio',
   hiit: 'HIIT',
   mobility: 'Mobility',
   endurance: 'Endurance',
   scramble: 'Scramble',
-};
-
-const DIFFICULTY_ICONS = {
-  beginner: '\u2605',
-  intermediate: '\u2605\u2605',
-  advanced: '\u2605\u2605\u2605',
-  elite: '\u2605\u2605\u2605\u2605',
 };
 
 export default function WorkoutLibrary() {
@@ -173,9 +169,6 @@ export default function WorkoutLibrary() {
                           <span className="workout-card-badge category">
                             {workout.category}
                           </span>
-                          <span className="workout-card-badge difficulty">
-                            {workout.difficulty}
-                          </span>
                           {locked && (
                             <span className="workout-card-badge tier-required">
                               {workout.requiredTier}
@@ -200,9 +193,6 @@ export default function WorkoutLibrary() {
                           )}
                           <span className="workout-card-exercises">
                             {workout.exercises?.length || 0} exercises
-                          </span>
-                          <span className="workout-card-stars">
-                            {DIFFICULTY_ICONS[workout.difficulty] || ''}
                           </span>
                         </div>
                         {workout.tags?.length > 0 && (
