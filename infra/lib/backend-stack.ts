@@ -123,7 +123,7 @@ export class BackendStack extends cdk.Stack {
     apiFn.addToRolePolicy(
       new iam.PolicyStatement({
         actions: ['lambda:InvokeFunction'],
-        resources: [apiFn.functionArn],
+        resources: [`arn:aws:lambda:us-east-1:${this.account}:function:hyrax-api`],
       })
     );
 
