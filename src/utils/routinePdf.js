@@ -121,14 +121,14 @@ export async function downloadRoutinePdf(workout, options = {}) {
 
   // ── Header Bar ──
   doc.setFillColor(...COLORS.ink);
-  doc.rect(0, 0, pageWidth, 50, 'F');
+  doc.rect(0, 0, pageWidth, 44, 'F');
   doc.setFillColor(...COLORS.sunset);
   doc.rect(0, 50, pageWidth, 1.5, 'F');
 
   // Logo — square aspect ratio, not squished, positioned with breathing room
   if (logo) {
     try {
-      doc.addImage(logo, 'PNG', margin - 1, 4, 19, 19);
+      doc.addImage(logo, 'PNG', margin - 4, 10, 25, 19);
     } catch { /* skip if logo fails */ }
   }
   const textStart = logo ? margin + 22 : margin;
@@ -137,12 +137,12 @@ export async function downloadRoutinePdf(workout, options = {}) {
   doc.setTextColor(...COLORS.white);
   doc.setFontSize(16);
   doc.setFont('helvetica', 'bold');
-  doc.text('HYRAX FITNESS', textStart, 15);
+  doc.text('HYRAX FITNESS', textStart, 13);
 
   doc.setFontSize(9);
   doc.setFont('helvetica', 'normal');
   doc.setTextColor(...COLORS.sunrise);
-  doc.text('AI-Generated Daily Workout', textStart, 21);
+  doc.text('Custom Daily Workout', textStart, 19);
 
   // Workout title in header
   doc.setFontSize(10);
@@ -150,13 +150,13 @@ export async function downloadRoutinePdf(workout, options = {}) {
   doc.setTextColor(...COLORS.white);
   const title = sanitize(workout.title || 'Daily Workout');
   const titleLines = doc.splitTextToSize(title, contentWidth - 70);
-  doc.text(titleLines[0] || title, textStart, 31);
+  doc.text(titleLines[0] || title, textStart, 25);
 
   // Type badge
   const typeBadge = workout.type === 'rest' ? 'REST DAY' : workout.type === 'active_recovery' ? 'ACTIVE RECOVERY' : 'TRAINING';
   doc.setFontSize(7);
   doc.setTextColor(...COLORS.sunrise);
-  doc.text(typeBadge, textStart, 37);
+  doc.text(typeBadge, textStart, 31);
 
   // Duration + Focus
   if (workout.duration || workout.focus?.length) {
@@ -165,7 +165,7 @@ export async function downloadRoutinePdf(workout, options = {}) {
     const metaParts = [];
     if (workout.duration) metaParts.push(sanitize(workout.duration));
     if (workout.focus?.length) metaParts.push(workout.focus.map(t => t.replace(/[-_]/g, ' ')).join(', '));
-    doc.text(metaParts.join('  |  '), textStart, 43);
+    doc.text(metaParts.join('  |  '), textStart, 37);
   }
 
   // Right side: User info
@@ -189,7 +189,7 @@ export async function downloadRoutinePdf(workout, options = {}) {
     doc.setFillColor(...tierColor);
     doc.roundedRect(tierX, 19, tierWidth, 7, 3, 3, 'F');
     doc.setTextColor(...COLORS.white);
-    doc.text(tierText, tierX + tierWidth / 2, 24, { align: 'center' });
+    doc.text(tierText, tierX + tierWidth / 2, 23, { align: 'center' });
   }
 
   // Date
@@ -203,7 +203,7 @@ export async function downloadRoutinePdf(workout, options = {}) {
     : new Date().toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
   doc.text(dateStr, pageWidth - margin, 32, { align: 'right' });
 
-  y = 60;
+  y = 54;
 
   // ── Coaching Notes ──
   if (workout.coachingNotes) {
@@ -291,7 +291,7 @@ export async function downloadRoutinePdf(workout, options = {}) {
         doc.setTextColor(...COLORS.rock);
         doc.text(prescParts.join('  |  '), margin + 11, y + 8);
       }
-      y += 10;
+      y += 11;
 
       // Modification level badge — on its own line below name
       if (ex.modificationLevel) {
@@ -392,7 +392,7 @@ export async function downloadRoutinePdf(workout, options = {}) {
       doc.setFont('helvetica', 'normal');
       doc.setTextColor(...COLORS.rock);
       for (let li = 0; li < progLines.length; li++) {
-        doc.text(progLines[li], margin + 28, y + li * LINE_HEIGHT);
+        doc.text(progLines[li], margin + 24, y + li * LINE_HEIGHT);
       }
       y += progLines.length * LINE_HEIGHT + 4;
     }

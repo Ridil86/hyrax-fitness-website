@@ -43,7 +43,7 @@ export async function sendChatMessage(
     const profile = profileResult.Item;
     if (!profile) return serverError('Profile not found');
     if (!hasTierAccess(profile.tier || 'Pup', 'Iron Dassie')) {
-      return forbidden('AI Coach chat is available for Iron Dassie members only');
+      return forbidden('Personal Coach chat is available for Iron Dassie members only');
     }
 
     // Rate limit: count today's messages
@@ -90,7 +90,7 @@ export async function sendChatMessage(
     // Build system prompt
     const userName = [profile.givenName, profile.familyName].filter(Boolean).join(' ') || 'athlete';
     const fp = profile.fitnessProfile;
-    let systemPrompt = `You are the Hyrax Fitness AI Coach for ${userName}. You are a knowledgeable, encouraging, and concise personal training assistant.\n\n`;
+    let systemPrompt = `You are the Hyrax Fitness Personal Coach for ${userName}. You are a knowledgeable, encouraging, and concise personal training assistant.\n\n`;
     systemPrompt += `## User Context\n`;
     if (fp) {
       systemPrompt += `Experience: ${fp.experienceLevel || 'intermediate'}\n`;
@@ -193,7 +193,7 @@ export async function getChatHistory(
       new GetCommand({ TableName: TABLE_NAME, Key: { pk: `USER#${claims.sub}`, sk: 'PROFILE' } })
     );
     if (!hasTierAccess(profileResult.Item?.tier || 'Pup', 'Iron Dassie')) {
-      return forbidden('AI Coach chat is available for Iron Dassie members only');
+      return forbidden('Personal Coach chat is available for Iron Dassie members only');
     }
 
     const today = new Date().toISOString().slice(0, 10);
