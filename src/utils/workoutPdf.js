@@ -1,4 +1,5 @@
 import jsPDF from 'jspdf';
+import QRCode from 'qrcode';
 
 // ── Logo cache ──
 let _cachedLogo = null;
@@ -74,8 +75,10 @@ export function generateWorkoutPdf(workout, options = {}) {
     activeDifficulty = 'beginner',
     exerciseOverrides = {},
     userProfile = null,
+    userTier = null,
     workoutStats = null,
     imageCache = {},
+    qrDataUrl = null,
   } = options;
 
   const doc = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4' });
@@ -87,11 +90,11 @@ export function generateWorkoutPdf(workout, options = {}) {
 
   // ── Header Bar ──
   doc.setFillColor(...COLORS.ink);
-  doc.rect(0, 0, pageWidth, 38, 'F');
+  doc.rect(0, 0, pageWidth, 42, 'F');
 
   // Brand accent line
   doc.setFillColor(...COLORS.sunset);
-  doc.rect(0, 38, pageWidth, 3, 'F');
+  doc.rect(0, 42, pageWidth, 3, 'F');
 
   // Logo in header (actual image is 817x625, ratio 1.307:1)
   const logoHeight = 22;
@@ -111,15 +114,35 @@ export function generateWorkoutPdf(workout, options = {}) {
   doc.setFont('helvetica', 'normal');
   doc.setFontSize(9);
   doc.setTextColor(...COLORS.sand);
-  doc.text('START-STOP SCRAMBLE & CARRY TRAINING', textOffsetX, 28);
+  doc.text('START-STOP SCRAMBLE & CARRY TRAINING', textOffsetX, 24);
 
   // User name (right-aligned)
   if (userProfile?.givenName || userProfile?.familyName) {
     const userName = [userProfile.givenName, userProfile.familyName].filter(Boolean).join(' ');
     doc.setFont('helvetica', 'normal');
-    doc.setFontSize(8.5);
+    doc.setFontSize(15);
     doc.setTextColor(...COLORS.sand);
-    doc.text(`Prepared for: ${userName}`, pageWidth - margin, 18, { align: 'right' });
+    doc.text(`${userName}`, pageWidth - margin, 16, { align: 'right' });
+  }
+
+  // Tier capsule (right-aligned, below name)
+  if (userTier) {
+    const tierColors = {
+      'Pup': COLORS.sand,
+      'Rock Runner': COLORS.sunset,
+      'Iron Dassie': COLORS.earth,
+    };
+    const capsuleColor = tierColors[userTier] || COLORS.sand;
+    const tierLabel = userTier.toUpperCase();
+    doc.setFont('helvetica', 'bold');
+    doc.setFontSize(7.5);
+    const tierTextWidth = doc.getTextWidth(tierLabel) + 6;
+    const capsuleX = pageWidth - margin - tierTextWidth;
+    const capsuleY = 20;
+    doc.setFillColor(...capsuleColor);
+    doc.roundedRect(capsuleX, capsuleY, tierTextWidth, 5.5, 2, 2, 'F');
+    doc.setTextColor(...COLORS.white);
+    doc.text(tierLabel, capsuleX + 3, capsuleY + 4);
   }
 
   // Date generated (right-aligned)
@@ -129,11 +152,11 @@ export function generateWorkoutPdf(workout, options = {}) {
     day: 'numeric',
   });
   doc.setFont('helvetica', 'normal');
-  doc.setFontSize(7.5);
+  doc.setFontSize(9);
   doc.setTextColor(...COLORS.sand);
-  doc.text(`Generated: ${dateStr}`, pageWidth - margin, 24, { align: 'right' });
+  doc.text(`${dateStr}`, pageWidth - margin, 32, { align: 'right' });
 
-  y = 52;
+  y = 56;
 
   // ── Title ──
   doc.setFont('helvetica', 'bold');
@@ -234,7 +257,7 @@ export function generateWorkoutPdf(workout, options = {}) {
   doc.setFont('helvetica', 'normal');
   doc.setFontSize(8.5);
   doc.setTextColor(...COLORS.ink);
-  const warmUpText = '5 minutes of light movement — walking, arm circles, hip openers, and dynamic stretches to prepare your body for the session ahead.';
+  const warmUpText = '5 minutes of light movement - walking, arm circles, hip openers, and dynamic stretches to prepare your body for the session ahead.';
   const warmUpLines = doc.splitTextToSize(warmUpText, contentWidth - 10);
   doc.text(warmUpLines, margin + 5, y + 9);
 
@@ -470,17 +493,36 @@ export function generateWorkoutPdf(workout, options = {}) {
   y += baskHeight + 6;
 
   // ── QR Code link back to workout ──
-  y = checkPageBreak(doc, y, 20, pageHeight, margin);
+  const qrSize = 35; // mm — large enough for easy mobile scanning
+  const qrSectionHeight = qrDataUrl ? qrSize + 8 : 20;
+  y = checkPageBreak(doc, y, qrSectionHeight, pageHeight, margin);
+
+  const workoutUrl = `https://hyraxfitness.com/portal/workouts/${workout.id || ''}`;
+  const textAreaWidth = qrDataUrl ? contentWidth - qrSize - 10 : contentWidth;
 
   doc.setFont('helvetica', 'normal');
-  doc.setFontSize(8);
+  doc.setFontSize(15);
   doc.setTextColor(...COLORS.rock);
-  const workoutUrl = `https://hyraxfitness.com/portal/workouts/${workout.id || ''}`;
-  doc.text('Log your completion online:', margin, y);
-  doc.setTextColor(...COLORS.sunset);
-  doc.textWithLink(workoutUrl, margin, y + 4.5, { url: workoutUrl });
+  const qrHeadingLines = doc.splitTextToSize(
+    'Log your completion online at the URL below or scan this QR code:',
+    textAreaWidth
+  );
+  doc.text(qrHeadingLines, margin, y);
 
-  y += 14;
+  doc.setTextColor(...COLORS.sunset);
+  doc.setFontSize(12);
+  doc.textWithLink(workoutUrl, margin, y + qrHeadingLines.length * 6 + 2, { url: workoutUrl });
+
+  // QR code image (right-aligned)
+  if (qrDataUrl) {
+    try {
+      doc.addImage(qrDataUrl, 'PNG', pageWidth - margin - qrSize, y - 4, qrSize, qrSize);
+    } catch {
+      // Skip QR on failure
+    }
+  }
+
+  y += qrSectionHeight;
 
   // ── Footer on each page ──
   const totalPages = doc.getNumberOfPages();
@@ -555,10 +597,20 @@ export async function downloadWorkoutPdf(workout, options = {}) {
     await Promise.all(imagePromises);
   }
 
+  // Generate QR code for workout URL
+  let qrDataUrl = null;
+  try {
+    const workoutUrl = `https://hyraxfitness.com/portal/workouts/${workout.id || ''}`;
+    qrDataUrl = await QRCode.toDataURL(workoutUrl, { width: 200, margin: 1 });
+  } catch {
+    // QR generation is best-effort
+  }
+
   const doc = generateWorkoutPdf(workout, {
     ...options,
     logoBase64,
     imageCache,
+    qrDataUrl,
   });
 
   const filename = `hyrax-${(workout.title || 'workout')

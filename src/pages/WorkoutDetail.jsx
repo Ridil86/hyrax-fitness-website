@@ -442,6 +442,7 @@ export default function WorkoutDetail() {
                     activeDifficulty,
                     exerciseOverrides,
                     userProfile,
+                    userTier,
                     workoutStats,
                   })}
                 >
