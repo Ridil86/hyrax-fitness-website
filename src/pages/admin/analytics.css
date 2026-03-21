@@ -105,6 +105,150 @@
   font-size: .95rem;
 }
 
+/* ── AI Stats Grid ── */
+.ai-stats-grid {
+  margin-bottom: 16px !important;
+}
+
+.stat-sub {
+  font-size: .72rem;
+  color: rgba(27, 18, 10, .4);
+  margin-top: 2px;
+}
+
+/* ── Billing Card ── */
+.ai-billing-card {
+  background: rgba(27, 18, 10, .03);
+  border: 1px solid rgba(27, 18, 10, .08);
+  border-radius: 12px;
+  padding: 20px;
+  margin-top: 8px;
+}
+
+.ai-billing-card.cost-alert-yellow {
+  border-color: #fbbf24;
+  background: rgba(251, 191, 36, .06);
+}
+
+.ai-billing-card.cost-alert-red {
+  border-color: #f87171;
+  background: rgba(248, 113, 113, .06);
+}
+
+.ai-billing-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  margin-bottom: 16px;
+}
+
+.ai-billing-header h3 {
+  margin: 0;
+  font-size: .95rem;
+  font-weight: 700;
+  color: var(--ink);
+}
+
+.ai-billing-period {
+  font-size: .78rem;
+  color: rgba(27, 18, 10, .45);
+}
+
+.ai-billing-grid {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-bottom: 16px;
+}
+
+.ai-billing-item {
+  display: grid;
+  grid-template-columns: 80px 1fr 80px 90px;
+  align-items: center;
+  gap: 12px;
+  padding: 6px 0;
+  font-size: .85rem;
+}
+
+.ai-billing-item.ai-billing-total {
+  border-top: 2px solid rgba(27, 18, 10, .1);
+  padding-top: 10px;
+  font-weight: 600;
+}
+
+.ai-billing-label {
+  font-weight: 600;
+  color: var(--ink);
+}
+
+.ai-billing-tokens {
+  color: rgba(27, 18, 10, .55);
+  font-size: .8rem;
+}
+
+.ai-billing-rate {
+  color: rgba(27, 18, 10, .4);
+  font-size: .75rem;
+  text-align: right;
+}
+
+.ai-billing-cost {
+  text-align: right;
+  font-weight: 500;
+  color: var(--ink);
+}
+
+.ai-billing-cost-total {
+  font-size: 1.1rem;
+  font-weight: 700;
+  color: #F28501;
+}
+
+/* ── Revenue vs Cost ── */
+.ai-revenue-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr;
+  gap: 16px;
+  padding-top: 16px;
+  border-top: 1px solid rgba(27, 18, 10, .08);
+}
+
+.ai-revenue-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+}
+
+.ai-revenue-label {
+  font-size: .72rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: .04em;
+  color: rgba(27, 18, 10, .45);
+  margin-bottom: 4px;
+}
+
+.ai-revenue-value {
+  font-size: 1.2rem;
+  font-weight: 700;
+  color: var(--ink);
+}
+
+.ai-revenue-detail {
+  font-size: .72rem;
+  color: rgba(27, 18, 10, .4);
+  margin-top: 2px;
+}
+
+.profit-positive {
+  color: #16a34a;
+}
+
+.profit-negative {
+  color: #dc2626;
+}
+
 /* ── Responsive ── */
 @media (max-width: 768px) {
   .analytics-charts {
@@ -122,5 +266,22 @@
 
   .analytics-doughnut-wrap {
     max-width: 260px;
+  }
+
+  .ai-billing-item {
+    grid-template-columns: 60px 1fr 60px 70px;
+    font-size: .8rem;
+    gap: 8px;
+  }
+
+  .ai-revenue-row {
+    grid-template-columns: 1fr;
+    gap: 12px;
+  }
+
+  .ai-revenue-item {
+    flex-direction: row;
+    justify-content: space-between;
+    text-align: left;
   }
 }

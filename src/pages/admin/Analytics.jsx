@@ -22,6 +22,207 @@ function formatMonthLabel(dateStr) {
   return `${month} '${year}`;
 }
 
+function fmtTokens(n) {
+  if (!n) return '0';
+  if (n >= 1_000_000) return (n / 1_000_000).toFixed(2) + 'M';
+  if (n >= 1_000) return (n / 1_000).toFixed(1) + 'K';
+  return n.toLocaleString();
+}
+
+function fmtCost(n) {
+  if (!n) return '$0.00';
+  return '$' + n.toFixed(4);
+}
+
+function costAlertClass(cost) {
+  if (cost >= 100) return 'cost-alert-red';
+  if (cost >= 50) return 'cost-alert-yellow';
+  return '';
+}
+
+function AIRoutineSection({ stats, tierDistribution }) {
+  const bc = stats.billingCycle || {};
+  const daily = stats.dailyBreakdown || [];
+  const topUsers = stats.topUsers || [];
+
+  // Revenue estimate from tier distribution
+  const tierDist = tierDistribution || {};
+  const rockRunners = tierDist['Rock Runner'] || 0;
+  const ironDassies = tierDist['Iron Dassie'] || 0;
+  const estRevenue = rockRunners * 5 + ironDassies * 20;
+  const estProfit = estRevenue - (bc.estimatedCostTotal || 0);
+
+  // Daily token chart
+  const tokenChartData = {
+    labels: daily.map((d) => {
+      const parts = d.date.split('-');
+      return parts[1] + '/' + parts[2];
+    }),
+    datasets: [
+      {
+        label: 'Input Tokens',
+        data: daily.map((d) => d.inputTokens),
+        backgroundColor: 'rgba(242,133,1,.6)',
+        borderRadius: 3,
+      },
+      {
+        label: 'Output Tokens',
+        data: daily.map((d) => d.outputTokens),
+        backgroundColor: 'rgba(101,76,43,.5)',
+        borderRadius: 3,
+      },
+    ],
+  };
+
+  const tokenChartOptions = {
+    responsive: true,
+    maintainAspectRatio: false,
+    plugins: {
+      legend: { position: 'top', labels: { color: '#A48051', font: { size: 11 }, boxWidth: 12, padding: 12 } },
+      tooltip: { enabled: true },
+    },
+    scales: {
+      x: {
+        stacked: true,
+        grid: { color: 'rgba(27,18,10,.06)' },
+        ticks: { color: '#A48051', font: { size: 10 }, maxRotation: 45 },
+      },
+      y: {
+        stacked: true,
+        beginAtZero: true,
+        grid: { color: 'rgba(27,18,10,.06)' },
+        ticks: { color: '#A48051', font: { size: 10 }, callback: (v) => fmtTokens(v) },
+      },
+    },
+  };
+
+  const costPerGen = bc.generations > 0
+    ? ((bc.estimatedCostTotal || 0) / bc.generations).toFixed(4)
+    : '0.0000';
+
+  return (
+    <>
+      <div className="analytics-chart-card">
+        <h2 className="analytics-chart-title">AI Routine Generation</h2>
+
+        {/* Row 1: Key Metrics */}
+        <div className="admin-stats ai-stats-grid">
+          <div className="admin-stat-card">
+            <div className="stat-label">This Month</div>
+            <div className="stat-value">{stats.thisMonthTotal}</div>
+            <div className="stat-sub">generations</div>
+          </div>
+          <div className="admin-stat-card">
+            <div className="stat-label">This Week</div>
+            <div className="stat-value">{stats.thisWeekTotal}</div>
+            <div className="stat-sub">generations</div>
+          </div>
+          <div className="admin-stat-card">
+            <div className="stat-label">Input Tokens</div>
+            <div className="stat-value">{fmtTokens(stats.totalInputTokens)}</div>
+            <div className="stat-sub">avg {fmtTokens(stats.avgInputTokensPerGen)}/gen</div>
+          </div>
+          <div className="admin-stat-card">
+            <div className="stat-label">Output Tokens</div>
+            <div className="stat-value">{fmtTokens(stats.totalOutputTokens)}</div>
+            <div className="stat-sub">avg {fmtTokens(stats.avgOutputTokensPerGen)}/gen</div>
+          </div>
+        </div>
+
+        {/* Row 2: Billing Cycle Cost Estimator */}
+        <div className={`ai-billing-card ${costAlertClass(bc.estimatedCostTotal || 0)}`}>
+          <div className="ai-billing-header">
+            <h3>Billing Cycle Cost Estimate</h3>
+            <span className="ai-billing-period">
+              {bc.startDate || 'N/A'} to {bc.endDate || 'N/A'}
+            </span>
+          </div>
+          <div className="ai-billing-grid">
+            <div className="ai-billing-item">
+              <span className="ai-billing-label">Input</span>
+              <span className="ai-billing-tokens">{fmtTokens(bc.inputTokens)} tokens</span>
+              <span className="ai-billing-rate">@ $3/M</span>
+              <span className="ai-billing-cost">{fmtCost(bc.estimatedCostInput)}</span>
+            </div>
+            <div className="ai-billing-item">
+              <span className="ai-billing-label">Output</span>
+              <span className="ai-billing-tokens">{fmtTokens(bc.outputTokens)} tokens</span>
+              <span className="ai-billing-rate">@ $15/M</span>
+              <span className="ai-billing-cost">{fmtCost(bc.estimatedCostOutput)}</span>
+            </div>
+            <div className="ai-billing-item ai-billing-total">
+              <span className="ai-billing-label">Total API Cost</span>
+              <span className="ai-billing-tokens">{bc.generations || 0} generations</span>
+              <span className="ai-billing-rate">{fmtCost(Number(costPerGen))}/gen</span>
+              <span className="ai-billing-cost ai-billing-cost-total">{fmtCost(bc.estimatedCostTotal)}</span>
+            </div>
+          </div>
+
+          {/* Revenue vs Cost */}
+          <div className="ai-revenue-row">
+            <div className="ai-revenue-item">
+              <span className="ai-revenue-label">Est. Monthly Revenue</span>
+              <span className="ai-revenue-value">${estRevenue.toFixed(2)}</span>
+              <span className="ai-revenue-detail">{rockRunners} Rock Runner + {ironDassies} Iron Dassie</span>
+            </div>
+            <div className="ai-revenue-item">
+              <span className="ai-revenue-label">Est. AI Cost</span>
+              <span className="ai-revenue-value">{fmtCost(bc.estimatedCostTotal)}</span>
+            </div>
+            <div className="ai-revenue-item">
+              <span className="ai-revenue-label">Net Margin</span>
+              <span className={`ai-revenue-value ${estProfit >= 0 ? 'profit-positive' : 'profit-negative'}`}>
+                ${estProfit.toFixed(2)}
+              </span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* Daily Token Usage Chart */}
+      {daily.length > 0 && (
+        <div className="analytics-chart-card">
+          <h2 className="analytics-chart-title">Daily Token Usage - Last 30 Days</h2>
+          <div className="analytics-chart-wrap">
+            <Bar data={tokenChartData} options={tokenChartOptions} />
+          </div>
+        </div>
+      )}
+
+      {/* Top Users by Token Usage */}
+      {topUsers.length > 0 && (
+        <div className="analytics-chart-card">
+          <h2 className="analytics-chart-title">Top Users by Token Usage</h2>
+          <table className="analytics-table">
+            <thead>
+              <tr>
+                <th>#</th>
+                <th>User</th>
+                <th>Generations</th>
+                <th>Input</th>
+                <th>Output</th>
+                <th>Est. Cost</th>
+              </tr>
+            </thead>
+            <tbody>
+              {topUsers.map((u, i) => (
+                <tr key={u.userSub}>
+                  <td><span className="analytics-rank">{i + 1}</span></td>
+                  <td>{u.name || u.email}</td>
+                  <td>{u.generations}</td>
+                  <td>{fmtTokens(u.inputTokens)}</td>
+                  <td>{fmtTokens(u.outputTokens)}</td>
+                  <td>{fmtCost(u.estimatedCost)}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      )}
+    </>
+  );
+}
+
 export default function Analytics() {
   const { getIdToken } = useAuth();
   const [overview, setOverview] = useState(null);
@@ -225,29 +426,7 @@ export default function Analytics() {
       </div>
 
       {/* AI Routine Generation Stats */}
-      {overview?.routineStats && (
-        <div className="analytics-chart-card" style={{ marginBottom: 20 }}>
-          <h2 className="analytics-chart-title">AI Routine Generation</h2>
-          <div className="admin-stats" style={{ marginBottom: 0 }}>
-            <div className="admin-stat-card">
-              <div className="stat-label">This Month</div>
-              <div className="stat-value">{overview.routineStats.thisMonthTotal}</div>
-            </div>
-            <div className="admin-stat-card">
-              <div className="stat-label">This Week</div>
-              <div className="stat-value">{overview.routineStats.thisWeekTotal}</div>
-            </div>
-            <div className="admin-stat-card">
-              <div className="stat-label">Total Tokens</div>
-              <div className="stat-value">{(overview.routineStats.totalTokensUsed || 0).toLocaleString()}</div>
-            </div>
-            <div className="admin-stat-card">
-              <div className="stat-label">Avg Tokens/Gen</div>
-              <div className="stat-value">{(overview.routineStats.avgTokensPerGeneration || 0).toLocaleString()}</div>
-            </div>
-          </div>
-        </div>
-      )}
+      {overview?.routineStats && <AIRoutineSection stats={overview.routineStats} tierDistribution={overview.tierDistribution} />}
 
       {/* Section 2 - Daily Activity Trend */}
       <div className="analytics-chart-card">

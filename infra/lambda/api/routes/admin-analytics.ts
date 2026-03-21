@@ -3,6 +3,7 @@ import {
   DynamoDBDocumentClient,
   QueryCommand,
   ScanCommand,
+  BatchGetCommand,
 } from '@aws-sdk/lib-dynamodb';
 import type { APIGatewayProxyEvent, APIGatewayProxyResult } from 'aws-lambda';
 import { success, badRequest, serverError } from '../utils/response';
@@ -143,8 +144,8 @@ export async function getAnalyticsOverview(
       tierDist[tier] = (tierDist[tier] || 0) + 1;
     });
 
-    // Routine generation stats (query GSI1 for DAILY_WORKOUT records this month)
-    let routineStats = { thisMonthTotal: 0, thisWeekTotal: 0, totalTokensUsed: 0, avgTokensPerGeneration: 0 };
+    // Routine generation stats (query GSI1 for DAILY_WORKOUT records last 30 days)
+    let routineStats: any = null;
     try {
       const routineResult = await client.send(
         new QueryCommand({
@@ -157,24 +158,132 @@ export async function getAnalyticsOverview(
           },
         })
       );
-      const routineItems = routineResult.Items || [];
-      const monthStart = thisMonth;
-      const monthRoutines = routineItems.filter((r: any) => (r.date || '').startsWith(monthStart));
+      const routineItems = (routineResult.Items || []).filter((r: any) => r.status !== 'generating');
+      const monthStart = thisMonth + '-01';
+      const monthRoutines = routineItems.filter((r: any) => (r.date || '') >= monthStart);
       const weekRoutines = routineItems.filter((r: any) => (r.date || '') >= weekAgo);
 
-      let totalTokens = 0;
+      // Token aggregation - separate input/output
+      let totalInputTokens = 0;
+      let totalOutputTokens = 0;
+      let billingInputTokens = 0;
+      let billingOutputTokens = 0;
+      const dailyMap: Record<string, { generations: number; inputTokens: number; outputTokens: number }> = {};
+      const userMap: Record<string, { generations: number; inputTokens: number; outputTokens: number }> = {};
+
       for (const r of routineItems) {
         const usage = r.tokenUsage;
-        if (usage) {
-          totalTokens += (usage.inputTokens || 0) + (usage.outputTokens || 0);
+        const input = usage?.inputTokens || 0;
+        const output = usage?.outputTokens || 0;
+        totalInputTokens += input;
+        totalOutputTokens += output;
+
+        // Billing cycle (current month)
+        const date = r.date || '';
+        if (date >= monthStart) {
+          billingInputTokens += input;
+          billingOutputTokens += output;
+        }
+
+        // Daily breakdown
+        if (date) {
+          if (!dailyMap[date]) dailyMap[date] = { generations: 0, inputTokens: 0, outputTokens: 0 };
+          dailyMap[date].generations += 1;
+          dailyMap[date].inputTokens += input;
+          dailyMap[date].outputTokens += output;
+        }
+
+        // Per-user breakdown (extract sub from gsi1sk: "date#sub")
+        const gsi1sk = r.gsi1sk || '';
+        const hashIdx = gsi1sk.indexOf('#');
+        const userSub = hashIdx >= 0 ? gsi1sk.slice(hashIdx + 1) : '';
+        if (userSub) {
+          if (!userMap[userSub]) userMap[userSub] = { generations: 0, inputTokens: 0, outputTokens: 0 };
+          userMap[userSub].generations += 1;
+          userMap[userSub].inputTokens += input;
+          userMap[userSub].outputTokens += output;
+        }
+      }
+
+      const totalTokens = totalInputTokens + totalOutputTokens;
+      const genCount = routineItems.length;
+
+      // Cost calculation (Sonnet 4.6: $3/M input, $15/M output)
+      const COST_PER_M_INPUT = 3;
+      const COST_PER_M_OUTPUT = 15;
+      const billingCostInput = (billingInputTokens / 1_000_000) * COST_PER_M_INPUT;
+      const billingCostOutput = (billingOutputTokens / 1_000_000) * COST_PER_M_OUTPUT;
+
+      // Daily breakdown sorted
+      const dailyBreakdown = Object.entries(dailyMap)
+        .map(([date, d]) => ({ date, ...d }))
+        .sort((a, b) => a.date.localeCompare(b.date));
+
+      // Top users by token usage - get top 10
+      const topUserEntries = Object.entries(userMap)
+        .map(([userSub, u]) => ({ userSub, ...u, totalTokens: u.inputTokens + u.outputTokens }))
+        .sort((a, b) => b.totalTokens - a.totalTokens)
+        .slice(0, 10);
+
+      // Batch-get emails for top users
+      const topUsers: any[] = [];
+      if (topUserEntries.length > 0) {
+        try {
+          const keys = topUserEntries.map((u) => ({ pk: `USER#${u.userSub}`, sk: 'PROFILE' }));
+          const batchResult = await client.send(
+            new BatchGetCommand({
+              RequestItems: {
+                [TABLE_NAME]: { Keys: keys, ProjectionExpression: 'pk, email, givenName, familyName' },
+              },
+            })
+          );
+          const profileMap: Record<string, any> = {};
+          (batchResult.Responses?.[TABLE_NAME] || []).forEach((p: any) => {
+            const sub = (p.pk || '').replace('USER#', '');
+            profileMap[sub] = p;
+          });
+          for (const u of topUserEntries) {
+            const profile = profileMap[u.userSub];
+            topUsers.push({
+              userSub: u.userSub,
+              email: profile?.email || 'Unknown',
+              name: [profile?.givenName, profile?.familyName].filter(Boolean).join(' ') || '',
+              generations: u.generations,
+              inputTokens: u.inputTokens,
+              outputTokens: u.outputTokens,
+              totalTokens: u.totalTokens,
+              estimatedCost: Number(((u.inputTokens / 1_000_000) * COST_PER_M_INPUT + (u.outputTokens / 1_000_000) * COST_PER_M_OUTPUT).toFixed(4)),
+            });
+          }
+        } catch (err) {
+          // Fall back to users without email
+          for (const u of topUserEntries) {
+            topUsers.push({ ...u, email: 'Unknown', name: '', estimatedCost: 0 });
+          }
         }
       }
 
       routineStats = {
         thisMonthTotal: monthRoutines.length,
         thisWeekTotal: weekRoutines.length,
+        totalInputTokens,
+        totalOutputTokens,
         totalTokensUsed: totalTokens,
-        avgTokensPerGeneration: routineItems.length > 0 ? Math.round(totalTokens / routineItems.length) : 0,
+        avgInputTokensPerGen: genCount > 0 ? Math.round(totalInputTokens / genCount) : 0,
+        avgOutputTokensPerGen: genCount > 0 ? Math.round(totalOutputTokens / genCount) : 0,
+        avgTokensPerGeneration: genCount > 0 ? Math.round(totalTokens / genCount) : 0,
+        billingCycle: {
+          startDate: monthStart,
+          endDate: today,
+          generations: monthRoutines.length,
+          inputTokens: billingInputTokens,
+          outputTokens: billingOutputTokens,
+          estimatedCostInput: Number(billingCostInput.toFixed(4)),
+          estimatedCostOutput: Number(billingCostOutput.toFixed(4)),
+          estimatedCostTotal: Number((billingCostInput + billingCostOutput).toFixed(4)),
+        },
+        dailyBreakdown,
+        topUsers,
       };
     } catch (err) {
       console.error('Failed to fetch routine stats:', err);
