@@ -123,15 +123,15 @@ export async function downloadRoutinePdf(workout, options = {}) {
   doc.setFillColor(...COLORS.ink);
   doc.rect(0, 0, pageWidth, 44, 'F');
   doc.setFillColor(...COLORS.sunset);
-  doc.rect(0, 50, pageWidth, 1.5, 'F');
+  doc.rect(0, 44, pageWidth, 1.5, 'F');
 
   // Logo — square aspect ratio, not squished, positioned with breathing room
   if (logo) {
     try {
-      doc.addImage(logo, 'PNG', margin - 4, 10, 25, 19);
+      doc.addImage(logo, 'PNG', margin - 7, 10, 39, 30);
     } catch { /* skip if logo fails */ }
   }
-  const textStart = logo ? margin + 22 : margin;
+  const textStart = logo ? margin + 37 : margin;
 
   // Title
   doc.setTextColor(...COLORS.white);
@@ -208,13 +208,13 @@ export async function downloadRoutinePdf(workout, options = {}) {
   // ── Coaching Notes ──
   if (workout.coachingNotes) {
     const notes = sanitize(workout.coachingNotes);
-    doc.setFontSize(8);
+    doc.setFontSize(8.5);
     doc.setFont('helvetica', 'italic');
     doc.setTextColor(...COLORS.earth);
     const lines = doc.splitTextToSize(notes, contentWidth);
     y = checkPageBreak(doc, y, lines.length * LINE_HEIGHT + 6, pageHeight, margin);
     doc.text(lines, margin, y);
-    y += lines.length * LINE_HEIGHT + 6;
+    y += lines.length * LINE_HEIGHT + 2;
   }
 
   // ── Warm-Up ──
@@ -267,11 +267,11 @@ export async function downloadRoutinePdf(workout, options = {}) {
 
       // Number circle — center is at (margin+4, y+2), radius 3.5
       doc.setFillColor(...COLORS.sunset);
-      doc.circle(margin + 4, y + 2.5, 3.5, 'F');
+      doc.circle(margin + 5, y + 2.5, 3.5, 'F');
       doc.setTextColor(...COLORS.white);
       doc.setFontSize(8);
       doc.setFont('helvetica', 'bold');
-      doc.text(String(i + 1), margin + 4, y + 3.5, { align: 'center' });
+      doc.text(String(i + 1), margin + 5, y + 3.5, { align: 'center' });
 
       // Exercise name
       const exName = sanitize(ex.exerciseName || 'Exercise');
@@ -346,6 +346,8 @@ export async function downloadRoutinePdf(workout, options = {}) {
         doc.setDrawColor(230, 225, 215);
         doc.line(margin + 11, y - 2, margin + contentWidth, y - 2);
       }
+
+      y += 2;
     }
   }
 
