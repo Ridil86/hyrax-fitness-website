@@ -39,8 +39,8 @@ const TIER_COLORS = {
   'Iron Dassie':  COLORS.earth,
 };
 
-const LINE_HEIGHT = 4; // mm per line for 8pt text
-const SM_LINE_HEIGHT = 3.5; // mm per line for 7pt text
+const LINE_HEIGHT = 4.8; // mm per line for ~9.5pt text
+const SM_LINE_HEIGHT = 4.2; // mm per line for ~8.5pt text
 
 /** Strip em-dashes, emojis, and other problematic characters */
 function sanitize(text) {
@@ -73,14 +73,14 @@ function checkPageBreak(doc, y, needed, pageHeight, margin) {
  * Pre-calculate total height an exercise entry will need.
  */
 function calcExerciseHeight(doc, ex, textWidth) {
-  let h = 12; // name line + prescription line + spacing
+  let h = 15; // name line + prescription line + spacing
 
   // Level badge line
-  if (ex.modificationLevel) h += 4;
+  if (ex.modificationLevel) h += 5;
 
   // Modification text
   if (ex.modificationName || ex.modificationDescription) {
-    doc.setFontSize(7);
+    doc.setFontSize(8.5);
     const modText = sanitize(ex.modificationName || '') +
       (ex.modificationDescription ? ': ' + sanitize(ex.modificationDescription) : '');
     const modLines = doc.splitTextToSize(modText, textWidth);
@@ -92,12 +92,12 @@ function calcExerciseHeight(doc, ex, textWidth) {
 
   // Notes
   if (ex.notes) {
-    doc.setFontSize(7);
+    doc.setFontSize(8.5);
     const noteLines = doc.splitTextToSize(sanitize(ex.notes), textWidth);
     h += noteLines.length * SM_LINE_HEIGHT + 1;
   }
 
-  h += 4; // bottom padding + separator
+  h += 5; // bottom padding + separator
   return h;
 }
 
@@ -209,16 +209,16 @@ export async function downloadRoutinePdf(workout, options = {}) {
   // --- Begin Main Content ---
 
   // Workout title
-  doc.setFontSize(10);
+  doc.setFontSize(12);
   doc.setFont('helvetica', 'bold');
   doc.setTextColor(...COLORS.earth);
   doc.text(titleLines[0] || title, margin, y);
-  y += 6;
+  y += 4;
 
   // ── Coaching Notes ──
   if (workout.coachingNotes) {
     const notes = sanitize(workout.coachingNotes);
-    doc.setFontSize(8.5);
+    doc.setFontSize(10);
     doc.setFont('helvetica', 'italic');
     doc.setTextColor(...COLORS.earth);
     const lines = doc.splitTextToSize(notes, contentWidth);
@@ -230,24 +230,24 @@ export async function downloadRoutinePdf(workout, options = {}) {
   // ── Warm-Up ──
   if (workout.warmUp && workout.type !== 'rest') {
     const warmText = sanitize(workout.warmUp.description || '');
-    doc.setFontSize(8);
+    doc.setFontSize(9.5);
     const warmLines = doc.splitTextToSize(warmText, contentWidth - 10);
-    const boxHeight = 12 + warmLines.length * LINE_HEIGHT + 2;
+    const boxHeight = 14 + warmLines.length * LINE_HEIGHT + 2;
 
     y = checkPageBreak(doc, y, boxHeight + 4, pageHeight, margin);
     doc.setFillColor(255, 245, 230);
     doc.roundedRect(margin, y, contentWidth, boxHeight, 3, 3, 'F');
 
-    doc.setFontSize(9);
+    doc.setFontSize(11);
     doc.setFont('helvetica', 'bold');
     doc.setTextColor(...COLORS.sunset);
-    doc.text('WARM-UP' + (workout.warmUp.duration ? '  (' + sanitize(workout.warmUp.duration) + ')' : ''), margin + 5, y + 7);
+    doc.text('WARM-UP' + (workout.warmUp.duration ? '  (' + sanitize(workout.warmUp.duration) + ')' : ''), margin + 5, y + 8);
 
-    doc.setFontSize(8);
+    doc.setFontSize(9.5);
     doc.setFont('helvetica', 'normal');
     doc.setTextColor(...COLORS.ink);
     for (let li = 0; li < warmLines.length; li++) {
-      doc.text(warmLines[li], margin + 5, y + 13 + li * LINE_HEIGHT);
+      doc.text(warmLines[li], margin + 5, y + 15 + li * LINE_HEIGHT);
     }
 
     y += boxHeight + 6;
@@ -255,12 +255,12 @@ export async function downloadRoutinePdf(workout, options = {}) {
 
   // ── Exercises ──
   if (workout.exercises?.length > 0 && workout.type !== 'rest') {
-    y = checkPageBreak(doc, y, 12, pageHeight, margin);
-    doc.setFontSize(10);
+    y = checkPageBreak(doc, y, 14, pageHeight, margin);
+    doc.setFontSize(12);
     doc.setFont('helvetica', 'bold');
     doc.setTextColor(...COLORS.ink);
     doc.text('EXERCISES (' + workout.exercises.length + ')', margin, y);
-    y += 7;
+    y += 8;
 
     for (let i = 0; i < workout.exercises.length; i++) {
       const ex = workout.exercises[i];
@@ -269,26 +269,26 @@ export async function downloadRoutinePdf(workout, options = {}) {
       const exHeight = calcExerciseHeight(doc, ex, exTextWidth);
       y = checkPageBreak(doc, y, exHeight, pageHeight, margin);
 
-      // Alternate row background — drawn at calculated height
+      // Alternate row background - drawn at calculated height
       if (i % 2 === 0) {
         doc.setFillColor(250, 248, 242);
         doc.rect(margin, y - 3, contentWidth, exHeight, 'F');
       }
 
-      // Number circle — center is at (margin+4, y+2), radius 3.5
+      // Number circle - radius 4, slightly larger
       doc.setFillColor(...COLORS.sunset);
-      doc.circle(margin + 5, y + 2.5, 3.5, 'F');
+      doc.circle(margin + 5, y + 3, 4, 'F');
       doc.setTextColor(...COLORS.white);
-      doc.setFontSize(8);
+      doc.setFontSize(10);
       doc.setFont('helvetica', 'bold');
-      doc.text(String(i + 1), margin + 5, y + 3.5, { align: 'center' });
+      doc.text(String(i + 1), margin + 5, y + 4.2, { align: 'center' });
 
       // Exercise name
       const exName = sanitize(ex.exerciseName || 'Exercise');
       doc.setTextColor(...COLORS.ink);
-      doc.setFontSize(9);
+      doc.setFontSize(11);
       doc.setFont('helvetica', 'bold');
-      doc.text(exName, margin + 11, y + 3);
+      doc.text(exName, margin + 12, y + 4);
 
       // Prescription line
       const prescParts = [];
@@ -296,32 +296,32 @@ export async function downloadRoutinePdf(workout, options = {}) {
       if (ex.duration && !ex.reps) prescParts.push(sanitize(ex.duration));
       if (ex.rest) prescParts.push(sanitize(ex.rest) + ' rest');
       if (prescParts.length) {
-        doc.setFontSize(7.5);
+        doc.setFontSize(9);
         doc.setFont('helvetica', 'normal');
         doc.setTextColor(...COLORS.rock);
-        doc.text(prescParts.join('  |  '), margin + 11, y + 8);
+        doc.text(prescParts.join('  |  '), margin + 12, y + 9.5);
       }
-      y += 11;
+      y += 13;
 
-      // Modification level badge — on its own line below name
+      // Modification level badge - on its own line below name
       if (ex.modificationLevel) {
-        doc.setFontSize(6.5);
+        doc.setFontSize(8);
         doc.setFont('helvetica', 'bold');
         doc.setTextColor(...COLORS.sunset);
-        doc.text(ex.modificationLevel.toUpperCase(), margin + 11, y);
-        y += 4;
+        doc.text(ex.modificationLevel.toUpperCase(), margin + 12, y);
+        y += 5;
       }
 
       // Modification name + description
       if (ex.modificationName || ex.modificationDescription) {
-        doc.setFontSize(7);
+        doc.setFontSize(8.5);
         doc.setFont('helvetica', 'normal');
         doc.setTextColor(...COLORS.earth);
         const modText = sanitize(ex.modificationName || '') +
           (ex.modificationDescription ? ': ' + sanitize(ex.modificationDescription) : '');
         const modLines = doc.splitTextToSize(modText, exTextWidth);
         for (let li = 0; li < modLines.length; li++) {
-          doc.text(modLines[li], margin + 11, y);
+          doc.text(modLines[li], margin + 12, y);
           y += SM_LINE_HEIGHT;
         }
         y += 1;
@@ -329,32 +329,32 @@ export async function downloadRoutinePdf(workout, options = {}) {
 
       // Equipment
       if (ex.equipment?.length > 0) {
-        doc.setFontSize(6.5);
+        doc.setFontSize(8);
         doc.setFont('helvetica', 'normal');
         doc.setTextColor(...COLORS.rock);
-        doc.text('Equipment: ' + ex.equipment.map(e => e.equipmentName).join(', '), margin + 11, y);
+        doc.text('Equipment: ' + ex.equipment.map(e => e.equipmentName).join(', '), margin + 12, y);
         y += SM_LINE_HEIGHT;
       }
 
       // Notes
       if (ex.notes) {
-        doc.setFontSize(7);
+        doc.setFontSize(8.5);
         doc.setFont('helvetica', 'italic');
         doc.setTextColor(...COLORS.earth);
         const noteLines = doc.splitTextToSize(sanitize(ex.notes), exTextWidth);
         for (let li = 0; li < noteLines.length; li++) {
-          doc.text(noteLines[li], margin + 11, y);
+          doc.text(noteLines[li], margin + 12, y);
           y += SM_LINE_HEIGHT;
         }
         y += 1;
       }
 
-      y += 3;
+      y += 4;
 
       // Separator line
       if (i < workout.exercises.length - 1) {
         doc.setDrawColor(230, 225, 215);
-        doc.line(margin + 11, y - 2, margin + contentWidth, y - 2);
+        doc.line(margin + 12, y - 2, margin + contentWidth, y - 2);
       }
 
       y += 2;
@@ -367,25 +367,25 @@ export async function downloadRoutinePdf(workout, options = {}) {
   // ── Bask (Cooldown) ──
   if (workout.bask && workout.type !== 'rest') {
     const baskText = sanitize(workout.bask.description || '');
-    doc.setFontSize(8);
+    doc.setFontSize(9.5);
     const baskLines = doc.splitTextToSize(baskText, contentWidth - 10);
-    const boxHeight = 12 + baskLines.length * LINE_HEIGHT + 2;
+    const boxHeight = 14 + baskLines.length * LINE_HEIGHT + 2;
 
     y = checkPageBreak(doc, y, boxHeight + 8, pageHeight, margin);
     y += 4;
     doc.setFillColor(235, 245, 240);
     doc.roundedRect(margin, y, contentWidth, boxHeight, 3, 3, 'F');
 
-    doc.setFontSize(9);
+    doc.setFontSize(11);
     doc.setFont('helvetica', 'bold');
     doc.setTextColor(6, 95, 70);
-    doc.text('BASK (COOLDOWN)' + (workout.bask.duration ? '  (' + sanitize(workout.bask.duration) + ')' : ''), margin + 5, y + 7);
+    doc.text('BASK (COOLDOWN)' + (workout.bask.duration ? '  (' + sanitize(workout.bask.duration) + ')' : ''), margin + 5, y + 8);
 
-    doc.setFontSize(8);
+    doc.setFontSize(9.5);
     doc.setFont('helvetica', 'normal');
     doc.setTextColor(...COLORS.ink);
     for (let li = 0; li < baskLines.length; li++) {
-      doc.text(baskLines[li], margin + 5, y + 13 + li * LINE_HEIGHT);
+      doc.text(baskLines[li], margin + 5, y + 15 + li * LINE_HEIGHT);
     }
 
     y += boxHeight + 6;
@@ -394,9 +394,9 @@ export async function downloadRoutinePdf(workout, options = {}) {
   // ── Progression + Next Day ──
   if (workout.progressionContext || workout.nextDayHint) {
     if (workout.progressionContext) {
-      doc.setFontSize(8);
+      doc.setFontSize(9.5);
       const progText = sanitize(workout.progressionContext);
-      const progLines = doc.splitTextToSize(progText, contentWidth - 28);
+      const progLines = doc.splitTextToSize(progText, contentWidth - 30);
       const progHeight = 6 + progLines.length * LINE_HEIGHT;
       y = checkPageBreak(doc, y, progHeight, pageHeight, margin);
       y += 2;
@@ -407,16 +407,16 @@ export async function downloadRoutinePdf(workout, options = {}) {
       doc.setFont('helvetica', 'normal');
       doc.setTextColor(...COLORS.rock);
       for (let li = 0; li < progLines.length; li++) {
-        doc.text(progLines[li], margin + 24, y + li * LINE_HEIGHT);
+        doc.text(progLines[li], margin + 28, y + li * LINE_HEIGHT);
       }
-      y += progLines.length * LINE_HEIGHT + 4;
+      y += progLines.length * LINE_HEIGHT + 5;
     }
 
     if (workout.nextDayHint) {
-      doc.setFontSize(8);
+      doc.setFontSize(9.5);
       const hintText = sanitize(workout.nextDayHint);
-      const hintLines = doc.splitTextToSize(hintText, contentWidth - 24);
-      const hintHeight = 4 + hintLines.length * LINE_HEIGHT;
+      const hintLines = doc.splitTextToSize(hintText, contentWidth - 26);
+      const hintHeight = 5 + hintLines.length * LINE_HEIGHT;
       y = checkPageBreak(doc, y, hintHeight, pageHeight, margin);
 
       doc.setFont('helvetica', 'bold');
@@ -425,11 +425,13 @@ export async function downloadRoutinePdf(workout, options = {}) {
       doc.setFont('helvetica', 'normal');
       doc.setTextColor(...COLORS.rock);
       for (let li = 0; li < hintLines.length; li++) {
-        doc.text(hintLines[li], margin + 24, y + li * LINE_HEIGHT);
+        doc.text(hintLines[li], margin + 26, y + li * LINE_HEIGHT);
       }
-      y += hintLines.length * LINE_HEIGHT + 4;
+      y += hintLines.length * LINE_HEIGHT + 5;
     }
   }
+
+  // --- End Main Content ---
 
   // ── QR Code + URL ──
   y = checkPageBreak(doc, y, 42, pageHeight, margin);

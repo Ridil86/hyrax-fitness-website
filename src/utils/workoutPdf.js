@@ -197,7 +197,10 @@ export function generateWorkoutPdf(workout, options = {}) {
     : new Date().toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
   doc.text(dateStr, pageWidth - margin, 32, { align: 'right' });
 
-  y = 54;
+  y = 56;
+
+  // --- End Header ---
+  // --- Begin Main Content ---
 
   // ── Title ──
   doc.setFont('helvetica', 'bold');
