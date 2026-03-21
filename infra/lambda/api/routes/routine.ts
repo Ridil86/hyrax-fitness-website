@@ -55,7 +55,7 @@ function buildSystemPrompt(
   lines.push(`You are the Hyrax Fitness digital training assistant. You create personalized daily workouts using ONLY the Hyrax Fitness exercise library and workout templates provided below.`);
   lines.push('');
   lines.push(`## Training Philosophy`);
-  lines.push(`The Hyrax training system is inspired by the rock hyrax — an animal that thrives in rugged terrain through explosive movement, endurance, and community. Every workout follows the Forage-Bask cycle: high-effort training bouts (Forage) followed by structured cooldown and recovery (Bask). Workouts emphasize functional, compound movements with progressive overload.`);
+  lines.push(`The Hyrax training system is inspired by the rock hyrax, an animal that thrives in rugged terrain through explosive movement, endurance, and community. Every workout follows the Forage-Bask cycle: high-effort training bouts (Forage) followed by structured cooldown and recovery (Bask). Workouts emphasize functional, compound movements with progressive overload.`);
   lines.push('');
 
   lines.push(`## Rules`);
@@ -70,6 +70,8 @@ function buildSystemPrompt(
   lines.push(`9. Use the workout templates as structural inspiration (round format, AMRAP, intervals, etc.) but adapt exercises and volume to the individual user.`);
   lines.push(`10. Respond ONLY with valid JSON matching the schema below. No explanation text outside the JSON.`);
   lines.push(`11. For premium (Iron Dassie) tier users, include a brief nutrition timing suggestion in coachingNotes (e.g., pre-workout fueling, post-workout protein window, hydration tips).`);
+  lines.push(`12. NEVER use em-dashes (--), unicode dashes, or emojis in any text field. Use commas, periods, or semicolons instead.`);
+  lines.push(`13. Be concise in all text fields. Warm-up and Bask descriptions: 1-2 short sentences max (under 120 characters). Modification descriptions: 1 sentence. Coaching notes: 2-3 sentences max. Exercise notes: 1 short sentence. Avoid filler words and motivational fluff.`);
   lines.push('');
 
   // Exercise catalog
@@ -83,7 +85,7 @@ function buildSystemPrompt(
       const mod = mods[level];
       if (mod) {
         const eqStr = (mod.equipment || []).map((e: any) => e.equipmentName).join(', ') || 'bodyweight';
-        lines.push(`- ${level}: "${mod.subName || 'Standard'}" — ${mod.description || 'N/A'} | Equipment: ${eqStr}`);
+        lines.push(`- ${level}: "${mod.subName || 'Standard'}" - ${mod.description || 'N/A'} | Equipment: ${eqStr}`);
       }
     }
     lines.push('');
@@ -199,7 +201,7 @@ function buildUserPrompt(
     lines.push(`Age: ${fitnessProfile.age}`);
   }
   if (userTier) {
-    lines.push(`Subscription Tier: ${userTier}${userTier === 'Iron Dassie' ? ' (premium — include nutrition timing tips)' : ''}`);
+    lines.push(`Subscription Tier: ${userTier}${userTier === 'Iron Dassie' ? ' (premium - include nutrition timing tips)' : ''}`);
   }
   lines.push('');
 
@@ -286,7 +288,7 @@ function buildUserPrompt(
   if (recentDailyWorkouts.length > 0) {
     lines.push(`## Previous AI-Generated Workouts (avoid repetition)`);
     for (const dw of recentDailyWorkouts) {
-      lines.push(`- ${dw.date}: "${dw.title}" — Focus: ${(dw.focus || []).join(', ')}, Type: ${dw.type}`);
+      lines.push(`- ${dw.date}: "${dw.title}" - Focus: ${(dw.focus || []).join(', ')}, Type: ${dw.type}`);
     }
     lines.push('');
 
@@ -303,7 +305,7 @@ function buildUserPrompt(
       }
       lines.push(`## Recent Workout Ratings`);
       for (const [date, r] of Object.entries(ratingsByDate).sort().reverse().slice(0, 7)) {
-        lines.push(`- ${date}: "${r.title}" — Rating: ${r.rating}/5`);
+        lines.push(`- ${date}: "${r.title}" - Rating: ${r.rating}/5`);
       }
       lines.push('');
     }
@@ -408,7 +410,7 @@ function computeProgressionData(logs: any[]): Array<{
 // ── Route Handlers ──
 
 /**
- * POST /api/routine/generate — Generate today's AI workout (authenticated, tier II+)
+ * POST /api/routine/generate - Generate today's AI workout (authenticated, tier II+)
  * Uses async Lambda self-invocation to avoid API Gateway's 29s timeout.
  */
 export async function generateDailyWorkout(
@@ -479,7 +481,7 @@ export async function generateDailyWorkout(
     await lambdaClient.send(
       new InvokeCommand({
         FunctionName: SELF_FUNCTION_NAME,
-        InvocationType: 'Event', // async — returns immediately
+        InvocationType: 'Event', // async - returns immediately
         Payload: new TextEncoder().encode(JSON.stringify({
           __asyncRoutineGeneration: true,
           userSub: claims.sub,
@@ -489,7 +491,7 @@ export async function generateDailyWorkout(
       })
     );
 
-    // 7. Return 202 immediately — frontend will poll GET /api/routine/today
+    // 7. Return 202 immediately - frontend will poll GET /api/routine/today
     return {
       statusCode: 202,
       headers: {
@@ -676,7 +678,7 @@ export async function generateRoutineAsync(payload: {
 }
 
 /**
- * POST /api/routine/swap — Swap today's workout for a different one
+ * POST /api/routine/swap - Swap today's workout for a different one
  * Rock Runner: 1 swap/day, Iron Dassie: unlimited
  */
 export async function swapDailyWorkout(
@@ -783,7 +785,7 @@ export async function swapDailyWorkout(
 }
 
 /**
- * POST /api/routine/preview — Preview prompts without calling Bedrock (admin-only debug)
+ * POST /api/routine/preview - Preview prompts without calling Bedrock (admin-only debug)
  */
 export async function previewPrompts(
   event: APIGatewayProxyEvent
@@ -887,7 +889,7 @@ export async function previewPrompts(
 }
 
 /**
- * GET /api/routine/today — Get today's generated workout (authenticated)
+ * GET /api/routine/today - Get today's generated workout (authenticated)
  */
 export async function getTodayWorkout(
   event: APIGatewayProxyEvent
@@ -916,7 +918,7 @@ export async function getTodayWorkout(
 }
 
 /**
- * GET /api/routine/history — List past daily workouts (authenticated)
+ * GET /api/routine/history - List past daily workouts (authenticated)
  */
 export async function listWorkoutHistory(
   event: APIGatewayProxyEvent
@@ -949,7 +951,7 @@ export async function listWorkoutHistory(
 }
 
 /**
- * GET /api/routine/{date} — Get a specific date's workout (authenticated)
+ * GET /api/routine/{date} - Get a specific date's workout (authenticated)
  */
 export async function getWorkoutByDate(
   event: APIGatewayProxyEvent
@@ -982,7 +984,7 @@ export async function getWorkoutByDate(
 }
 
 /**
- * GET /api/admin/users/{username}/routines — Admin-only: get a user's AI routine history
+ * GET /api/admin/users/{username}/routines - Admin-only: get a user's AI routine history
  */
 export async function getAdminUserRoutines(
   event: APIGatewayProxyEvent

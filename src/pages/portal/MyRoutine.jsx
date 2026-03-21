@@ -14,6 +14,15 @@ function formatFocus(tags) {
   return tags.map(t => t.replace(/[-_]/g, ' ')).join(', ');
 }
 
+/** Strip em-dashes and emojis from AI output */
+function sanitize(text) {
+  if (!text) return '';
+  return text
+    .replace(/[\u2014\u2013\u2012]/g, '-')
+    .replace(/[\u{1F600}-\u{1F9FF}\u{2600}-\u{26FF}\u{2700}-\u{27BF}\u{1F300}-\u{1F5FF}\u{1F680}-\u{1F6FF}\u{1FA00}-\u{1FAFF}\u{FE00}-\u{FE0F}\u{200D}]/gu, '')
+    .trim();
+}
+
 export default function MyRoutine() {
   const { getIdToken, userTier } = useAuth();
   const [fitnessProfile, setFitnessProfile] = useState(null);
@@ -285,12 +294,12 @@ export default function MyRoutine() {
             <span className={`routine-type-badge ${workout.type || 'training'}`}>
               {workout.type === 'rest' ? 'Rest Day' : workout.type === 'active_recovery' ? 'Active Recovery' : 'Training'}
             </span>
-            <h2 className="routine-title">{workout.title || 'Today\u2019s Workout'}</h2>
+            <h2 className="routine-title">{sanitize(workout.title) || "Today's Workout"}</h2>
           </div>
           <div className="routine-meta">
-            {workout.duration && <span className="routine-meta-item">&#x23F1; {workout.duration}</span>}
+            {workout.duration && <span className="routine-meta-item">{sanitize(workout.duration)}</span>}
             {workout.focus?.length > 0 && (
-              <span className="routine-meta-item">&#x1F3AF; {formatFocus(workout.focus)}</span>
+              <span className="routine-meta-item">{formatFocus(workout.focus)}</span>
             )}
           </div>
         </div>
@@ -303,26 +312,26 @@ export default function MyRoutine() {
             className="btn small routine-pdf-btn"
             onClick={() => downloadRoutinePdf(workout, { userProfile, userTier })}
           >
-            &#x1F4C4; PDF
+            PDF
           </button>
         </div>
         {workout.coachingNotes && (
-          <p className="routine-coaching">{workout.coachingNotes}</p>
+          <p className="routine-coaching">{sanitize(workout.coachingNotes)}</p>
         )}
       </div>
 
       {/* Warm-up */}
       {workout.warmUp && !isRest && (
         <div className="routine-card routine-section-card">
-          <h3>&#x1F525; Warm-Up {workout.warmUp.duration && <span className="routine-section-duration">({workout.warmUp.duration})</span>}</h3>
-          <p className="routine-section-desc">{workout.warmUp.description}</p>
+          <h3>Warm-Up {workout.warmUp.duration && <span className="routine-section-duration">({sanitize(workout.warmUp.duration)})</span>}</h3>
+          <p className="routine-section-desc">{sanitize(workout.warmUp.description)}</p>
         </div>
       )}
 
       {/* Exercises */}
       {!isRest && workout.exercises?.length > 0 && (
         <div className="routine-card">
-          <h3>&#x1F4AA; Exercises ({workout.exercises.length})</h3>
+          <h3>Exercises ({workout.exercises.length})</h3>
           <div className="routine-exercise-list">
             {workout.exercises.map((ex, idx) => (
               <div
@@ -357,7 +366,7 @@ export default function MyRoutine() {
                       </div>
                     )}
                     {ex.modificationDescription && (
-                      <p className="routine-mod-desc">{ex.modificationDescription}</p>
+                      <p className="routine-mod-desc">{sanitize(ex.modificationDescription)}</p>
                     )}
                     {ex.equipment?.length > 0 && (
                       <div className="routine-equipment">
@@ -366,7 +375,7 @@ export default function MyRoutine() {
                         ))}
                       </div>
                     )}
-                    {ex.notes && <p className="routine-exercise-notes">{ex.notes}</p>}
+                    {ex.notes && <p className="routine-exercise-notes">{sanitize(ex.notes)}</p>}
                   </div>
                 )}
               </div>
@@ -378,15 +387,15 @@ export default function MyRoutine() {
       {/* Bask (cooldown) */}
       {workout.bask && !isRest && (
         <div className="routine-card routine-section-card">
-          <h3>&#x1F9D8; Bask {workout.bask.duration && <span className="routine-section-duration">({workout.bask.duration})</span>}</h3>
-          <p className="routine-section-desc">{workout.bask.description}</p>
+          <h3>Bask (Cooldown) {workout.bask.duration && <span className="routine-section-duration">({sanitize(workout.bask.duration)})</span>}</h3>
+          <p className="routine-section-desc">{sanitize(workout.bask.description)}</p>
         </div>
       )}
 
       {/* Rest day content */}
       {isRest && (
         <div className="routine-card routine-section-card">
-          <h3>{workout.type === 'active_recovery' ? '&#x1F6B6; Active Recovery' : '&#x1F634; Rest Day'}</h3>
+          <h3>{workout.type === 'active_recovery' ? 'Active Recovery' : 'Rest Day'}</h3>
           <p className="routine-section-desc">
             {workout.coachingNotes || 'Take today to recover. Light stretching, walking, or foam rolling are encouraged.'}
           </p>
