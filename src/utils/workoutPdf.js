@@ -109,7 +109,7 @@ export function generateWorkoutPdf(workout, options = {}) {
   const doc = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4' });
   const pageWidth = doc.internal.pageSize.getWidth();
   const pageHeight = doc.internal.pageSize.getHeight();
-  const margin = 20;
+  const margin = 15;
   const contentWidth = pageWidth - margin * 2;
 
   let y = margin;
@@ -181,7 +181,7 @@ export function generateWorkoutPdf(workout, options = {}) {
     const tierWidth = doc.getTextWidth(tierText) + 8;
     const tierX = pageWidth - margin - tierWidth;
     doc.setFillColor(...tierColor);
-    doc.roundedRect(tierX, 19, tierWidth, 9, 3, 3, 'F');
+    doc.roundedRect(tierX, 19, tierWidth, 7, 3, 3, 'F');
     doc.setTextColor(...COLORS.white);
     doc.text(tierText, tierX + tierWidth / 2, 23, { align: 'center' });
   }
@@ -231,6 +231,9 @@ export function generateWorkoutPdf(workout, options = {}) {
     badgeX += textWidth + 4;
   }
   y += 14;
+
+  // --- End Header ---
+  // --- Begin Main Content ---
 
   // ── Description ──
   if (workout.description) {
@@ -532,37 +535,25 @@ export function generateWorkoutPdf(workout, options = {}) {
 
   y += baskHeight + 6;
 
-  // ── QR Code link back to workout ──
-  const qrSize = 35; // mm — large enough for easy mobile scanning
-  const qrSectionHeight = qrDataUrl ? qrSize + 8 : 20;
-  y = checkPageBreak(doc, y, qrSectionHeight, pageHeight, margin);
-
+  // ── QR Code + URL ──
+  y = checkPageBreak(doc, y, 42, pageHeight, margin);
+  y += 6;
   const workoutUrl = `https://hyraxfitness.com/portal/workouts/${workout.id || ''}`;
-  const textAreaWidth = qrDataUrl ? contentWidth - qrSize - 10 : contentWidth;
+  try {
+    doc.addImage(qrDataUrl, 'PNG', margin, y, 28, 28);
 
-  doc.setFont('helvetica', 'normal');
-  doc.setFontSize(10);
-  doc.setTextColor(...COLORS.rock);
-  const qrHeadingLines = doc.splitTextToSize(
-    'Log your completion online at the URL below or scan this QR code:',
-    textAreaWidth
-  );
-  doc.text(qrHeadingLines, margin, y);
-
-  doc.setTextColor(...COLORS.sunset);
-  doc.setFontSize(12);
-  doc.textWithLink(workoutUrl, margin, y + qrHeadingLines.length * 6 + 2, { url: workoutUrl });
-
-  // QR code image (right-aligned)
-  if (qrDataUrl) {
-    try {
-      doc.addImage(qrDataUrl, 'PNG', pageWidth - margin - qrSize, y - 4, qrSize, qrSize);
-    } catch {
-      // Skip QR on failure
-    }
+    doc.setFontSize(10);
+    doc.setFont('helvetica', 'normal');
+    doc.setTextColor(...COLORS.rock);
+    doc.text('Log your completion online:', margin + 32, y + 12);
+    doc.setTextColor(...COLORS.sunset);
+    doc.setFontSize(12);
+    doc.text(workoutUrl, margin + 32, y + 20);
+  } catch {
+    // QR generation failed, skip
   }
 
-  y += qrSectionHeight;
+  // --- End Main Content ---
 
   // ── Footer on each page ──
   const totalPages = doc.getNumberOfPages();

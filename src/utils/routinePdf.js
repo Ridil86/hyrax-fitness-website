@@ -187,7 +187,7 @@ export async function downloadRoutinePdf(workout, options = {}) {
     const tierWidth = doc.getTextWidth(tierText) + 8;
     const tierX = pageWidth - margin - tierWidth;
     doc.setFillColor(...tierColor);
-    doc.roundedRect(tierX, 19, tierWidth, 9, 3, 3, 'F');
+    doc.roundedRect(tierX, 19, tierWidth, 7, 3, 3, 'F');
     doc.setTextColor(...COLORS.white);
     doc.text(tierText, tierX + tierWidth / 2, 23, { align: 'center' });
   }
@@ -204,6 +204,16 @@ export async function downloadRoutinePdf(workout, options = {}) {
   doc.text(dateStr, pageWidth - margin, 32, { align: 'right' });
 
   y = 54;
+
+  // --- End Header ---
+  // --- Begin Main Content ---
+
+  // Workout title
+  doc.setFontSize(10);
+  doc.setFont('helvetica', 'bold');
+  doc.setTextColor(...COLORS.earth);
+  doc.text(titleLines[0] || title, textStart, y);
+  y += 6;
 
   // ── Coaching Notes ──
   if (workout.coachingNotes) {
@@ -322,7 +332,7 @@ export async function downloadRoutinePdf(workout, options = {}) {
         doc.setFontSize(6.5);
         doc.setFont('helvetica', 'normal');
         doc.setTextColor(...COLORS.rock);
-        doc.text('Equip: ' + ex.equipment.map(e => e.equipmentName).join(', '), margin + 11, y);
+        doc.text('Equipment: ' + ex.equipment.map(e => e.equipmentName).join(', '), margin + 11, y);
         y += SM_LINE_HEIGHT;
       }
 
@@ -429,13 +439,13 @@ export async function downloadRoutinePdf(workout, options = {}) {
     const qrDataUrl = await QRCode.toDataURL(workoutUrl, { width: 200, margin: 1 });
     doc.addImage(qrDataUrl, 'PNG', margin, y, 28, 28);
 
-    doc.setFontSize(8);
+    doc.setFontSize(10);
     doc.setFont('helvetica', 'normal');
     doc.setTextColor(...COLORS.rock);
     doc.text('Log your completion online:', margin + 32, y + 12);
     doc.setTextColor(...COLORS.sunset);
-    doc.setFontSize(7);
-    doc.text(workoutUrl, margin + 32, y + 17);
+    doc.setFontSize(12);
+    doc.text(workoutUrl, margin + 32, y + 20);
   } catch {
     // QR generation failed, skip
   }
