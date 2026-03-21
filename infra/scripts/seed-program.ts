@@ -4,7 +4,7 @@
  *
  * Run: cd infra && MSYS_NO_PATHCONV=1 npx tsx scripts/seed-program.ts --profile hyrax-fitness
  *
- * Idempotent — uses deterministic IDs so re-running overwrites with same keys.
+ * Idempotent - uses deterministic IDs so re-running overwrites with same keys.
  */
 
 import { DynamoDBClient } from '@aws-sdk/client-dynamodb';
@@ -404,7 +404,7 @@ const WORKOUTS = [
       exRef('ridge-row', { duration: '45s', rest: '15s', notes: 'Superset A' }),
       exRef('cliff-lunge', { duration: '45s', rest: '15s', notes: 'Superset B' }),
       exRef('sentinel-press', { duration: '45s', rest: '15s', notes: 'Superset B' }),
-      exRef('bolt-sprint', { duration: '20s', notes: 'Finisher — rower or bike' }),
+      exRef('bolt-sprint', { duration: '20s', notes: 'Finisher - rower or bike' }),
       exRef('basalt-burpee', { reps: '10', notes: 'Finisher' }),
     ],
     equipment: [],
@@ -453,7 +453,7 @@ const WORKOUTS = [
     equipment: [],
     tags: ['high-volume', 'full-body', 'all-exercises'],
     sortOrder: 9,
-    notes: 'Structure: 3 rounds. 30 sec per exercise, 10 sec transition. 2 min rest between rounds.\n\nBask (10 min): Full mobility sequence — ankles, hips, thoracic spine, shoulders. Box breathing throughout.',
+    notes: 'Structure: 3 rounds. 30 sec per exercise, 10 sec transition. 2 min rest between rounds.\n\nBask (10 min): Full mobility sequence - ankles, hips, thoracic spine, shoulders. Box breathing throughout.',
   },
   {
     id: 'spire-session',

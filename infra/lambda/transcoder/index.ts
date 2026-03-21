@@ -66,7 +66,7 @@ async function updateVideoTranscoding(
 }
 
 /**
- * Handle S3 ObjectCreated event — start a MediaConvert transcoding job.
+ * Handle S3 ObjectCreated event - start a MediaConvert transcoding job.
  */
 async function handleS3Event(event: S3Event) {
   for (const record of event.Records) {
@@ -261,7 +261,7 @@ interface MediaConvertJobDetail {
 }
 
 /**
- * Handle EventBridge MediaConvert job state change — update DynamoDB.
+ * Handle EventBridge MediaConvert job state change - update DynamoDB.
  */
 async function handleEventBridgeEvent(
   event: EventBridgeEvent<'MediaConvert Job State Change', MediaConvertJobDetail>
@@ -301,7 +301,7 @@ async function handleEventBridgeEvent(
 }
 
 /**
- * Lambda handler — dispatches based on event source.
+ * Lambda handler - dispatches based on event source.
  */
 export const handler = async (event: any): Promise<void> => {
   console.log('Event:', JSON.stringify(event, null, 2));

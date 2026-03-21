@@ -70,7 +70,7 @@ export default function WorkoutLibrary() {
             transition={{ duration: 0.5, delay: 0.1 }}
           >
             Browse our collection of Hyrax training regimens. View the details
-            or download a branded PDF to take to your session.
+            or download a print-ready PDF to take to your session.
           </motion.p>
         </div>
       </div>

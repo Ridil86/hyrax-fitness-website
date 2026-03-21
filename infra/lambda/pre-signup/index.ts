@@ -78,7 +78,7 @@ export const handler = async (
           `Linked Google identity ${userName} to existing user ${nativeUser.Username}`
         );
       } else {
-        // No native user exists — new Google-only user
+        // No native user exists - new Google-only user
         // Add them to the Client group after confirmation
         // (We also do this after sign-up completes, but set flags here)
         console.log(`New Google user: ${userName} (${email})`);
@@ -103,7 +103,7 @@ export const handler = async (
       event.response.autoVerifyEmail = true;
     } catch (error) {
       console.error('Pre-signup external provider error:', error);
-      // Don't block sign-in on unexpected errors — let it through
+      // Don't block sign-in on unexpected errors - let it through
       event.response.autoConfirmUser = true;
       event.response.autoVerifyEmail = true;
     }

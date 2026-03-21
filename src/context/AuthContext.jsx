@@ -49,7 +49,7 @@ export function AuthProvider({ children }) {
           setUserTier(profile.tier || 'Pup');
         }
       } catch {
-        // Profile fetch failed — keep default tier
+        // Profile fetch failed - keep default tier
       }
     } catch {
       setUser(null);
@@ -150,7 +150,7 @@ export function AuthProvider({ children }) {
         setUserTier(profile.tier || 'Pup');
       }
     } catch {
-      // Profile fetch failed — keep current tier
+      // Profile fetch failed - keep current tier
     }
   }, [getIdToken]);
 

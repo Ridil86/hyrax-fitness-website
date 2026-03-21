@@ -12,7 +12,7 @@
  * Environment variables:
  *   STRIPE_SECRET_KEY - Your Stripe test secret key (sk_test_...)
  *
- * This script is idempotent — it will skip tiers that already exist in DynamoDB (unless --update).
+ * This script is idempotent - it will skip tiers that already exist in DynamoDB (unless --update).
  */
 
 import { DynamoDBClient } from '@aws-sdk/client-dynamodb';
@@ -147,10 +147,10 @@ async function main() {
   let stripe: Stripe | null = null;
   if (STRIPE_SECRET_KEY && !STRIPE_SECRET_KEY.includes('placeholder')) {
     stripe = new Stripe(STRIPE_SECRET_KEY, { apiVersion: '2025-04-30.basil' });
-    console.log('Stripe SDK initialized — will create Products/Prices.');
+    console.log('Stripe SDK initialized - will create Products/Prices.');
   } else {
     console.log(
-      'No STRIPE_SECRET_KEY set — skipping Stripe Product/Price creation.',
+      'No STRIPE_SECRET_KEY set - skipping Stripe Product/Price creation.',
       '\nSet STRIPE_SECRET_KEY=sk_test_... to create Stripe objects.'
     );
   }
@@ -191,7 +191,7 @@ async function main() {
           },
         })
       );
-      console.log(`  UPDATED: Tier "${tier.name}" — features, description, logoUrl`);
+      console.log(`  UPDATED: Tier "${tier.name}" - features, description, logoUrl`);
       continue;
     }
 

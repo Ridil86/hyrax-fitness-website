@@ -581,7 +581,7 @@ export default function VideoAdmin() {
         <div className="workout-editor-card">
           <h3>Media</h3>
 
-          {/* Video File (first — duration and thumbnail depend on it) */}
+          {/* Video File (first - duration and thumbnail depend on it) */}
           <div className="content-field">
             <label>Video File</label>
             <span className="video-field-label">Video URL</span>

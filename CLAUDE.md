@@ -14,7 +14,7 @@ npm run build    # Production build to dist/
 npm run lint     # ESLint check
 npm run preview  # Preview production build locally
 
-# CDK (from infra/ directory) — MSYS_NO_PATHCONV=1 required on Windows Git Bash
+# CDK (from infra/ directory) - MSYS_NO_PATHCONV=1 required on Windows Git Bash
 cd infra && MSYS_NO_PATHCONV=1 npx cdk deploy --all --profile hyrax-fitness
 cd infra && MSYS_NO_PATHCONV=1 npx cdk diff --profile hyrax-fitness
 cd infra && MSYS_NO_PATHCONV=1 npx cdk synth
@@ -45,7 +45,7 @@ Key hook pattern: `useContent(sectionName)` fetches from `/api/content/{section}
 ### Auth System
 
 - **Provider**: AWS Cognito via `aws-amplify` v6, wrapped in `AuthContext.jsx`
-- **Groups**: Admin (precedence 0), Client (precedence 10) — extracted from `cognito:groups` access token claim
+- **Groups**: Admin (precedence 0), Client (precedence 10) - extracted from `cognito:groups` access token claim
 - **Route protection**: `ProtectedRoute.jsx` checks auth + group membership
 - **API auth**: ID token sent as `Authorization` header; Lambda validates via `infra/lambda/api/utils/auth.ts`
 - **Google OAuth**: Federated login via Cognito Hosted UI, handled by `GoogleOAuthHandler.jsx`
@@ -53,7 +53,7 @@ Key hook pattern: `useContent(sectionName)` fetches from `/api/content/{section}
 
 ### Stripe Subscription System
 
-Three fixed tiers: **Pup** (free), **Rock Runner** ($5/mo), **Iron Dassie** ($20/mo). Tier count is fixed — admin can only edit existing tiers, not add/remove.
+Three fixed tiers: **Pup** (free), **Rock Runner** ($5/mo), **Iron Dassie** ($20/mo). Tier count is fixed - admin can only edit existing tiers, not add/remove.
 
 - Upgrades: immediate with proration
 - Downgrades: effective at period end
@@ -76,11 +76,11 @@ Common query patterns:
 
 Single Lambda handles all routes via dispatcher (`infra/lambda/api/index.ts`). Route handlers in `infra/lambda/api/routes/`. Uses `fromFunctionArn` import pattern in CDK to avoid exceeding the 20KB Lambda resource-based policy limit.
 
-Dispatcher uses regex-based path matching — **route order matters** (specific routes like `/api/audit/stats` must come before generic `/api/audit`). Path parameters are extracted via regex groups and set on `event.pathParameters`.
+Dispatcher uses regex-based path matching - **route order matters** (specific routes like `/api/audit/stats` must come before generic `/api/audit`). Path parameters are extracted via regex groups and set on `event.pathParameters`.
 
 Shared utilities in `infra/lambda/api/utils/`:
 - `auth.ts`: `extractClaims(event)` returns `{ sub, email, groups }`, `isAdmin(event)` checks Admin group
-- `response.ts`: `success()`, `created()`, `badRequest()`, `forbidden()`, `notFound()`, `serverError()` — all include CORS headers
+- `response.ts`: `success()`, `created()`, `badRequest()`, `forbidden()`, `notFound()`, `serverError()` - all include CORS headers
 
 ### Media & Video Pipeline
 
@@ -112,13 +112,13 @@ Defined in `src/styles/variables.css`:
 - **Animations**: `ScrollReveal` wrapper component using Framer Motion for scroll-triggered reveals.
 - **Admin pages**: Use `AdminLayout` with sidebar nav. Protected by `ProtectedRoute` requiring Admin group.
 - **Portal pages**: Use `PortalLayout` with sidebar nav. Protected by `ProtectedRoute` requiring auth.
-- **Tier gating**: `src/utils/tiers.js` — `hasTierAccess(userTier, requiredTier)` checks access. `useTiers` hook fetches tier data.
+- **Tier gating**: `src/utils/tiers.js` - `hasTierAccess(userTier, requiredTier)` checks access. `useTiers` hook fetches tier data.
 
 ## Adding a New API Route
 
-1. **Create route handler** in `infra/lambda/api/routes/my-feature.ts` — use `extractClaims`/`isAdmin` for auth, response helpers for returns
-2. **Import and register** in `infra/lambda/api/index.ts` — add regex match in the handler function (place specific paths before generic ones)
-3. **Add API Gateway resource** in `infra/lib/backend-stack.ts` — create resource + method with Cognito authorizer if authenticated
+1. **Create route handler** in `infra/lambda/api/routes/my-feature.ts` - use `extractClaims`/`isAdmin` for auth, response helpers for returns
+2. **Import and register** in `infra/lambda/api/index.ts` - add regex match in the handler function (place specific paths before generic ones)
+3. **Add API Gateway resource** in `infra/lib/backend-stack.ts` - create resource + method with Cognito authorizer if authenticated
 4. **Deploy**: `cd infra && MSYS_NO_PATHCONV=1 npx cdk deploy --all --profile hyrax-fitness`
 
 ## Deployment

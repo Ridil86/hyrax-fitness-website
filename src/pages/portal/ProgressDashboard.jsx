@@ -352,7 +352,7 @@ export default function ProgressDashboard() {
         <h1>Progress Dashboard</h1>
       </div>
 
-      {/* Section 1 — Overview Stats */}
+      {/* Section 1 - Overview Stats */}
       <div className="progress-stats">
         <div className="progress-stat-card">
           <span className="progress-stat-value">{stats?.currentStreak || 0}</span>
@@ -376,7 +376,7 @@ export default function ProgressDashboard() {
         </div>
       </div>
 
-      {/* Section 2 — Exercise Progress Charts */}
+      {/* Section 2 - Exercise Progress Charts */}
       <div className="progress-section">
         <h2 className="progress-section-title">Exercise Progress</h2>
         <div className="progress-filters">
@@ -429,7 +429,7 @@ export default function ProgressDashboard() {
         )}
       </div>
 
-      {/* Section 3 — Activity Calendar */}
+      {/* Section 3 - Activity Calendar */}
       <div className="progress-section">
         <h2 className="progress-section-title">Activity Calendar</h2>
         <div className="progress-calendar-nav">

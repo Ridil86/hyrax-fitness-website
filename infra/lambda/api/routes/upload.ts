@@ -42,7 +42,7 @@ export async function getUploadUrl(
       );
     }
 
-    // Generate unique key — organize videos in a separate prefix
+    // Generate unique key - organize videos in a separate prefix
     const ext = body.filename.split('.').pop() || 'jpg';
     const isVideo = body.contentType.startsWith('video/');
     const prefix = isVideo ? 'uploads/videos' : 'uploads';

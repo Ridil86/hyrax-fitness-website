@@ -8,7 +8,7 @@ import { useTiers } from '../hooks/useTiers';
 import { useAuth } from '../context/AuthContext';
 import './Programs.css';
 
-// Display-level metadata per tier (keyed by name) — not editable from CMS
+// Display-level metadata per tier (keyed by name) - not editable from CMS
 const TIER_DISPLAY = {
   'Pup': { level: 'Explorer', priceSub: '' },
   'Rock Runner': { level: 'Committed', priceSub: '/ month', featured: true },
