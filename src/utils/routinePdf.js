@@ -187,7 +187,7 @@ export async function downloadRoutinePdf(workout, options = {}) {
     const tierWidth = doc.getTextWidth(tierText) + 8;
     const tierX = pageWidth - margin - tierWidth;
     doc.setFillColor(...tierColor);
-    doc.roundedRect(tierX, 19, tierWidth, 7, 3, 3, 'F');
+    doc.roundedRect(tierX, 19, tierWidth, 6, 3, 3, 'F');
     doc.setTextColor(...COLORS.white);
     doc.text(tierText, tierX + tierWidth / 2, 23, { align: 'center' });
   }
@@ -212,7 +212,7 @@ export async function downloadRoutinePdf(workout, options = {}) {
   doc.setFontSize(10);
   doc.setFont('helvetica', 'bold');
   doc.setTextColor(...COLORS.earth);
-  doc.text(titleLines[0] || title, textStart, y);
+  doc.text(titleLines[0] || title, margin, y);
   y += 6;
 
   // ── Coaching Notes ──
@@ -439,13 +439,15 @@ export async function downloadRoutinePdf(workout, options = {}) {
     const qrDataUrl = await QRCode.toDataURL(workoutUrl, { width: 200, margin: 1 });
     doc.addImage(qrDataUrl, 'PNG', margin, y, 28, 28);
 
-    doc.setFontSize(10);
     doc.setFont('helvetica', 'normal');
     doc.setTextColor(...COLORS.rock);
-    doc.text('Log your completion online:', margin + 32, y + 12);
+    doc.setFontSize(14);
+    doc.text('Track your progress and set benchmarks!', margin + 32, y + 8);
+    doc.setFontSize(10);
+    doc.text('Log your completion online:', margin + 32, y + 16);
     doc.setTextColor(...COLORS.sunset);
     doc.setFontSize(12);
-    doc.text(workoutUrl, margin + 32, y + 20);
+    doc.text(workoutUrl, margin + 32, y + 24);
   } catch {
     // QR generation failed, skip
   }
