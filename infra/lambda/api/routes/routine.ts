@@ -454,10 +454,15 @@ export async function generateDailyWorkout(
       if (existingResult.Item.status === 'generating') {
         return success({ status: 'generating', date: today });
       }
-      const isIronDassie = hasTierAccess(profile.tier || 'Pup', 'Iron Dassie');
-      const genCount = existingResult.Item.generationCount || 1;
-      if (!isIronDassie || genCount >= 3) {
-        return success(existingResult.Item);
+      // If previous attempt errored, allow regeneration
+      if (existingResult.Item.status === 'error') {
+        // Fall through to regenerate
+      } else {
+        const isIronDassie = hasTierAccess(profile.tier || 'Pup', 'Iron Dassie');
+        const genCount = existingResult.Item.generationCount || 1;
+        if (!isIronDassie || genCount >= 3) {
+          return success(existingResult.Item);
+        }
       }
     }
 
@@ -651,7 +656,7 @@ export async function generateRoutineAsync(payload: {
       ...dailyWorkout,
       status: 'ready',
       generatedAt: new Date().toISOString(),
-      modelId: 'us.anthropic.claude-sonnet-4-6',
+      modelId: 'us.anthropic.claude-haiku-4-5-20251001-v1:0',
       tokenUsage: result.usage,
       generationCount: prevGenCount + 1,
     };
@@ -847,7 +852,7 @@ export async function swapRoutineAsync(payload: {
       ...dailyWorkout,
       status: 'ready',
       generatedAt: new Date().toISOString(),
-      modelId: 'us.anthropic.claude-sonnet-4-6',
+      modelId: 'us.anthropic.claude-haiku-4-5-20251001-v1:0',
       tokenUsage: result.usage,
       swapCount,
     };

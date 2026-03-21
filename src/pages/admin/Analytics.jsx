@@ -141,13 +141,13 @@ function AIRoutineSection({ stats, tierDistribution }) {
             <div className="ai-billing-item">
               <span className="ai-billing-label">Input</span>
               <span className="ai-billing-tokens">{fmtTokens(bc.inputTokens)} tokens</span>
-              <span className="ai-billing-rate">@ $3/M</span>
+              <span className="ai-billing-rate">@ $1/M</span>
               <span className="ai-billing-cost">{fmtCost(bc.estimatedCostInput)}</span>
             </div>
             <div className="ai-billing-item">
               <span className="ai-billing-label">Output</span>
               <span className="ai-billing-tokens">{fmtTokens(bc.outputTokens)} tokens</span>
-              <span className="ai-billing-rate">@ $15/M</span>
+              <span className="ai-billing-rate">@ $5/M</span>
               <span className="ai-billing-cost">{fmtCost(bc.estimatedCostOutput)}</span>
             </div>
             <div className="ai-billing-item ai-billing-total">

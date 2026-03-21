@@ -1,7 +1,7 @@
 import { BedrockRuntimeClient, InvokeModelCommand } from '@aws-sdk/client-bedrock-runtime';
 
 const client = new BedrockRuntimeClient({ region: 'us-east-1' });
-const MODEL_ID = 'us.anthropic.claude-sonnet-4-6';
+const MODEL_ID = 'us.anthropic.claude-haiku-4-5-20251001-v1:0';
 const MAX_RETRIES = 3;
 
 interface InvokeResult {

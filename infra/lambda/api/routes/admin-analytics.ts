@@ -209,8 +209,9 @@ export async function getAnalyticsOverview(
       const genCount = routineItems.length;
 
       // Cost calculation (Sonnet 4.6: $3/M input, $15/M output)
-      const COST_PER_M_INPUT = 3;
-      const COST_PER_M_OUTPUT = 15;
+      // Haiku 4.5: $1/M input, $5/M output
+      const COST_PER_M_INPUT = 1;
+      const COST_PER_M_OUTPUT = 5;
       const billingCostInput = (billingInputTokens / 1_000_000) * COST_PER_M_INPUT;
       const billingCostOutput = (billingOutputTokens / 1_000_000) * COST_PER_M_OUTPUT;
 
