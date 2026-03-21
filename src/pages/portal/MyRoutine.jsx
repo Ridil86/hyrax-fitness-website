@@ -186,7 +186,12 @@ export default function MyRoutine() {
       const result = await swapDailyWorkout(token, {
         avoidFocus: workout?.focus || [],
       });
-      setWorkout(result);
+      if (result.status === 'generating') {
+        const final = await pollForWorkout(token);
+        setWorkout(final);
+      } else {
+        setWorkout(result);
+      }
       setCompleted(false);
       setShowLogForm(false);
       setWorkoutRating(null);
@@ -195,7 +200,7 @@ export default function MyRoutine() {
     } finally {
       setSwapping(false);
     }
-  }, [getIdToken, workout]);
+  }, [getIdToken, workout, pollForWorkout]);
 
   const toggleExercise = (idx) => {
     setExpandedExercise(expandedExercise === idx ? null : idx);

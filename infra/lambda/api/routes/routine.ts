@@ -680,6 +680,7 @@ export async function generateRoutineAsync(payload: {
 /**
  * POST /api/routine/swap - Swap today's workout for a different one
  * Rock Runner: 1 swap/day, Iron Dassie: unlimited
+ * Uses async self-invocation like generate to avoid 29s timeout.
  */
 export async function swapDailyWorkout(
   event: APIGatewayProxyEvent
@@ -707,6 +708,7 @@ export async function swapDailyWorkout(
     );
     const existing = existingResult.Item;
     if (!existing) return badRequest('No workout to swap. Generate one first.');
+    if (existing.status === 'generating') return badRequest('Workout is still generating. Please wait.');
 
     const currentSwapCount = existing.swapCount || 0;
     const isIronDassie = hasTierAccess(profile.tier || 'Pup', 'Iron Dassie');
@@ -716,35 +718,100 @@ export async function swapDailyWorkout(
 
     // Parse optional preferences from body
     const body = JSON.parse(event.body || '{}');
-    const avoidFocus = body.avoidFocus || [];
-    const preferFocus = body.preferFocus || [];
 
-    // Load catalogs + context
+    // Save generating placeholder
+    await client.send(
+      new PutCommand({
+        TableName: TABLE_NAME,
+        Item: {
+          pk: `USER#${claims.sub}`,
+          sk: `DAILY_WORKOUT#${today}`,
+          gsi1pk: 'DAILY_WORKOUT',
+          gsi1sk: `${today}#${claims.sub}`,
+          status: 'generating',
+          date: today,
+          generatedAt: new Date().toISOString(),
+          swapCount: currentSwapCount + 1,
+        },
+      })
+    );
+
+    // Fire-and-forget async swap
+    await lambdaClient.send(
+      new InvokeCommand({
+        FunctionName: SELF_FUNCTION_NAME,
+        InvocationType: 'Event',
+        Payload: new TextEncoder().encode(JSON.stringify({
+          __asyncRoutineSwap: true,
+          userSub: claims.sub,
+          userTier: profile.tier,
+          today,
+          swapCount: currentSwapCount + 1,
+          rejectedTitle: existing.title || '',
+          rejectedFocus: existing.focus || [],
+          avoidFocus: body.avoidFocus || [],
+          preferFocus: body.preferFocus || [],
+        })),
+      })
+    );
+
+    return {
+      statusCode: 202,
+      headers: {
+        'Access-Control-Allow-Origin': '*',
+        'Access-Control-Allow-Headers': 'Content-Type,Authorization,X-Amz-Date,X-Api-Key',
+        'Access-Control-Allow-Methods': 'GET,POST,PUT,DELETE,OPTIONS',
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({ status: 'generating', date: today }),
+    };
+  } catch (error) {
+    console.error('swapDailyWorkout error:', error);
+    return serverError('Failed to swap workout');
+  }
+}
+
+/**
+ * Async background handler for swap generation.
+ */
+export async function swapRoutineAsync(payload: {
+  userSub: string;
+  userTier: string;
+  today: string;
+  swapCount: number;
+  rejectedTitle: string;
+  rejectedFocus: string[];
+  avoidFocus: string[];
+  preferFocus: string[];
+}): Promise<void> {
+  const { userSub, userTier, today, swapCount, rejectedTitle, rejectedFocus, avoidFocus, preferFocus } = payload;
+
+  try {
+    const profileResult = await client.send(
+      new GetCommand({ TableName: TABLE_NAME, Key: { pk: `USER#${userSub}`, sk: 'PROFILE' } })
+    );
+    const profile = profileResult.Item;
+    if (!profile?.fitnessProfile) return;
+
     const fourteenDaysAgo = daysAgo(14);
     const [exerciseResult, workoutResult, equipmentResult, logsResult, dailyWorkoutsResult] = await Promise.all([
       client.send(new QueryCommand({ TableName: TABLE_NAME, KeyConditionExpression: 'pk = :pk', ExpressionAttributeValues: { ':pk': 'EXERCISE' } })),
       client.send(new QueryCommand({ TableName: TABLE_NAME, KeyConditionExpression: 'pk = :pk', FilterExpression: '#s = :pub', ExpressionAttributeNames: { '#s': 'status' }, ExpressionAttributeValues: { ':pk': 'WORKOUT', ':pub': 'published' } })),
       client.send(new QueryCommand({ TableName: TABLE_NAME, KeyConditionExpression: 'pk = :pk', ExpressionAttributeValues: { ':pk': 'EQUIPMENT' } })),
-      client.send(new QueryCommand({ TableName: TABLE_NAME, KeyConditionExpression: 'pk = :pk AND sk BETWEEN :from AND :to', ExpressionAttributeValues: { ':pk': `USER#${claims.sub}`, ':from': `LOG#${fourteenDaysAgo}`, ':to': `LOG#${new Date().toISOString()}~` }, ScanIndexForward: false })),
-      client.send(new QueryCommand({ TableName: TABLE_NAME, KeyConditionExpression: 'pk = :pk AND begins_with(sk, :prefix)', ExpressionAttributeValues: { ':pk': `USER#${claims.sub}`, ':prefix': 'DAILY_WORKOUT#' }, ScanIndexForward: false, Limit: 7 })),
+      client.send(new QueryCommand({ TableName: TABLE_NAME, KeyConditionExpression: 'pk = :pk AND sk BETWEEN :from AND :to', ExpressionAttributeValues: { ':pk': `USER#${userSub}`, ':from': `LOG#${fourteenDaysAgo}`, ':to': `LOG#${new Date().toISOString()}~` }, ScanIndexForward: false })),
+      client.send(new QueryCommand({ TableName: TABLE_NAME, KeyConditionExpression: 'pk = :pk AND begins_with(sk, :prefix)', ExpressionAttributeValues: { ':pk': `USER#${userSub}`, ':prefix': 'DAILY_WORKOUT#' }, ScanIndexForward: false, Limit: 7 })),
     ]);
 
     const exercises = exerciseResult.Items || [];
-    const workouts = workoutResult.Items || [];
-    const equipment = equipmentResult.Items || [];
+    const systemPrompt = buildSystemPrompt(exercises, workoutResult.Items || [], equipmentResult.Items || []);
+    let userPrompt = buildUserPrompt(profile.fitnessProfile, logsResult.Items || [], dailyWorkoutsResult.Items || [], exercises, today, userTier);
 
-    // Build prompts with swap context
-    const systemPrompt = buildSystemPrompt(exercises, workouts, equipment);
-    let userPrompt = buildUserPrompt(profile.fitnessProfile, logsResult.Items || [], dailyWorkoutsResult.Items || [], exercises, today, profile.tier);
-
-    // Add swap context
     userPrompt += `\n## SWAP REQUEST\n`;
-    userPrompt += `The user rejected this workout: "${existing.title}" (focus: ${(existing.focus || []).join(', ')})\n`;
+    userPrompt += `The user rejected this workout: "${rejectedTitle}" (focus: ${rejectedFocus.join(', ')})\n`;
     userPrompt += `Generate a DIFFERENT workout with different exercises and a different focus area.\n`;
     if (avoidFocus.length > 0) userPrompt += `Avoid focus areas: ${avoidFocus.join(', ')}\n`;
     if (preferFocus.length > 0) userPrompt += `Prefer focus areas: ${preferFocus.join(', ')}\n`;
 
-    // Call Bedrock
     const result = await invokeClaude(systemPrompt, userPrompt, { maxTokens: 4096 });
 
     let dailyWorkout: any;
@@ -757,30 +824,47 @@ export async function swapDailyWorkout(
         const parsed = JSON.parse(jsonMatch[1].trim());
         dailyWorkout = parsed.dailyWorkout || parsed;
       } else {
-        return serverError('AI returned invalid response format. Please try again.');
+        console.error('Swap: failed to parse response:', result.content.slice(0, 500));
+        await client.send(new PutCommand({
+          TableName: TABLE_NAME,
+          Item: {
+            pk: `USER#${userSub}`, sk: `DAILY_WORKOUT#${today}`,
+            gsi1pk: 'DAILY_WORKOUT', gsi1sk: `${today}#${userSub}`,
+            status: 'error', date: today, error: 'AI returned invalid format',
+            generatedAt: new Date().toISOString(), swapCount,
+          },
+        }));
+        return;
       }
     }
 
     dailyWorkout.date = today;
-
-    // Overwrite with new workout
     const item = {
-      pk: `USER#${claims.sub}`,
+      pk: `USER#${userSub}`,
       sk: `DAILY_WORKOUT#${today}`,
       gsi1pk: 'DAILY_WORKOUT',
-      gsi1sk: `${today}#${claims.sub}`,
+      gsi1sk: `${today}#${userSub}`,
       ...dailyWorkout,
+      status: 'ready',
       generatedAt: new Date().toISOString(),
-      modelId: 'us.anthropic.claude-sonnet-4-20250514',
+      modelId: 'us.anthropic.claude-sonnet-4-6',
       tokenUsage: result.usage,
-      swapCount: currentSwapCount + 1,
+      swapCount,
     };
 
     await client.send(new PutCommand({ TableName: TABLE_NAME, Item: item }));
-    return success(item);
+    console.log(`Swap completed for ${userSub} on ${today}`);
   } catch (error) {
-    console.error('swapDailyWorkout error:', error);
-    return serverError('Failed to swap workout');
+    console.error('swapRoutineAsync error:', error);
+    await client.send(new PutCommand({
+      TableName: TABLE_NAME,
+      Item: {
+        pk: `USER#${userSub}`, sk: `DAILY_WORKOUT#${today}`,
+        gsi1pk: 'DAILY_WORKOUT', gsi1sk: `${today}#${userSub}`,
+        status: 'error', date: today, error: 'Swap generation failed',
+        generatedAt: new Date().toISOString(), swapCount: payload.swapCount,
+      },
+    }));
   }
 }
 

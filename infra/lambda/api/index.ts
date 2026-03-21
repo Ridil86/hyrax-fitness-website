@@ -34,8 +34,8 @@ import {
 } from './routes/completion-log';
 import { getAnalyticsOverview, getAnalyticsTrends } from './routes/admin-analytics';
 import {
-  generateDailyWorkout, generateRoutineAsync, swapDailyWorkout, previewPrompts, getTodayWorkout,
-  listWorkoutHistory, getWorkoutByDate, getAdminUserRoutines,
+  generateDailyWorkout, generateRoutineAsync, swapDailyWorkout, swapRoutineAsync,
+  previewPrompts, getTodayWorkout, listWorkoutHistory, getWorkoutByDate, getAdminUserRoutines,
 } from './routes/routine';
 import { sendChatMessage, getChatHistory } from './routes/chat';
 import { notFound, serverError } from './utils/response';
@@ -48,6 +48,11 @@ export const handler = async (
   if (event.__asyncRoutineGeneration) {
     console.log('Async routine generation for', event.userSub);
     await generateRoutineAsync(event);
+    return { statusCode: 200, headers: {}, body: 'ok' };
+  }
+  if (event.__asyncRoutineSwap) {
+    console.log('Async routine swap for', event.userSub);
+    await swapRoutineAsync(event);
     return { statusCode: 200, headers: {}, body: 'ok' };
   }
 
