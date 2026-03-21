@@ -4,7 +4,7 @@ import { motion } from 'framer-motion';
 import { useAuth } from '../context/AuthContext';
 import { fetchWorkout } from '../api/workouts';
 import { fetchExercises } from '../api/exercises';
-import { fetchUserLogs, fetchLogStats, fetchExerciseHistory } from '../api/completionLog';
+import { fetchUserLogs, fetchExerciseHistory } from '../api/completionLog';
 import { fetchProfile } from '../api/profile';
 import { downloadWorkoutPdf } from '../utils/workoutPdf';
 import { hasTierAccess, getRequiredTierInfo } from '../utils/tiers';
@@ -449,7 +449,7 @@ export default function WorkoutDetail() {
                   &#128196; Download PDF
                 </button>
                 <p className="workout-download-hint">
-                  Get a branded, print-ready PDF of this workout.
+                  Get a print-ready PDF of this workout.
                 </p>
               </div>
 

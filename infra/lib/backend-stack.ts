@@ -77,8 +77,8 @@ export class BackendStack extends cdk.Stack {
       runtime: Runtime.NODEJS_20_X,
       entry: path.join(__dirname, '..', 'lambda', 'api', 'index.ts'),
       handler: 'handler',
-      timeout: cdk.Duration.seconds(30),
-      memorySize: 256,
+      timeout: cdk.Duration.seconds(60),
+      memorySize: 512,
       environment: {
         TABLE_NAME: table.tableName,
         BUCKET_NAME: mediaBucket.bucketName,
@@ -118,6 +118,14 @@ export class BackendStack extends cdk.Stack {
       })
     );
 
+    // Bedrock permissions for AI workout generation
+    apiFn.addToRolePolicy(
+      new iam.PolicyStatement({
+        actions: ['bedrock:InvokeModel'],
+        resources: ['arn:aws:bedrock:us-east-1::foundation-model/anthropic.*'],
+      })
+    );
+
     // ── MediaConvert Video Transcoding Pipeline ──
 
     // IAM Role that MediaConvert assumes to access S3
@@ -128,7 +136,7 @@ export class BackendStack extends cdk.Stack {
     mediaBucket.grantRead(mediaConvertRole);
     mediaBucket.grantPut(mediaConvertRole);
 
-    // Transcoder Lambda — triggered by S3 uploads and EventBridge
+    // Transcoder Lambda - triggered by S3 uploads and EventBridge
     const transcoderFn = new NodejsFunction(this, 'HyraxTranscoderFn', {
       functionName: 'hyrax-transcoder',
       runtime: Runtime.NODEJS_20_X,
@@ -171,14 +179,14 @@ export class BackendStack extends cdk.Stack {
       })
     );
 
-    // S3 Event Notification — trigger transcoding when video uploaded
+    // S3 Event Notification - trigger transcoding when video uploaded
     mediaBucket.addEventNotification(
       s3.EventType.OBJECT_CREATED,
       new s3n.LambdaDestination(transcoderFn),
       { prefix: 'uploads/videos/' }
     );
 
-    // EventBridge Rule — catch MediaConvert job completion/failure
+    // EventBridge Rule - catch MediaConvert job completion/failure
     const transcodingCompleteRule = new events.Rule(this, 'TranscodingCompleteRule', {
       description: 'Trigger Transcoder Lambda when MediaConvert job completes or fails',
       eventPattern: {
@@ -305,6 +313,12 @@ export class BackendStack extends cdk.Stack {
       authorizationType: apigateway.AuthorizationType.COGNITO,
     });
 
+    const userFitnessProfile = userItem.addResource('fitness-profile');
+    userFitnessProfile.addMethod('GET', lambdaIntegration, {
+      authorizer,
+      authorizationType: apigateway.AuthorizationType.COGNITO,
+    });
+
     // Equipment routes
     const equipmentResource = apiResource.addResource('equipment');
     equipmentResource.addMethod('GET', lambdaIntegration, {
@@ -424,6 +438,12 @@ export class BackendStack extends cdk.Stack {
 
     const logsStats = logsResource.addResource('stats');
     logsStats.addMethod('GET', lambdaIntegration, {
+      authorizer,
+      authorizationType: apigateway.AuthorizationType.COGNITO,
+    });
+
+    const logsBenchmarks = logsResource.addResource('benchmarks');
+    logsBenchmarks.addMethod('GET', lambdaIntegration, {
       authorizer,
       authorizationType: apigateway.AuthorizationType.COGNITO,
     });
@@ -616,6 +636,68 @@ export class BackendStack extends cdk.Stack {
       authorizationType: apigateway.AuthorizationType.COGNITO,
     });
 
+    // Fitness profile sub-route (authenticated)
+    const fitnessProfileResource = profileResource.addResource('fitness');
+    fitnessProfileResource.addMethod('GET', lambdaIntegration, {
+      authorizer,
+      authorizationType: apigateway.AuthorizationType.COGNITO,
+    });
+    fitnessProfileResource.addMethod('PUT', lambdaIntegration, {
+      authorizer,
+      authorizationType: apigateway.AuthorizationType.COGNITO,
+    });
+
+    // AI Routine routes (all authenticated)
+    const routineResource = apiResource.addResource('routine');
+
+    const routineGenerate = routineResource.addResource('generate');
+    routineGenerate.addMethod('POST', lambdaIntegration, {
+      authorizer,
+      authorizationType: apigateway.AuthorizationType.COGNITO,
+    });
+
+    const routineSwap = routineResource.addResource('swap');
+    routineSwap.addMethod('POST', lambdaIntegration, {
+      authorizer,
+      authorizationType: apigateway.AuthorizationType.COGNITO,
+    });
+
+    const routinePreview = routineResource.addResource('preview');
+    routinePreview.addMethod('POST', lambdaIntegration, {
+      authorizer,
+      authorizationType: apigateway.AuthorizationType.COGNITO,
+    });
+
+    const routineToday = routineResource.addResource('today');
+    routineToday.addMethod('GET', lambdaIntegration, {
+      authorizer,
+      authorizationType: apigateway.AuthorizationType.COGNITO,
+    });
+
+    const routineHistory = routineResource.addResource('history');
+    routineHistory.addMethod('GET', lambdaIntegration, {
+      authorizer,
+      authorizationType: apigateway.AuthorizationType.COGNITO,
+    });
+
+    const routineDate = routineResource.addResource('{date}');
+    routineDate.addMethod('GET', lambdaIntegration, {
+      authorizer,
+      authorizationType: apigateway.AuthorizationType.COGNITO,
+    });
+
+    // AI Chat routes (Iron Dassie only, all authenticated)
+    const chatResource = apiResource.addResource('chat');
+    chatResource.addMethod('POST', lambdaIntegration, {
+      authorizer,
+      authorizationType: apigateway.AuthorizationType.COGNITO,
+    });
+    const chatHistory = chatResource.addResource('history');
+    chatHistory.addMethod('GET', lambdaIntegration, {
+      authorizer,
+      authorizationType: apigateway.AuthorizationType.COGNITO,
+    });
+
     // Audit routes (POST is public for consent logging, GET is admin-only)
     const auditResource = apiResource.addResource('audit');
     auditResource.addMethod('POST', lambdaIntegration); // Public
@@ -690,6 +772,15 @@ export class BackendStack extends cdk.Stack {
     });
     const analyticsTrends = analyticsResource.addResource('trends');
     analyticsTrends.addMethod('GET', lambdaIntegration, {
+      authorizer,
+      authorizationType: apigateway.AuthorizationType.COGNITO,
+    });
+
+    // Admin user routines (AI routine history per user)
+    const adminUsersResource = adminResource.addResource('users');
+    const adminUserItem = adminUsersResource.addResource('{username}');
+    const adminUserRoutines = adminUserItem.addResource('routines');
+    adminUserRoutines.addMethod('GET', lambdaIntegration, {
       authorizer,
       authorizationType: apigateway.AuthorizationType.COGNITO,
     });

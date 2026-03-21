@@ -10,7 +10,7 @@ import { getUploadUrl } from './routes/upload';
 import { getUserUploadUrl } from './routes/user-upload';
 import { logAuditEvent, listAuditLogs, getAuditStats } from './routes/audit';
 import { createAccount } from './routes/signup';
-import { getProfile, createProfile, updateProfile } from './routes/profile';
+import { getProfile, createProfile, updateProfile, getFitnessProfile, updateFitnessProfile, getAdminUserFitnessProfile } from './routes/profile';
 import { listEquipment, getEquipment, createEquipment, updateEquipment, deleteEquipment } from './routes/equipment';
 import { listExercises, getExercise, createExercise, updateExercise, deleteExercise } from './routes/exercises';
 import { listWorkouts, getWorkout, createWorkout, updateWorkout, deleteWorkout } from './routes/workouts';
@@ -30,9 +30,14 @@ import {
   addMessage, assignTicket, getSupportStats,
 } from './routes/support';
 import {
-  createLog, createWorkoutLog, listUserLogs, getLogStats, getExerciseHistory, getCalendarData, deleteLog,
+  createLog, createWorkoutLog, listUserLogs, getLogStats, getExerciseHistory, getCalendarData, deleteLog, getBenchmarkHistory,
 } from './routes/completion-log';
 import { getAnalyticsOverview, getAnalyticsTrends } from './routes/admin-analytics';
+import {
+  generateDailyWorkout, swapDailyWorkout, previewPrompts, getTodayWorkout,
+  listWorkoutHistory, getWorkoutByDate, getAdminUserRoutines,
+} from './routes/routine';
+import { sendChatMessage, getChatHistory } from './routes/chat';
 import { notFound, serverError } from './utils/response';
 
 export const handler = async (
@@ -80,7 +85,13 @@ export const handler = async (
       return createAccount(event);
     }
 
-    // ── Profile Route (authenticated) ──
+    // ── Profile Routes (authenticated) ──
+    // Fitness sub-route must match BEFORE generic /api/profile
+    if (path === '/api/profile/fitness') {
+      if (method === 'GET') return getFitnessProfile(event);
+      if (method === 'PUT') return updateFitnessProfile(event);
+    }
+
     if (path === '/api/profile') {
       if (method === 'GET') return getProfile(event);
       if (method === 'POST') return createProfile(event);
@@ -90,6 +101,18 @@ export const handler = async (
     // ── Users Routes ──
     if (path === '/api/users' && method === 'GET') {
       return listUsers(event);
+    }
+
+    // /api/users/{username}/fitness-profile (admin-only)
+    const userFitnessMatch = path.match(
+      /^\/api\/users\/([^/]+)\/fitness-profile$/
+    );
+    if (userFitnessMatch && method === 'GET') {
+      event.pathParameters = {
+        ...event.pathParameters,
+        username: userFitnessMatch[1],
+      };
+      return getAdminUserFitnessProfile(event);
     }
 
     // /api/users/{username}/status
@@ -380,6 +403,9 @@ export const handler = async (
       return getLogStats(event);
     }
 
+    if (path === '/api/logs/benchmarks' && method === 'GET') {
+      return getBenchmarkHistory(event);
+    }
     if (path === '/api/logs/exercise-history' && method === 'GET') {
       return getExerciseHistory(event);
     }
@@ -397,6 +423,44 @@ export const handler = async (
     if (logMatch) {
       event.pathParameters = { ...event.pathParameters, id: logMatch[1] };
       if (method === 'DELETE') return deleteLog(event);
+    }
+
+    // ── AI Chat Routes (Iron Dassie only) ──
+    if (path === '/api/chat/history' && method === 'GET') {
+      return getChatHistory(event);
+    }
+    if (path === '/api/chat' && method === 'POST') {
+      return sendChatMessage(event);
+    }
+
+    // ── Admin User Routines (before generic routine routes) ──
+    const adminUserRoutinesMatch = path.match(/^\/api\/admin\/users\/([^/]+)\/routines$/);
+    if (adminUserRoutinesMatch && method === 'GET') {
+      event.pathParameters = { ...event.pathParameters, username: adminUserRoutinesMatch[1] };
+      return getAdminUserRoutines(event);
+    }
+
+    // ── AI Routine Routes (authenticated) ──
+    if (path === '/api/routine/generate' && method === 'POST') {
+      return generateDailyWorkout(event);
+    }
+    if (path === '/api/routine/swap' && method === 'POST') {
+      return swapDailyWorkout(event);
+    }
+    if (path === '/api/routine/preview' && method === 'POST') {
+      return previewPrompts(event);
+    }
+    if (path === '/api/routine/today' && method === 'GET') {
+      return getTodayWorkout(event);
+    }
+    if (path === '/api/routine/history' && method === 'GET') {
+      return listWorkoutHistory(event);
+    }
+
+    const routineDateMatch = path.match(/^\/api\/routine\/([^/]+)$/);
+    if (routineDateMatch) {
+      event.pathParameters = { ...event.pathParameters, date: routineDateMatch[1] };
+      if (method === 'GET') return getWorkoutByDate(event);
     }
 
     return notFound(`No route found for ${method} ${path}`);

@@ -137,3 +137,49 @@
   font-size: .88rem;
   color: var(--rock);
 }
+
+/* ── Fitness Profile Summary ── */
+
+.portal-fp-summary {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin-bottom: 16px;
+}
+
+.portal-fp-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  padding: 6px 0;
+  border-bottom: 1px solid rgba(27, 18, 10, .05);
+}
+
+.portal-fp-row:last-child {
+  border-bottom: none;
+}
+
+.portal-fp-label {
+  font-size: .82rem;
+  font-weight: 600;
+  color: var(--rock);
+  text-transform: uppercase;
+  letter-spacing: .03em;
+}
+
+.portal-fp-value {
+  font-size: .88rem;
+  color: var(--ink);
+  text-transform: capitalize;
+}
+
+.portal-fp-empty {
+  text-align: center;
+  padding: 12px 0;
+}
+
+.portal-fp-empty p {
+  margin: 0 0 14px;
+  font-size: .88rem;
+  color: var(--rock);
+}

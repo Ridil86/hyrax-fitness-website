@@ -4,6 +4,7 @@ import { useAuth } from '../../context/AuthContext';
 import { useTiers } from '../../hooks/useTiers';
 import { fetchProfile } from '../../api/profile';
 import { fetchLogStats, fetchUserLogs, fetchCalendarData } from '../../api/completionLog';
+import { fetchTodayWorkout } from '../../api/routine';
 import { hasTierAccess } from '../../utils/tiers';
 import './portal-dashboard.css';
 
@@ -76,6 +77,7 @@ export default function PortalDashboard() {
   const [activityStats, setActivityStats] = useState(null);
   const [recentLogs, setRecentLogs] = useState([]);
   const [calendarData, setCalendarData] = useState({});
+  const [todayWorkout, setTodayWorkout] = useState(null);
 
   useEffect(() => {
     let cancelled = false;
@@ -109,16 +111,18 @@ export default function PortalDashboard() {
     (async () => {
       try {
         const token = await getIdToken();
-        const [statsData, logsData, calData] = await Promise.all([
+        const [statsData, logsData, calData, todayData] = await Promise.all([
           fetchLogStats(token),
           fetchUserLogs({ limit: 3 }, token),
           fetchCalendarData(now.getFullYear(), now.getMonth() + 1, token),
+          fetchTodayWorkout(token).catch(() => null),
         ]);
         if (!cancelled) {
           setActivityStats(statsData);
           const logs = Array.isArray(logsData) ? logsData : logsData?.logs || [];
           setRecentLogs(logs.slice(0, 3));
           setCalendarData(calData || {});
+          if (todayData && !todayData.error) setTodayWorkout(todayData);
         }
       } catch (err) {
         console.error('Failed to load dashboard activity data:', err);
@@ -198,6 +202,22 @@ export default function PortalDashboard() {
         <p>Your Hyrax Fitness dashboard</p>
       </div>
 
+      {/* Onboarding: Fitness Profile Prompt */}
+      {hasActivityAccess && profile && !profile.fitnessProfile && (
+        <div className="portal-card dashboard-onboarding-banner">
+          <div style={{ display: 'flex', alignItems: 'center', gap: 14 }}>
+            <span style={{ fontSize: '1.8rem' }}>&#x1F4CB;</span>
+            <div style={{ flex: 1 }}>
+              <strong style={{ display: 'block', fontSize: '.96rem', marginBottom: 4 }}>Set Up Your Fitness Profile</strong>
+              <span style={{ fontSize: '.86rem', color: 'var(--rock)' }}>
+                Complete a quick questionnaire to unlock AI-generated personalized daily workouts.
+              </span>
+            </div>
+            <Link to="/portal/questionnaire" className="btn primary small">Get Started</Link>
+          </div>
+        </div>
+      )}
+
       {/* Profile Card */}
       <div className="portal-card">
         <div className="portal-profile-header">
@@ -244,6 +264,55 @@ export default function PortalDashboard() {
             <span>{fullName}</span>
           </div>
         </div>
+      </div>
+
+      {/* Today's AI Workout */}
+      <div className="portal-card">
+        <h3>{'\u{1F3CB}'} Today&rsquo;s Workout</h3>
+        {hasActivityAccess ? (
+          todayWorkout ? (
+            <>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 10 }}>
+                <span style={{
+                  display: 'inline-block', padding: '3px 10px', borderRadius: 10,
+                  fontSize: '.72rem', fontWeight: 700, textTransform: 'uppercase',
+                  background: todayWorkout.type === 'rest' ? 'rgba(27,18,10,.06)' : 'rgba(242,133,1,.12)',
+                  color: todayWorkout.type === 'rest' ? 'var(--rock)' : 'var(--sunset)',
+                }}>
+                  {todayWorkout.type === 'rest' ? 'Rest Day' : todayWorkout.type === 'active_recovery' ? 'Recovery' : 'Training'}
+                </span>
+                {todayWorkout.duration && (
+                  <span style={{ fontSize: '.82rem', color: 'var(--rock)' }}>{todayWorkout.duration}</span>
+                )}
+              </div>
+              <p style={{ margin: '0 0 8px', fontWeight: 600, fontSize: '.96rem' }}>{todayWorkout.title || 'Workout'}</p>
+              {todayWorkout.exercises?.length > 0 && (
+                <p style={{ margin: '0 0 12px', fontSize: '.84rem', color: 'var(--rock)' }}>
+                  {todayWorkout.exercises.length} exercises
+                  {todayWorkout.focus?.length > 0 ? ` \u00B7 ${todayWorkout.focus.map(t => t.replace(/[-_]/g, ' ')).join(', ')}` : ''}
+                </p>
+              )}
+              <Link to="/portal/routine" className="dashboard-view-more">
+                View Full Workout &rarr;
+              </Link>
+            </>
+          ) : (
+            <>
+              <p style={{ margin: '0 0 12px', fontSize: '.88rem', color: 'var(--rock)' }}>
+                No workout generated yet today. Let your AI training assistant create one for you.
+              </p>
+              <Link to="/portal/routine" className="dashboard-view-more">
+                Generate Workout &rarr;
+              </Link>
+            </>
+          )
+        ) : (
+          <div className="dashboard-locked-msg">
+            <span>{'\u{1F512}'}</span>
+            <span>AI-powered routines are available with Rock Runner and above.</span>
+            <Link to="/portal/subscription">Upgrade &rarr;</Link>
+          </div>
+        )}
       </div>
 
       {/* Activity Summary */}

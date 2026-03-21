@@ -1,0 +1,339 @@
+/* ── Fitness Questionnaire Wizard ── */
+
+.fq-loading {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+  padding: 60px 0;
+  color: var(--rock);
+}
+
+.fq-container {
+  max-width: 720px;
+  margin: 0 auto;
+}
+
+/* ── Progress Bar ── */
+.fq-progress {
+  display: flex;
+  gap: 4px;
+  margin-bottom: 24px;
+  overflow-x: auto;
+  padding-bottom: 4px;
+}
+
+.fq-progress-step {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  flex: 1;
+  min-width: 0;
+  cursor: pointer;
+  opacity: 0.4;
+  transition: opacity 0.2s;
+}
+
+.fq-progress-step.active,
+.fq-progress-step.done {
+  opacity: 1;
+}
+
+.fq-progress-dot {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.82rem;
+  font-weight: 700;
+  background: rgba(27, 18, 10, 0.06);
+  color: var(--rock);
+  transition: all 0.2s;
+  flex-shrink: 0;
+}
+
+.fq-progress-step.active .fq-progress-dot {
+  background: var(--sunset);
+  color: #fff;
+}
+
+.fq-progress-step.done .fq-progress-dot {
+  background: #065f46;
+  color: #fff;
+}
+
+.fq-progress-label {
+  font-size: 0.68rem;
+  text-align: center;
+  color: var(--rock);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 100%;
+}
+
+.fq-progress-step.active .fq-progress-label {
+  color: var(--ink);
+  font-weight: 600;
+}
+
+/* ── Main Card ── */
+.fq-card {
+  background: #fff;
+  border-radius: var(--radius);
+  box-shadow: var(--shadow-soft);
+  padding: 32px;
+  margin-bottom: 24px;
+}
+
+.fq-step-header {
+  margin-bottom: 28px;
+}
+
+.fq-step-header h2 {
+  font-size: 1.2rem;
+  margin: 0 0 4px;
+  color: var(--ink);
+}
+
+.fq-step-header p {
+  margin: 0;
+  font-size: 0.88rem;
+  color: var(--rock);
+}
+
+/* ── Fields ── */
+.fq-field {
+  margin-bottom: 24px;
+}
+
+.fq-field > label {
+  display: block;
+  font-size: 0.84rem;
+  font-weight: 600;
+  color: var(--ink);
+  margin-bottom: 10px;
+}
+
+.fq-hint {
+  font-weight: 400;
+  color: var(--rock);
+  font-size: 0.8rem;
+}
+
+/* ── Option Cards (single select with description) ── */
+.fq-option-cards {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+  gap: 10px;
+}
+
+.fq-option-card {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 4px;
+  padding: 14px 16px;
+  border: 2px solid rgba(27, 18, 10, 0.08);
+  border-radius: 12px;
+  background: #fff;
+  cursor: pointer;
+  transition: all 0.15s;
+  text-align: left;
+  font: inherit;
+}
+
+.fq-option-card:hover {
+  border-color: var(--sunset);
+  background: rgba(242, 133, 1, 0.03);
+}
+
+.fq-option-card.selected {
+  border-color: var(--sunset);
+  background: rgba(242, 133, 1, 0.06);
+}
+
+.fq-option-card strong {
+  font-size: 0.9rem;
+  color: var(--ink);
+}
+
+.fq-option-card span {
+  font-size: 0.78rem;
+  color: var(--rock);
+  line-height: 1.3;
+}
+
+/* ── Chips (multi or single select, no description) ── */
+.fq-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.fq-chip {
+  padding: 8px 16px;
+  border: 2px solid rgba(27, 18, 10, 0.08);
+  border-radius: 20px;
+  background: #fff;
+  font: inherit;
+  font-size: 0.86rem;
+  cursor: pointer;
+  transition: all 0.15s;
+  color: var(--ink);
+}
+
+.fq-chip:hover {
+  border-color: var(--sunset);
+}
+
+.fq-chip.selected {
+  border-color: var(--sunset);
+  background: var(--sunset);
+  color: #fff;
+}
+
+/* ── Equipment Grid ── */
+.fq-equipment-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+  gap: 8px;
+}
+
+.fq-equipment-item {
+  padding: 10px 14px;
+  border: 2px solid rgba(27, 18, 10, 0.08);
+  border-radius: 10px;
+  background: #fff;
+  font: inherit;
+  font-size: 0.84rem;
+  cursor: pointer;
+  transition: all 0.15s;
+  text-align: center;
+  color: var(--ink);
+}
+
+.fq-equipment-item:hover {
+  border-color: var(--sunset);
+}
+
+.fq-equipment-item.selected {
+  border-color: var(--sunset);
+  background: rgba(242, 133, 1, 0.08);
+  font-weight: 600;
+}
+
+/* ── Slider ── */
+.fq-days-slider {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
+.fq-days-slider input[type='range'] {
+  flex: 1;
+  accent-color: var(--sunset);
+  height: 6px;
+}
+
+.fq-days-value {
+  font-size: 1rem;
+  font-weight: 700;
+  color: var(--sunset);
+  white-space: nowrap;
+  min-width: 90px;
+  text-align: center;
+}
+
+/* ── Input & Textarea ── */
+.fq-input {
+  display: block;
+  width: 100%;
+  padding: 10px 14px;
+  border: 1px solid rgba(27, 18, 10, 0.12);
+  border-radius: 10px;
+  font: inherit;
+  font-size: 0.92rem;
+  background: #fff;
+}
+
+.fq-input:focus,
+.fq-textarea:focus {
+  outline: none;
+  border-color: var(--sunset);
+  box-shadow: var(--ring);
+}
+
+.fq-input-short {
+  max-width: 120px;
+}
+
+.fq-textarea {
+  display: block;
+  width: 100%;
+  padding: 10px 14px;
+  border: 1px solid rgba(27, 18, 10, 0.12);
+  border-radius: 10px;
+  font: inherit;
+  font-size: 0.92rem;
+  background: #fff;
+  resize: vertical;
+  min-height: 60px;
+}
+
+/* ── Checkbox Label ── */
+.fq-checkbox-label {
+  display: flex !important;
+  align-items: center;
+  gap: 10px;
+  font-weight: 400 !important;
+  cursor: pointer;
+}
+
+.fq-checkbox-label input[type='checkbox'] {
+  accent-color: var(--sunset);
+  width: 18px;
+  height: 18px;
+  flex-shrink: 0;
+}
+
+/* ── Navigation ── */
+.fq-nav {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-top: 28px;
+  padding-top: 20px;
+  border-top: 1px solid rgba(27, 18, 10, 0.06);
+}
+
+.fq-nav-right {
+  margin-left: auto;
+}
+
+/* ── Responsive ── */
+@media (max-width: 600px) {
+  .fq-card {
+    padding: 20px 16px;
+  }
+
+  .fq-option-cards {
+    grid-template-columns: 1fr;
+  }
+
+  .fq-equipment-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  .fq-progress-label {
+    display: none;
+  }
+
+  .fq-progress {
+    justify-content: center;
+    gap: 12px;
+  }
+}

@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { useParams, useLocation, Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import { fetchUsers, fetchUserGroups, updateUserGroups, deleteUser, freezeUser } from '../../api/users';
+import { apiGet } from '../../api/client';
 import './admin.css';
 import './users-admin.css';
 import './user-profile.css';
@@ -22,6 +23,8 @@ export default function UserProfile() {
   const [deleting, setDeleting] = useState(false);
   const [confirmDelete, setConfirmDelete] = useState(false);
   const [actionError, setActionError] = useState(null);
+  const [fitnessProfile, setFitnessProfile] = useState(null);
+  const [routines, setRoutines] = useState([]);
 
   const decodedUsername = decodeURIComponent(username);
 
@@ -78,6 +81,30 @@ export default function UserProfile() {
     loadGroups();
     return () => { cancelled = true; };
   }, [decodedUsername, getIdToken, user]);
+
+  // Load fitness profile + AI routines
+  useEffect(() => {
+    let cancelled = false;
+
+    async function loadExtras() {
+      try {
+        const token = await getIdToken();
+        const [fpData, routineData] = await Promise.all([
+          apiGet(`/api/users/${encodeURIComponent(decodedUsername)}/fitness-profile`, token).catch(() => null),
+          apiGet(`/api/admin/users/${encodeURIComponent(decodedUsername)}/routines`, token).catch(() => null),
+        ]);
+        if (!cancelled) {
+          if (fpData?.fitnessProfile) setFitnessProfile(fpData.fitnessProfile);
+          if (routineData?.routines) setRoutines(routineData.routines);
+        }
+      } catch {
+        // best-effort
+      }
+    }
+
+    loadExtras();
+    return () => { cancelled = true; };
+  }, [decodedUsername, getIdToken]);
 
   const handleFreeze = async () => {
     setFreezing(true);
@@ -225,6 +252,84 @@ export default function UserProfile() {
             <span>{formatDate(user.lastModified)}</span>
           </div>
         </div>
+
+        {fitnessProfile && (
+          <div className="profile-groups-section">
+            <h3>Fitness Profile</h3>
+            <div className="profile-details" style={{ marginTop: 0 }}>
+              <div className="profile-field">
+                <label>Experience</label>
+                <span style={{ textTransform: 'capitalize' }}>{fitnessProfile.experienceLevel || '--'}</span>
+              </div>
+              <div className="profile-field">
+                <label>Goals</label>
+                <span>{(fitnessProfile.fitnessGoals || []).map(g => g.replace(/_/g, ' ')).join(', ') || '--'}</span>
+              </div>
+              <div className="profile-field">
+                <label>Schedule</label>
+                <span>{fitnessProfile.daysPerWeek ? `${fitnessProfile.daysPerWeek} days/week, ${fitnessProfile.preferredDuration || '?'} min` : '--'}</span>
+              </div>
+              <div className="profile-field">
+                <label>Environment</label>
+                <span>{(fitnessProfile.trainingEnvironment || []).join(', ') || '--'}</span>
+              </div>
+              <div className="profile-field">
+                <label>Equipment</label>
+                <span>{(fitnessProfile.availableEquipment || []).join(', ') || 'None'}</span>
+              </div>
+              <div className="profile-field">
+                <label>Intensity</label>
+                <span style={{ textTransform: 'capitalize' }}>{(fitnessProfile.preferredIntensity || '--').replace(/_/g, ' ')}</span>
+              </div>
+              <div className="profile-field">
+                <label>Limitations</label>
+                <span>{(fitnessProfile.limitations || []).map(l => l.replace(/_/g, ' ')).join(', ') || 'None'}</span>
+              </div>
+              {fitnessProfile.injuries && (
+                <div className="profile-field">
+                  <label>Injuries</label>
+                  <span>{fitnessProfile.injuries}</span>
+                </div>
+              )}
+              {fitnessProfile.location?.region && (
+                <div className="profile-field">
+                  <label>Location</label>
+                  <span>{fitnessProfile.location.region}{fitnessProfile.location.climate ? ` (${fitnessProfile.location.climate.replace(/_/g, ' ')})` : ''}</span>
+                </div>
+              )}
+            </div>
+          </div>
+        )}
+
+        {routines.length > 0 && (
+          <div className="profile-groups-section">
+            <h3>AI Routines ({routines.length})</h3>
+            <table className="profile-routines-table" style={{ width: '100%', borderCollapse: 'collapse', fontSize: '.84rem' }}>
+              <thead>
+                <tr style={{ borderBottom: '1px solid rgba(27,18,10,.1)', textAlign: 'left' }}>
+                  <th style={{ padding: '6px 8px', color: 'var(--rock)', fontWeight: 600, fontSize: '.76rem', textTransform: 'uppercase' }}>Date</th>
+                  <th style={{ padding: '6px 8px', color: 'var(--rock)', fontWeight: 600, fontSize: '.76rem', textTransform: 'uppercase' }}>Title</th>
+                  <th style={{ padding: '6px 8px', color: 'var(--rock)', fontWeight: 600, fontSize: '.76rem', textTransform: 'uppercase' }}>Type</th>
+                  <th style={{ padding: '6px 8px', color: 'var(--rock)', fontWeight: 600, fontSize: '.76rem', textTransform: 'uppercase' }}>Duration</th>
+                  <th style={{ padding: '6px 8px', color: 'var(--rock)', fontWeight: 600, fontSize: '.76rem', textTransform: 'uppercase' }}>Tokens</th>
+                </tr>
+              </thead>
+              <tbody>
+                {routines.map((r, i) => (
+                  <tr key={r.date || i} style={{ borderBottom: '1px solid rgba(27,18,10,.05)' }}>
+                    <td style={{ padding: '8px' }}>{r.date}</td>
+                    <td style={{ padding: '8px', fontWeight: 500 }}>{r.title || '--'}</td>
+                    <td style={{ padding: '8px', textTransform: 'capitalize' }}>{(r.type || '').replace(/_/g, ' ')}</td>
+                    <td style={{ padding: '8px' }}>{r.duration || '--'}</td>
+                    <td style={{ padding: '8px', color: 'var(--rock)' }}>
+                      {r.tokenUsage ? `${((r.tokenUsage.inputTokens || 0) + (r.tokenUsage.outputTokens || 0)).toLocaleString()}` : '--'}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )}
 
         <div className="profile-groups-section">
           <h3>Group Membership</h3>

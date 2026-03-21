@@ -59,7 +59,7 @@ export default function Analytics() {
     return (overview.thisMonthTotal / overview.totalUsers).toFixed(1);
   }, [overview]);
 
-  // Line chart — daily activity
+  // Line chart - daily activity
   const dailyChartData = useMemo(() => {
     const dailyStats = overview?.dailyStats || [];
     return {
@@ -100,7 +100,7 @@ export default function Analytics() {
     },
   }), []);
 
-  // Doughnut chart — tier distribution
+  // Doughnut chart - tier distribution
   const tierChartData = useMemo(() => {
     const dist = overview?.tierDistribution || {};
     const labels = [];
@@ -140,7 +140,7 @@ export default function Analytics() {
     },
   }), []);
 
-  // Bar chart — monthly trends
+  // Bar chart - monthly trends
   const trendsChartData = useMemo(() => ({
     labels: trends.map((t) => formatMonthLabel(t.month)),
     datasets: [
@@ -200,7 +200,7 @@ export default function Analytics() {
         <p>Platform activity and engagement metrics</p>
       </div>
 
-      {/* Section 1 — Overview Stats */}
+      {/* Section 1 - Overview Stats */}
       <div className="admin-stats">
         <div className="admin-stat-card">
           <div className="stat-label">All-Time Completions</div>
@@ -224,15 +224,40 @@ export default function Analytics() {
         </div>
       </div>
 
-      {/* Section 2 — Daily Activity Trend */}
+      {/* AI Routine Generation Stats */}
+      {overview?.routineStats && (
+        <div className="analytics-chart-card" style={{ marginBottom: 20 }}>
+          <h2 className="analytics-chart-title">AI Routine Generation</h2>
+          <div className="admin-stats" style={{ marginBottom: 0 }}>
+            <div className="admin-stat-card">
+              <div className="stat-label">This Month</div>
+              <div className="stat-value">{overview.routineStats.thisMonthTotal}</div>
+            </div>
+            <div className="admin-stat-card">
+              <div className="stat-label">This Week</div>
+              <div className="stat-value">{overview.routineStats.thisWeekTotal}</div>
+            </div>
+            <div className="admin-stat-card">
+              <div className="stat-label">Total Tokens</div>
+              <div className="stat-value">{(overview.routineStats.totalTokensUsed || 0).toLocaleString()}</div>
+            </div>
+            <div className="admin-stat-card">
+              <div className="stat-label">Avg Tokens/Gen</div>
+              <div className="stat-value">{(overview.routineStats.avgTokensPerGeneration || 0).toLocaleString()}</div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Section 2 - Daily Activity Trend */}
       <div className="analytics-chart-card">
-        <h2 className="analytics-chart-title">Daily Activity &mdash; Last 30 Days</h2>
+        <h2 className="analytics-chart-title">Daily Activity - Last 30 Days</h2>
         <div className="analytics-chart-wrap">
           <Line data={dailyChartData} options={dailyChartOptions} />
         </div>
       </div>
 
-      {/* Section 3 — Popular Content */}
+      {/* Section 3 - Popular Content */}
       <div className="analytics-charts">
         <div className="analytics-chart-card">
           <h2 className="analytics-chart-title">Top Exercises This Month</h2>
@@ -289,7 +314,7 @@ export default function Analytics() {
         </div>
       </div>
 
-      {/* Section 4 — User Engagement */}
+      {/* Section 4 - User Engagement */}
       <div className="analytics-charts">
         <div className="analytics-chart-card">
           <h2 className="analytics-chart-title">Subscription Distribution</h2>
@@ -299,7 +324,7 @@ export default function Analytics() {
         </div>
 
         <div className="analytics-chart-card">
-          <h2 className="analytics-chart-title">Monthly Trends &mdash; Last 12 Months</h2>
+          <h2 className="analytics-chart-title">Monthly Trends - Last 12 Months</h2>
           <div className="analytics-chart-wrap">
             <Bar data={trendsChartData} options={trendsChartOptions} />
           </div>

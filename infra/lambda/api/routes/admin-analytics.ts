@@ -143,6 +143,43 @@ export async function getAnalyticsOverview(
       tierDist[tier] = (tierDist[tier] || 0) + 1;
     });
 
+    // Routine generation stats (query GSI1 for DAILY_WORKOUT records this month)
+    let routineStats = { thisMonthTotal: 0, thisWeekTotal: 0, totalTokensUsed: 0, avgTokensPerGeneration: 0 };
+    try {
+      const routineResult = await client.send(
+        new QueryCommand({
+          TableName: TABLE_NAME,
+          IndexName: 'GSI1',
+          KeyConditionExpression: 'gsi1pk = :pk AND gsi1sk >= :from',
+          ExpressionAttributeValues: {
+            ':pk': 'DAILY_WORKOUT',
+            ':from': `${thirtyDaysAgo}`,
+          },
+        })
+      );
+      const routineItems = routineResult.Items || [];
+      const monthStart = thisMonth;
+      const monthRoutines = routineItems.filter((r: any) => (r.date || '').startsWith(monthStart));
+      const weekRoutines = routineItems.filter((r: any) => (r.date || '') >= weekAgo);
+
+      let totalTokens = 0;
+      for (const r of routineItems) {
+        const usage = r.tokenUsage;
+        if (usage) {
+          totalTokens += (usage.inputTokens || 0) + (usage.outputTokens || 0);
+        }
+      }
+
+      routineStats = {
+        thisMonthTotal: monthRoutines.length,
+        thisWeekTotal: weekRoutines.length,
+        totalTokensUsed: totalTokens,
+        avgTokensPerGeneration: routineItems.length > 0 ? Math.round(totalTokens / routineItems.length) : 0,
+      };
+    } catch (err) {
+      console.error('Failed to fetch routine stats:', err);
+    }
+
     return success({
       allTimeTotal,
       thisMonthTotal,
@@ -152,6 +189,7 @@ export async function getAnalyticsOverview(
       topWorkouts: workoutStats,
       tierDistribution: tierDist,
       totalUsers: Object.values(tierDist).reduce((s, n) => s + n, 0),
+      routineStats,
     });
   } catch (error) {
     console.error('getAnalyticsOverview error:', error);

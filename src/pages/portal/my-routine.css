@@ -1,0 +1,580 @@
+/* ── My Routine ── */
+
+.routine-loading {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+  padding: 60px 0;
+  color: var(--rock);
+}
+
+/* ── Gate / CTA Screens ── */
+.routine-gate,
+.routine-generate-cta {
+  background: #fff;
+  border-radius: var(--radius);
+  box-shadow: var(--shadow-soft);
+  padding: 48px 32px;
+  text-align: center;
+  max-width: 520px;
+  margin: 0 auto;
+}
+
+.routine-gate-icon {
+  font-size: 2.4rem;
+  margin-bottom: 12px;
+}
+
+.routine-gate h2,
+.routine-generate-cta h2 {
+  font-size: 1.2rem;
+  margin: 0 0 10px;
+  color: var(--ink);
+}
+
+.routine-gate p,
+.routine-generate-cta p {
+  font-size: 0.9rem;
+  color: var(--rock);
+  margin: 0 0 20px;
+  line-height: 1.5;
+}
+
+.routine-error {
+  background: #fef2f2;
+  border: 1px solid #fecaca;
+  color: #991b1b;
+  padding: 10px 16px;
+  border-radius: 10px;
+  font-size: 0.86rem;
+  margin-bottom: 16px;
+}
+
+.routine-profile-summary {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px 20px;
+  justify-content: center;
+  margin: 20px 0 12px;
+  font-size: 0.86rem;
+  color: var(--ink);
+  text-transform: capitalize;
+}
+
+.routine-profile-summary strong {
+  color: var(--rock);
+  font-size: 0.78rem;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+}
+
+.routine-edit-link {
+  display: inline-block;
+  margin-top: 8px;
+  font-size: 0.84rem;
+  color: var(--rock);
+}
+
+/* ── Workout Cards ── */
+.routine-card {
+  background: #fff;
+  border-radius: var(--radius);
+  box-shadow: var(--shadow-soft);
+  padding: 24px 28px;
+  margin-bottom: 16px;
+}
+
+.routine-card h3 {
+  font-size: 1rem;
+  margin: 0 0 14px;
+  color: var(--ink);
+}
+
+/* ── Header Card ── */
+.routine-header-card {
+  border-left: 4px solid var(--sunset);
+}
+
+.routine-header-top {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 16px;
+  flex-wrap: wrap;
+}
+
+.routine-type-badge {
+  display: inline-block;
+  padding: 3px 12px;
+  border-radius: 12px;
+  font-size: 0.72rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  margin-bottom: 6px;
+}
+
+.routine-type-badge.training {
+  background: rgba(242, 133, 1, 0.12);
+  color: var(--sunset);
+}
+
+.routine-type-badge.rest {
+  background: rgba(27, 18, 10, 0.06);
+  color: var(--rock);
+}
+
+.routine-type-badge.active_recovery {
+  background: rgba(6, 95, 70, 0.1);
+  color: #065f46;
+}
+
+.routine-title {
+  font-size: 1.3rem;
+  margin: 0;
+  color: var(--ink);
+}
+
+.routine-meta {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  align-items: flex-end;
+}
+
+.routine-meta-item {
+  font-size: 0.84rem;
+  color: var(--rock);
+  white-space: nowrap;
+  text-transform: capitalize;
+}
+
+.routine-coaching {
+  margin: 14px 0 0;
+  font-size: 0.88rem;
+  color: var(--rock);
+  line-height: 1.5;
+  font-style: italic;
+}
+
+/* ── Section Cards (warm-up, bask) ── */
+.routine-section-card h3 {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.routine-section-duration {
+  font-weight: 400;
+  font-size: 0.84rem;
+  color: var(--rock);
+}
+
+.routine-section-desc {
+  margin: 0;
+  font-size: 0.9rem;
+  color: var(--ink);
+  line-height: 1.6;
+}
+
+/* ── Exercise List ── */
+.routine-exercise-list {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.routine-exercise {
+  border: 1px solid rgba(27, 18, 10, 0.06);
+  border-radius: 12px;
+  overflow: hidden;
+  transition: border-color 0.15s;
+}
+
+.routine-exercise.expanded {
+  border-color: rgba(242, 133, 1, 0.25);
+}
+
+.routine-exercise-header {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 14px 16px;
+  background: none;
+  border: none;
+  width: 100%;
+  cursor: pointer;
+  font: inherit;
+  text-align: left;
+  transition: background 0.1s;
+}
+
+.routine-exercise-header:hover {
+  background: rgba(27, 18, 10, 0.02);
+}
+
+.routine-exercise-num {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  background: var(--sunset);
+  color: #fff;
+  font-size: 0.78rem;
+  font-weight: 700;
+  flex-shrink: 0;
+}
+
+.routine-exercise-info {
+  flex: 1;
+  min-width: 0;
+}
+
+.routine-exercise-name {
+  display: block;
+  font-weight: 600;
+  font-size: 0.92rem;
+  color: var(--ink);
+}
+
+.routine-exercise-prescription {
+  display: block;
+  font-size: 0.82rem;
+  color: var(--rock);
+  margin-top: 2px;
+}
+
+.routine-exercise-chevron {
+  font-size: 0.7rem;
+  color: var(--rock);
+  flex-shrink: 0;
+}
+
+/* ── Exercise Details (expanded) ── */
+.routine-exercise-details {
+  padding: 0 16px 16px;
+  border-top: 1px solid rgba(27, 18, 10, 0.06);
+}
+
+.routine-exercise-mod {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 12px;
+}
+
+.routine-mod-level {
+  display: inline-block;
+  padding: 2px 8px;
+  border-radius: 8px;
+  font-size: 0.72rem;
+  font-weight: 600;
+  text-transform: capitalize;
+  background: rgba(242, 133, 1, 0.1);
+  color: var(--sunset);
+}
+
+.routine-mod-name {
+  font-size: 0.88rem;
+  font-weight: 600;
+  color: var(--ink);
+}
+
+.routine-mod-desc {
+  margin: 8px 0 0;
+  font-size: 0.86rem;
+  color: var(--rock);
+  line-height: 1.5;
+}
+
+.routine-equipment {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-top: 10px;
+}
+
+.routine-equipment-tag {
+  display: inline-block;
+  padding: 3px 10px;
+  border-radius: 8px;
+  font-size: 0.76rem;
+  background: rgba(27, 18, 10, 0.05);
+  color: var(--rock);
+}
+
+.routine-exercise-notes {
+  margin: 10px 0 0;
+  font-size: 0.84rem;
+  color: var(--earth);
+  font-style: italic;
+  line-height: 1.4;
+}
+
+/* ── Insights Card ── */
+.routine-insights-card {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.routine-insight strong {
+  display: block;
+  font-size: 0.84rem;
+  color: var(--ink);
+  margin-bottom: 4px;
+}
+
+.routine-insight p {
+  margin: 0;
+  font-size: 0.86rem;
+  color: var(--rock);
+  line-height: 1.5;
+}
+
+/* ── Logged Badge ── */
+.routine-logged-badge {
+  display: inline-block;
+  margin-top: 10px;
+  padding: 4px 14px;
+  border-radius: 10px;
+  font-size: 0.8rem;
+  font-weight: 700;
+  background: #ecfdf5;
+  color: #065f46;
+  border: 1px solid #a7f3d0;
+}
+
+/* ── Log Form ── */
+.routine-log-msg {
+  padding: 10px 16px;
+  border-radius: 10px;
+  font-size: 0.86rem;
+  text-align: center;
+  margin-bottom: 16px;
+}
+
+.routine-log-msg.success {
+  background: #ecfdf5;
+  border: 1px solid #a7f3d0;
+  color: #065f46;
+}
+
+.routine-log-msg.error {
+  background: #fef2f2;
+  border: 1px solid #fecaca;
+  color: #991b1b;
+}
+
+.routine-log-form h3 {
+  margin-bottom: 6px;
+}
+
+.routine-log-hint {
+  margin: 0 0 16px;
+  font-size: 0.84rem;
+  color: var(--rock);
+}
+
+.routine-log-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-bottom: 16px;
+}
+
+.routine-log-item {
+  padding: 10px 14px;
+  border: 1px solid rgba(27, 18, 10, 0.08);
+  border-radius: 10px;
+  transition: opacity 0.15s;
+}
+
+.routine-log-item.skipped {
+  opacity: 0.45;
+}
+
+.routine-log-check {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: var(--ink);
+  cursor: pointer;
+}
+
+.routine-log-check input[type='checkbox'] {
+  accent-color: var(--sunset);
+  width: 18px;
+  height: 18px;
+}
+
+.routine-log-fields {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-top: 8px;
+  padding-left: 28px;
+}
+
+.routine-log-input {
+  width: 60px;
+  padding: 5px 8px;
+  border: 1px solid rgba(27, 18, 10, 0.12);
+  border-radius: 6px;
+  font: inherit;
+  font-size: 0.84rem;
+  text-align: center;
+}
+
+.routine-log-input:focus {
+  outline: none;
+  border-color: var(--sunset);
+}
+
+.routine-log-rpe {
+  width: 50px;
+  margin-left: 8px;
+}
+
+.routine-log-x {
+  font-size: 0.82rem;
+  color: var(--rock);
+}
+
+/* ── Rating ── */
+.routine-rating-section {
+  margin-bottom: 16px;
+  padding-top: 12px;
+  border-top: 1px solid rgba(27, 18, 10, 0.06);
+}
+
+.routine-rating-section > label {
+  display: block;
+  font-size: 0.88rem;
+  font-weight: 600;
+  color: var(--ink);
+  margin-bottom: 10px;
+}
+
+.routine-rating-buttons {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 4px;
+}
+
+.routine-rating-btn {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  border: 2px solid rgba(27, 18, 10, 0.1);
+  background: #fff;
+  font: inherit;
+  font-size: 0.92rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.15s;
+  color: var(--ink);
+}
+
+.routine-rating-btn:hover {
+  border-color: var(--sunset);
+}
+
+.routine-rating-btn.selected {
+  border-color: var(--sunset);
+  background: var(--sunset);
+  color: #fff;
+}
+
+.routine-rating-labels {
+  display: flex;
+  justify-content: space-between;
+  font-size: 0.72rem;
+  color: var(--rock);
+  padding: 0 4px;
+}
+
+.routine-log-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+  padding-top: 12px;
+  border-top: 1px solid rgba(27, 18, 10, 0.06);
+}
+
+/* ── Header Actions (logged badge + PDF) ── */
+.routine-header-actions {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-top: 12px;
+}
+
+.routine-pdf-btn {
+  font-size: 0.78rem;
+  padding: 4px 12px;
+}
+
+/* ── Swap Button ── */
+.routine-swap-btn {
+  color: var(--rock);
+  border-color: rgba(27, 18, 10, 0.12);
+  font-size: 0.86rem;
+}
+
+.routine-swap-btn:hover {
+  color: var(--sunset);
+  border-color: var(--sunset);
+}
+
+/* ── Footer Links ── */
+.routine-footer {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 8px 0;
+  margin-top: 4px;
+}
+
+.routine-footer-link {
+  font-size: 0.86rem;
+  color: var(--sunset);
+  font-weight: 500;
+}
+
+.routine-footer-link:hover {
+  text-decoration: underline;
+}
+
+/* ── Responsive ── */
+@media (max-width: 600px) {
+  .routine-card {
+    padding: 18px 16px;
+  }
+
+  .routine-header-top {
+    flex-direction: column;
+  }
+
+  .routine-meta {
+    align-items: flex-start;
+    flex-direction: row;
+    gap: 12px;
+  }
+
+  .routine-gate,
+  .routine-generate-cta {
+    padding: 32px 20px;
+  }
+
+  .routine-footer {
+    flex-direction: column;
+    gap: 10px;
+    align-items: flex-start;
+  }
+}

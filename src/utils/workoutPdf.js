@@ -56,7 +56,7 @@ const COLORS = {
 };
 
 /**
- * Generate a branded Hyrax Fitness PDF for a workout.
+ * Generate a print-ready Hyrax Fitness PDF for a workout.
  * @param {Object} workout - The workout data object
  * @param {Object} options - Generation options
  * @param {string} options.logoBase64 - Pre-loaded logo
@@ -321,7 +321,7 @@ export function generateWorkoutPdf(workout, options = {}) {
         : (exercise.exerciseName || full?.name || `Exercise ${index + 1}`);
 
       // Check for exercise image
-      const modImageUrl = mod?.imageUrl || full?.imageUrl;
+      const _modImageUrl = mod?.imageUrl || full?.imageUrl;
       const imageB64 = exercise.exerciseId ? imageCache[exercise.exerciseId] : null;
       const hasImage = !!imageB64;
       const imgW = 25;
@@ -501,7 +501,7 @@ export function generateWorkoutPdf(workout, options = {}) {
   const textAreaWidth = qrDataUrl ? contentWidth - qrSize - 10 : contentWidth;
 
   doc.setFont('helvetica', 'normal');
-  doc.setFontSize(15);
+  doc.setFontSize(10);
   doc.setTextColor(...COLORS.rock);
   const qrHeadingLines = doc.splitTextToSize(
     'Log your completion online at the URL below or scan this QR code:',

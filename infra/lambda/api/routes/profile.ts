@@ -1,8 +1,8 @@
 import { DynamoDBClient } from '@aws-sdk/client-dynamodb';
 import { DynamoDBDocumentClient, GetCommand, PutCommand, UpdateCommand } from '@aws-sdk/lib-dynamodb';
 import type { APIGatewayProxyEvent, APIGatewayProxyResult } from 'aws-lambda';
-import { success, created, badRequest, forbidden, serverError } from '../utils/response';
-import { extractClaims } from '../utils/auth';
+import { success, created, badRequest, forbidden, notFound, serverError } from '../utils/response';
+import { extractClaims, isAdmin } from '../utils/auth';
 import { randomUUID } from 'crypto';
 
 const client = DynamoDBDocumentClient.from(new DynamoDBClient({}));
@@ -240,5 +240,138 @@ export async function updateProfile(
   } catch (error) {
     console.error('updateProfile error:', error);
     return serverError('Failed to update profile');
+  }
+}
+
+/**
+ * GET /api/profile/fitness - Get the current user's fitness profile (AUTHENTICATED)
+ */
+export async function getFitnessProfile(
+  event: APIGatewayProxyEvent
+): Promise<APIGatewayProxyResult> {
+  const claims = extractClaims(event);
+  if (!claims?.sub) {
+    return forbidden('Authentication required');
+  }
+
+  try {
+    const result = await client.send(
+      new GetCommand({
+        TableName: TABLE_NAME,
+        Key: {
+          pk: `USER#${claims.sub}`,
+          sk: 'PROFILE',
+        },
+        ProjectionExpression: 'fitnessProfile, fitnessProfileCompletedAt',
+      })
+    );
+
+    return success({
+      fitnessProfile: result.Item?.fitnessProfile || null,
+      fitnessProfileCompletedAt: result.Item?.fitnessProfileCompletedAt || null,
+    });
+  } catch (error) {
+    console.error('getFitnessProfile error:', error);
+    return serverError('Failed to fetch fitness profile');
+  }
+}
+
+/**
+ * PUT /api/profile/fitness - Save/update the current user's fitness profile (AUTHENTICATED)
+ */
+export async function updateFitnessProfile(
+  event: APIGatewayProxyEvent
+): Promise<APIGatewayProxyResult> {
+  const claims = extractClaims(event);
+  if (!claims?.sub) {
+    return forbidden('Authentication required');
+  }
+
+  try {
+    const body = JSON.parse(event.body || '{}');
+    const { fitnessProfile } = body;
+
+    if (!fitnessProfile || typeof fitnessProfile !== 'object') {
+      return badRequest('fitnessProfile object is required');
+    }
+
+    // Validate required fields
+    const validExperienceLevels = ['beginner', 'intermediate', 'advanced', 'elite'];
+    if (fitnessProfile.experienceLevel && !validExperienceLevels.includes(fitnessProfile.experienceLevel)) {
+      return badRequest('Invalid experience level');
+    }
+
+    const now = new Date().toISOString();
+
+    const result = await client.send(
+      new UpdateCommand({
+        TableName: TABLE_NAME,
+        Key: {
+          pk: `USER#${claims.sub}`,
+          sk: 'PROFILE',
+        },
+        UpdateExpression: 'SET #fp = :fp, #fpca = :fpca, #ua = :ua',
+        ExpressionAttributeNames: {
+          '#fp': 'fitnessProfile',
+          '#fpca': 'fitnessProfileCompletedAt',
+          '#ua': 'updatedAt',
+        },
+        ExpressionAttributeValues: {
+          ':fp': fitnessProfile,
+          ':fpca': now,
+          ':ua': now,
+        },
+        ReturnValues: 'ALL_NEW',
+      })
+    );
+
+    return success({
+      fitnessProfile: result.Attributes?.fitnessProfile,
+      fitnessProfileCompletedAt: result.Attributes?.fitnessProfileCompletedAt,
+    });
+  } catch (error) {
+    console.error('updateFitnessProfile error:', error);
+    return serverError('Failed to update fitness profile');
+  }
+}
+
+/**
+ * GET /api/users/{username}/fitness-profile - Admin-only: get a user's fitness profile
+ */
+export async function getAdminUserFitnessProfile(
+  event: APIGatewayProxyEvent
+): Promise<APIGatewayProxyResult> {
+  if (!isAdmin(event)) {
+    return forbidden('Admin access required');
+  }
+
+  const username = event.pathParameters?.username;
+  if (!username) {
+    return badRequest('Username is required');
+  }
+
+  try {
+    const result = await client.send(
+      new GetCommand({
+        TableName: TABLE_NAME,
+        Key: {
+          pk: `USER#${username}`,
+          sk: 'PROFILE',
+        },
+        ProjectionExpression: 'fitnessProfile, fitnessProfileCompletedAt',
+      })
+    );
+
+    if (!result.Item) {
+      return notFound('User profile not found');
+    }
+
+    return success({
+      fitnessProfile: result.Item.fitnessProfile || null,
+      fitnessProfileCompletedAt: result.Item.fitnessProfileCompletedAt || null,
+    });
+  } catch (error) {
+    console.error('getAdminUserFitnessProfile error:', error);
+    return serverError('Failed to fetch user fitness profile');
   }
 }

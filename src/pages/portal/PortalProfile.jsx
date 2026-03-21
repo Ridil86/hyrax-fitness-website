@@ -1,7 +1,9 @@
 import { useState, useEffect } from 'react';
+import { Link } from 'react-router-dom';
 import { updatePassword } from 'aws-amplify/auth';
 import { useAuth } from '../../context/AuthContext';
 import { fetchProfile, updateProfile } from '../../api/profile';
+import { fetchFitnessProfile } from '../../api/fitnessProfile';
 import './portal-profile.css';
 
 export default function PortalProfile() {
@@ -20,6 +22,9 @@ export default function PortalProfile() {
   const [pwSaving, setPwSaving] = useState(false);
   const [pwMessage, setPwMessage] = useState(null);
 
+  // Fitness profile state
+  const [fitnessProfile, setFitnessProfile] = useState(null);
+
   const isGoogleUser = user?.username?.startsWith('Google_') || user?.username?.startsWith('google_');
 
   useEffect(() => {
@@ -28,7 +33,10 @@ export default function PortalProfile() {
     async function load() {
       try {
         const token = await getIdToken();
-        const profile = await fetchProfile(token);
+        const [profile, fpData] = await Promise.all([
+          fetchProfile(token),
+          fetchFitnessProfile(token).catch(() => null),
+        ]);
         if (cancelled) return;
         if (profile) {
           setForm({
@@ -36,6 +44,9 @@ export default function PortalProfile() {
             familyName: profile.familyName || '',
             email: profile.email || '',
           });
+        }
+        if (fpData?.fitnessProfile) {
+          setFitnessProfile(fpData.fitnessProfile);
         }
       } catch {
         // best-effort
@@ -169,7 +180,7 @@ export default function PortalProfile() {
         </div>
       </form>
 
-      {/* Security — Password Change (non-Google users only) */}
+      {/* Security - Password Change (non-Google users only) */}
       {!isGoogleUser && (
         <div className="portal-profile-card">
           <h3>Security</h3>
@@ -225,6 +236,51 @@ export default function PortalProfile() {
           </div>
         </div>
       )}
+
+      {/* Fitness Profile */}
+      <div className="portal-profile-card">
+        <h3>Fitness Profile</h3>
+        {fitnessProfile ? (
+          <>
+            <div className="portal-fp-summary">
+              <div className="portal-fp-row">
+                <span className="portal-fp-label">Experience</span>
+                <span className="portal-fp-value">{fitnessProfile.experienceLevel}</span>
+              </div>
+              <div className="portal-fp-row">
+                <span className="portal-fp-label">Goals</span>
+                <span className="portal-fp-value">{(fitnessProfile.fitnessGoals || []).map(g => g.replace(/_/g, ' ')).join(', ')}</span>
+              </div>
+              <div className="portal-fp-row">
+                <span className="portal-fp-label">Schedule</span>
+                <span className="portal-fp-value">{fitnessProfile.daysPerWeek} days/week, {fitnessProfile.preferredDuration} min</span>
+              </div>
+              <div className="portal-fp-row">
+                <span className="portal-fp-label">Environment</span>
+                <span className="portal-fp-value">{(fitnessProfile.trainingEnvironment || []).join(', ')}</span>
+              </div>
+              <div className="portal-fp-row">
+                <span className="portal-fp-label">Intensity</span>
+                <span className="portal-fp-value">{(fitnessProfile.preferredIntensity || '').replace(/_/g, ' ')}</span>
+              </div>
+              {fitnessProfile.availableEquipment?.length > 0 && (
+                <div className="portal-fp-row">
+                  <span className="portal-fp-label">Equipment</span>
+                  <span className="portal-fp-value">{fitnessProfile.availableEquipment.length} items</span>
+                </div>
+              )}
+            </div>
+            <div className="portal-profile-actions">
+              <Link to="/portal/questionnaire" className="btn">Edit Fitness Profile</Link>
+            </div>
+          </>
+        ) : (
+          <div className="portal-fp-empty">
+            <p>Complete your fitness profile to get personalized workout routines.</p>
+            <Link to="/portal/questionnaire" className="btn primary">Complete Questionnaire</Link>
+          </div>
+        )}
+      </div>
 
       {/* Linked Accounts */}
       <div className="portal-profile-card">

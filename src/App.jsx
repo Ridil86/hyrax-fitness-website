@@ -41,6 +41,7 @@ const VideoAdmin = lazy(() => import('./pages/admin/VideoAdmin'));
 const Billing = lazy(() => import('./pages/admin/Billing'));
 const TierAdmin = lazy(() => import('./pages/admin/TierAdmin'));
 const Analytics = lazy(() => import('./pages/admin/Analytics'));
+const RoutineDebug = lazy(() => import('./pages/admin/RoutineDebug'));
 
 // Workout library pages
 const WorkoutLibrary = lazy(() => import('./pages/WorkoutLibrary'));
@@ -77,6 +78,11 @@ const PortalSettings = lazy(() => import('./pages/portal/PortalSettings'));
 const PortalSubscription = lazy(() => import('./pages/portal/PortalSubscription'));
 const ActivityLog = lazy(() => import('./pages/portal/ActivityLog'));
 const ProgressDashboard = lazy(() => import('./pages/portal/ProgressDashboard'));
+const FitnessQuestionnaire = lazy(() => import('./pages/portal/FitnessQuestionnaire'));
+const MyRoutine = lazy(() => import('./pages/portal/MyRoutine'));
+const RoutineHistory = lazy(() => import('./pages/portal/RoutineHistory'));
+const TrainingChat = lazy(() => import('./pages/portal/TrainingChat'));
+const Benchmarks = lazy(() => import('./pages/portal/Benchmarks'));
 
 // Cookie consent
 const CookieConsent = lazy(() => import('./components/CookieConsent'));
@@ -179,6 +185,11 @@ export default function App() {
               <Route path="support/:id" element={<LazySection><SupportTicket /></LazySection>} />
               <Route path="profile" element={<LazySection><PortalProfile /></LazySection>} />
               <Route path="subscription" element={<LazySection><PortalSubscription /></LazySection>} />
+              <Route path="routine" element={<LazySection><MyRoutine /></LazySection>} />
+              <Route path="routine/history" element={<LazySection><RoutineHistory /></LazySection>} />
+              <Route path="questionnaire" element={<LazySection><FitnessQuestionnaire /></LazySection>} />
+              <Route path="chat" element={<LazySection><TrainingChat /></LazySection>} />
+              <Route path="benchmarks" element={<LazySection><Benchmarks /></LazySection>} />
               <Route path="activity" element={<LazySection><ActivityLog /></LazySection>} />
               <Route path="progress" element={<LazySection><ProgressDashboard /></LazySection>} />
               <Route path="settings" element={<LazySection><PortalSettings /></LazySection>} />
@@ -203,6 +214,7 @@ export default function App() {
               <Route path="billing" element={<LazySection><Billing /></LazySection>} />
               <Route path="tiers" element={<LazySection><TierAdmin /></LazySection>} />
               <Route path="analytics" element={<LazySection><Analytics /></LazySection>} />
+              <Route path="routine-debug" element={<LazySection><RoutineDebug /></LazySection>} />
               <Route path="community" element={<LazySection><CommunityAdmin /></LazySection>} />
               <Route path="support" element={<LazySection><SupportAdmin /></LazySection>} />
               <Route path="merch" element={<LazySection><Merch /></LazySection>} />

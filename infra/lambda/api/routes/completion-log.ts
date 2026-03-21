@@ -107,7 +107,7 @@ export async function createLog(
       userSub: claims.sub,
       userEmail: claims.email || '',
       sessionId: body.sessionId || id,
-      type: 'exercise' as const,
+      type: (body.type === 'benchmark' ? 'benchmark' : 'exercise') as string,
       exerciseId: body.exerciseId,
       exerciseName: body.exerciseName,
       workoutId: body.workoutId || '',
@@ -196,6 +196,7 @@ export async function createWorkoutLog(
       if (ex.weightUnit) item.weightUnit = ex.weightUnit;
       if (ex.duration != null) item.duration = Number(ex.duration);
       if (ex.rpe != null) item.rpe = Number(ex.rpe);
+      if (ex.rating != null || body.rating != null) item.rating = Number(ex.rating ?? body.rating);
       if (body.workoutDuration != null) item.workoutDuration = Number(body.workoutDuration);
 
       logs.push(item);
@@ -476,5 +477,74 @@ export async function deleteLog(
   } catch (error) {
     console.error('deleteLog error:', error);
     return serverError('Failed to delete completion log');
+  }
+}
+
+/**
+ * GET /api/logs/benchmarks - Get user's benchmark history grouped by exercise
+ */
+export async function getBenchmarkHistory(
+  event: APIGatewayProxyEvent
+): Promise<APIGatewayProxyResult> {
+  const claims = extractClaims(event);
+  if (!claims?.sub) return forbidden('Authentication required');
+
+  try {
+    const result = await client.send(
+      new QueryCommand({
+        TableName: TABLE_NAME,
+        KeyConditionExpression: 'pk = :pk AND begins_with(sk, :prefix)',
+        ExpressionAttributeValues: {
+          ':pk': `USER#${claims.sub}`,
+          ':prefix': 'LOG#',
+        },
+        ScanIndexForward: true,
+      })
+    );
+
+    const benchmarks = (result.Items || []).filter((item) => item.type === 'benchmark');
+
+    // Group by exerciseId
+    const grouped: Record<string, {
+      exerciseId: string;
+      exerciseName: string;
+      entries: Array<{
+        date: string;
+        value: number;
+        unit: string;
+        reps?: number;
+        weight?: number;
+        duration?: number;
+        notes?: string;
+      }>;
+    }> = {};
+
+    for (const b of benchmarks) {
+      const exId = b.exerciseId;
+      if (!grouped[exId]) {
+        grouped[exId] = {
+          exerciseId: exId,
+          exerciseName: b.exerciseName || exId,
+          entries: [],
+        };
+      }
+      grouped[exId].entries.push({
+        date: (b.completedAt || '').slice(0, 10),
+        value: b.weight || b.reps || b.duration || 0,
+        unit: b.weight ? (b.weightUnit || 'lbs') : b.duration ? 'sec' : 'reps',
+        reps: b.reps,
+        weight: b.weight,
+        duration: b.duration,
+        notes: b.notes,
+      });
+    }
+
+    return success({
+      benchmarks: Object.values(grouped),
+      totalEntries: benchmarks.length,
+    });
+  } catch (error) {
+    console.error('getBenchmarkHistory error:', error);
+    return serverError('Failed to fetch benchmark history');
   }
 }
