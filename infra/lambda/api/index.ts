@@ -34,20 +34,40 @@ import {
 } from './routes/completion-log';
 import { getAnalyticsOverview, getAnalyticsTrends } from './routes/admin-analytics';
 import {
-  generateDailyWorkout, swapDailyWorkout, previewPrompts, getTodayWorkout,
+  generateDailyWorkout, generateRoutineAsync, swapDailyWorkout, previewPrompts, getTodayWorkout,
   listWorkoutHistory, getWorkoutByDate, getAdminUserRoutines,
 } from './routes/routine';
 import { sendChatMessage, getChatHistory } from './routes/chat';
 import { notFound, serverError } from './utils/response';
 
 export const handler = async (
-  event: APIGatewayProxyEvent,
+  event: any,
   _context: Context
 ): Promise<APIGatewayProxyResult> => {
+  // Handle async self-invocations (not from API Gateway)
+  if (event.__asyncRoutineGeneration) {
+    console.log('Async routine generation for', event.userSub);
+    await generateRoutineAsync(event);
+    return { statusCode: 200, headers: {}, body: 'ok' };
+  }
+
   const method = event.httpMethod;
   const path = event.path;
 
   console.log(`${method} ${path}`);
+
+  // OPTIONS catch-all: return CORS headers for any preflight request
+  if (method === 'OPTIONS') {
+    return {
+      statusCode: 200,
+      headers: {
+        'Access-Control-Allow-Origin': '*',
+        'Access-Control-Allow-Headers': 'Content-Type,Authorization,X-Amz-Date,X-Api-Key',
+        'Access-Control-Allow-Methods': 'GET,POST,PUT,DELETE,OPTIONS',
+      },
+      body: '',
+    };
+  }
 
   try {
     // ── FAQ Routes ──

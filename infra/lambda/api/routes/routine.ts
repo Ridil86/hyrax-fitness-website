@@ -5,13 +5,16 @@ import {
   QueryCommand,
   PutCommand,
 } from '@aws-sdk/lib-dynamodb';
+import { LambdaClient, InvokeCommand } from '@aws-sdk/client-lambda';
 import type { APIGatewayProxyEvent, APIGatewayProxyResult } from 'aws-lambda';
 import { success, badRequest, forbidden, notFound, serverError } from '../utils/response';
 import { extractClaims, isAdmin } from '../utils/auth';
 import { invokeClaude } from '../utils/bedrock';
 
 const client = DynamoDBDocumentClient.from(new DynamoDBClient({}));
+const lambdaClient = new LambdaClient({});
 const TABLE_NAME = process.env.TABLE_NAME!;
+const SELF_FUNCTION_NAME = process.env.SELF_FUNCTION_NAME || 'hyrax-api';
 
 // ── Tier access check (server-side, no frontend dependency) ──
 const TIER_RANK: Record<string, number> = { 'Pup': 1, 'Rock Runner': 2, 'Iron Dassie': 3 };
@@ -406,6 +409,7 @@ function computeProgressionData(logs: any[]): Array<{
 
 /**
  * POST /api/routine/generate — Generate today's AI workout (authenticated, tier II+)
+ * Uses async Lambda self-invocation to avoid API Gateway's 29s timeout.
  */
 export async function generateDailyWorkout(
   event: APIGatewayProxyEvent
@@ -444,16 +448,99 @@ export async function generateDailyWorkout(
       })
     );
     if (existingResult.Item) {
+      // If still generating, tell the frontend to keep polling
+      if (existingResult.Item.status === 'generating') {
+        return success({ status: 'generating', date: today });
+      }
       const isIronDassie = hasTierAccess(profile.tier || 'Pup', 'Iron Dassie');
       const genCount = existingResult.Item.generationCount || 1;
-      // Iron Dassie: up to 3 generations/day; Rock Runner: 1
       if (!isIronDassie || genCount >= 3) {
         return success(existingResult.Item);
       }
-      // Iron Dassie can regenerate — continue with generation, store incremented count
     }
 
-    // 5. Load catalogs in parallel
+    // 5. Save a placeholder record so the frontend knows generation is in progress
+    await client.send(
+      new PutCommand({
+        TableName: TABLE_NAME,
+        Item: {
+          pk: `USER#${claims.sub}`,
+          sk: `DAILY_WORKOUT#${today}`,
+          gsi1pk: 'DAILY_WORKOUT',
+          gsi1sk: `${today}#${claims.sub}`,
+          status: 'generating',
+          date: today,
+          generatedAt: new Date().toISOString(),
+        },
+      })
+    );
+
+    // 6. Fire-and-forget: invoke self asynchronously to do the Bedrock call
+    await lambdaClient.send(
+      new InvokeCommand({
+        FunctionName: SELF_FUNCTION_NAME,
+        InvocationType: 'Event', // async — returns immediately
+        Payload: new TextEncoder().encode(JSON.stringify({
+          __asyncRoutineGeneration: true,
+          userSub: claims.sub,
+          userTier: profile.tier,
+          today,
+        })),
+      })
+    );
+
+    // 7. Return 202 immediately — frontend will poll GET /api/routine/today
+    return {
+      statusCode: 202,
+      headers: {
+        'Access-Control-Allow-Origin': '*',
+        'Access-Control-Allow-Headers': 'Content-Type,Authorization,X-Amz-Date,X-Api-Key',
+        'Access-Control-Allow-Methods': 'GET,POST,PUT,DELETE,OPTIONS',
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({ status: 'generating', date: today }),
+    };
+  } catch (error) {
+    console.error('generateDailyWorkout error:', error);
+    return serverError('Failed to generate daily workout');
+  }
+}
+
+/**
+ * Async background handler for routine generation.
+ * Called via Lambda self-invocation (InvocationType: Event).
+ */
+export async function generateRoutineAsync(payload: {
+  userSub: string;
+  userTier: string;
+  today: string;
+}): Promise<void> {
+  const { userSub, userTier, today } = payload;
+
+  try {
+    // Load fitness profile
+    const profileResult = await client.send(
+      new GetCommand({
+        TableName: TABLE_NAME,
+        Key: { pk: `USER#${userSub}`, sk: 'PROFILE' },
+      })
+    );
+    const profile = profileResult.Item;
+    if (!profile?.fitnessProfile) {
+      console.error('generateRoutineAsync: no fitness profile for', userSub);
+      return;
+    }
+
+    // Check existing record for generation count
+    const existingResult = await client.send(
+      new GetCommand({
+        TableName: TABLE_NAME,
+        Key: { pk: `USER#${userSub}`, sk: `DAILY_WORKOUT#${today}` },
+      })
+    );
+    const prevGenCount = existingResult.Item?.generationCount || 0;
+
+    // Load catalogs in parallel
     const [exerciseResult, workoutResult, equipmentResult] = await Promise.all([
       client.send(new QueryCommand({
         TableName: TABLE_NAME,
@@ -478,14 +565,14 @@ export async function generateDailyWorkout(
     const workouts = workoutResult.Items || [];
     const equipment = equipmentResult.Items || [];
 
-    // 6. Load user context in parallel
+    // Load user context in parallel
     const fourteenDaysAgo = daysAgo(14);
     const [logsResult, dailyWorkoutsResult] = await Promise.all([
       client.send(new QueryCommand({
         TableName: TABLE_NAME,
         KeyConditionExpression: 'pk = :pk AND sk BETWEEN :from AND :to',
         ExpressionAttributeValues: {
-          ':pk': `USER#${claims.sub}`,
+          ':pk': `USER#${userSub}`,
           ':from': `LOG#${fourteenDaysAgo}`,
           ':to': `LOG#${new Date().toISOString()}~`,
         },
@@ -495,7 +582,7 @@ export async function generateDailyWorkout(
         TableName: TABLE_NAME,
         KeyConditionExpression: 'pk = :pk AND begins_with(sk, :prefix)',
         ExpressionAttributeValues: {
-          ':pk': `USER#${claims.sub}`,
+          ':pk': `USER#${userSub}`,
           ':prefix': 'DAILY_WORKOUT#',
         },
         ScanIndexForward: false,
@@ -506,7 +593,7 @@ export async function generateDailyWorkout(
     const recentLogs = logsResult.Items || [];
     const recentDailyWorkouts = dailyWorkoutsResult.Items || [];
 
-    // 7. Build prompts
+    // Build prompts
     const systemPrompt = buildSystemPrompt(exercises, workouts, equipment);
     const userPrompt = buildUserPrompt(
       profile.fitnessProfile,
@@ -514,58 +601,77 @@ export async function generateDailyWorkout(
       recentDailyWorkouts,
       exercises,
       today,
-      profile.tier
+      userTier
     );
 
-    // 8. Call Bedrock
+    // Call Bedrock
     const result = await invokeClaude(systemPrompt, userPrompt, { maxTokens: 4096 });
 
-    // 9. Parse JSON from response
+    // Parse JSON from response
     let dailyWorkout: any;
     try {
       const parsed = JSON.parse(result.content);
       dailyWorkout = parsed.dailyWorkout || parsed;
     } catch {
-      // Try to extract JSON from markdown code blocks
       const jsonMatch = result.content.match(/```(?:json)?\s*([\s\S]*?)```/);
       if (jsonMatch) {
         const parsed = JSON.parse(jsonMatch[1].trim());
         dailyWorkout = parsed.dailyWorkout || parsed;
       } else {
         console.error('Failed to parse Bedrock response:', result.content.slice(0, 500));
-        return serverError('AI returned invalid response format. Please try again.');
+        // Save error status so frontend can show error
+        await client.send(new PutCommand({
+          TableName: TABLE_NAME,
+          Item: {
+            pk: `USER#${userSub}`,
+            sk: `DAILY_WORKOUT#${today}`,
+            gsi1pk: 'DAILY_WORKOUT',
+            gsi1sk: `${today}#${userSub}`,
+            status: 'error',
+            date: today,
+            error: 'AI returned invalid response format',
+            generatedAt: new Date().toISOString(),
+          },
+        }));
+        return;
       }
     }
 
     // Ensure date is set
     dailyWorkout.date = today;
 
-    // 10. Store in DynamoDB
-    const prevGenCount = existingResult.Item?.generationCount || 0;
+    // Store in DynamoDB
     const item = {
-      pk: `USER#${claims.sub}`,
+      pk: `USER#${userSub}`,
       sk: `DAILY_WORKOUT#${today}`,
       gsi1pk: 'DAILY_WORKOUT',
-      gsi1sk: `${today}#${claims.sub}`,
+      gsi1sk: `${today}#${userSub}`,
       ...dailyWorkout,
+      status: 'ready',
       generatedAt: new Date().toISOString(),
-      modelId: 'us.anthropic.claude-sonnet-4-20250514',
+      modelId: 'us.anthropic.claude-sonnet-4-6',
       tokenUsage: result.usage,
       generationCount: prevGenCount + 1,
     };
 
-    await client.send(
-      new PutCommand({
-        TableName: TABLE_NAME,
-        Item: item,
-      })
-    );
-
-    // 11. Return
-    return success(item);
+    await client.send(new PutCommand({ TableName: TABLE_NAME, Item: item }));
+    console.log(`Routine generated for ${userSub} on ${today}`);
   } catch (error) {
-    console.error('generateDailyWorkout error:', error);
-    return serverError('Failed to generate daily workout');
+    console.error('generateRoutineAsync error:', error);
+    // Save error status
+    await client.send(new PutCommand({
+      TableName: TABLE_NAME,
+      Item: {
+        pk: `USER#${userSub}`,
+        sk: `DAILY_WORKOUT#${today}`,
+        gsi1pk: 'DAILY_WORKOUT',
+        gsi1sk: `${today}#${userSub}`,
+        status: 'error',
+        date: today,
+        error: 'Generation failed',
+        generatedAt: new Date().toISOString(),
+      },
+    }));
   }
 }
 

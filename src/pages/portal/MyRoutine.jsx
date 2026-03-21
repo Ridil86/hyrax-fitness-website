@@ -33,6 +33,24 @@ export default function MyRoutine() {
 
   const hasAccess = hasTierAccess(userTier, 'Rock Runner');
 
+  // Poll for workout when generation is in progress
+  const pollForWorkout = useCallback(async (token) => {
+    const MAX_POLLS = 30;
+    for (let i = 0; i < MAX_POLLS; i++) {
+      await new Promise((r) => setTimeout(r, 3000));
+      try {
+        const result = await fetchTodayWorkout(token);
+        if (result.status === 'generating') continue;
+        if (result.status === 'error') throw new Error(result.error || 'Generation failed');
+        return result;
+      } catch (err) {
+        if (err.status === 404) continue;
+        throw err;
+      }
+    }
+    throw new Error('Generation timed out. Please refresh.');
+  }, []);
+
   useEffect(() => {
     let cancelled = false;
     async function load() {
@@ -47,8 +65,16 @@ export default function MyRoutine() {
         ]);
         if (cancelled) return;
         if (fpData?.fitnessProfile) setFitnessProfile(fpData.fitnessProfile);
-        if (todayData && !todayData.error) setWorkout(todayData);
         if (profileData) setUserProfile(profileData);
+        // If workout is still generating, start polling
+        if (todayData?.status === 'generating') {
+          setGenerating(true);
+          pollForWorkout(token).then(result => {
+            if (!cancelled) { setWorkout(result); setGenerating(false); }
+          }).catch(() => { if (!cancelled) setGenerating(false); });
+        } else if (todayData && !todayData.error) {
+          setWorkout(todayData);
+        }
         // Check if today's AI routine was already logged
         const logs = Array.isArray(logsData) ? logsData : logsData?.logs || [];
         if (logs.some(l => l.source === 'ai-routine' && l.sourceId === today)) {
@@ -71,13 +97,19 @@ export default function MyRoutine() {
     try {
       const token = await getIdToken();
       const result = await generateDailyWorkout(token);
-      setWorkout(result);
+      if (result.status === 'generating') {
+        // Poll until ready
+        const final = await pollForWorkout(token);
+        setWorkout(final);
+      } else {
+        setWorkout(result);
+      }
     } catch (err) {
       setError(err.message || 'Failed to generate workout. Please try again.');
     } finally {
       setGenerating(false);
     }
-  }, [getIdToken]);
+  }, [getIdToken, pollForWorkout]);
 
   const handleOpenLogForm = useCallback(() => {
     if (!workout?.exercises) return;

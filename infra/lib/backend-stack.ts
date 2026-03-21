@@ -87,6 +87,7 @@ export class BackendStack extends cdk.Stack {
         STRIPE_SECRET_KEY: process.env.STRIPE_SECRET_KEY || 'sk_test_placeholder',
         STRIPE_WEBHOOK_SECRET: process.env.STRIPE_WEBHOOK_SECRET || 'whsec_placeholder',
         STRIPE_PUBLISHABLE_KEY: process.env.STRIPE_PUBLISHABLE_KEY || 'pk_test_placeholder',
+        SELF_FUNCTION_NAME: 'hyrax-api',
       },
       bundling: {
         minify: true,
@@ -118,11 +119,22 @@ export class BackendStack extends cdk.Stack {
       })
     );
 
+    // Self-invoke permission (for async routine generation)
+    apiFn.addToRolePolicy(
+      new iam.PolicyStatement({
+        actions: ['lambda:InvokeFunction'],
+        resources: [apiFn.functionArn],
+      })
+    );
+
     // Bedrock permissions for AI workout generation
     apiFn.addToRolePolicy(
       new iam.PolicyStatement({
         actions: ['bedrock:InvokeModel'],
-        resources: ['arn:aws:bedrock:us-east-1::foundation-model/anthropic.*'],
+        resources: [
+          'arn:aws:bedrock:*::foundation-model/anthropic.*',
+          'arn:aws:bedrock:*:*:inference-profile/us.anthropic.*',
+        ],
       })
     );
 

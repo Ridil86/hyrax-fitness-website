@@ -2,11 +2,41 @@ import { apiGet, apiPost } from './client';
 
 /**
  * Generate today's AI-powered daily workout.
- * Returns the generated workout, or the existing one if already generated today.
+ * Kicks off async generation and polls until ready.
  * @param {string} token - Cognito ID token
+ * @param {(status: string) => void} [onStatusChange] - Optional callback for status updates
+ * @returns {Promise<object>} The generated workout
  */
-export function generateDailyWorkout(token) {
-  return apiPost('/api/routine/generate', {}, token);
+export async function generateDailyWorkout(token, onStatusChange) {
+  // Kick off generation (returns 202 with { status: 'generating' })
+  const initial = await apiPost('/api/routine/generate', {}, token);
+
+  // If the workout already existed and was returned directly, return it
+  if (initial.status !== 'generating') {
+    return initial;
+  }
+
+  if (onStatusChange) onStatusChange('generating');
+
+  // Poll GET /api/routine/today every 3 seconds until ready
+  const MAX_POLLS = 30; // 90 seconds max
+  for (let i = 0; i < MAX_POLLS; i++) {
+    await new Promise((r) => setTimeout(r, 3000));
+    try {
+      const result = await apiGet('/api/routine/today', token);
+      if (result.status === 'generating') continue;
+      if (result.status === 'error') {
+        throw new Error(result.error || 'Workout generation failed');
+      }
+      return result;
+    } catch (err) {
+      // 404 means not ready yet — keep polling
+      if (err.status === 404) continue;
+      throw err;
+    }
+  }
+
+  throw new Error('Workout generation timed out. Please refresh the page to check again.');
 }
 
 /**
