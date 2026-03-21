@@ -43,6 +43,25 @@ async function fetchImageAsBase64(url) {
   }
 }
 
+/** Strip em-dashes, emojis, and other problematic characters */
+function sanitize(text) {
+  if (!text) return '';
+  return text
+    .replace(/[\u2014\u2013\u2012]/g, '-')
+    .replace(/&mdash;/g, '-')
+    .replace(/&ndash;/g, '-')
+    .replace(/[\u{1F600}-\u{1F9FF}]/gu, '')
+    .replace(/[\u{2600}-\u{26FF}]/gu, '')
+    .replace(/[\u{2700}-\u{27BF}]/gu, '')
+    .replace(/[\u{1F300}-\u{1F5FF}]/gu, '')
+    .replace(/[\u{1F680}-\u{1F6FF}]/gu, '')
+    .replace(/[\u{1FA00}-\u{1FA6F}]/gu, '')
+    .replace(/[\u{1FA70}-\u{1FAFF}]/gu, '')
+    .replace(/[\u{FE00}-\u{FE0F}]/gu, '')
+    .replace(/[\u{200D}]/gu, '')
+    .trim();
+}
+
 // Brand colors
 const COLORS = {
   ink: [27, 18, 10],
@@ -53,6 +72,12 @@ const COLORS = {
   sunset: [242, 133, 1],
   sunrise: [253, 185, 15],
   white: [255, 255, 255],
+};
+
+const TIER_COLORS = {
+  'Pup':          COLORS.sand,
+  'Rock Runner':  COLORS.sunset,
+  'Iron Dassie':  COLORS.earth,
 };
 
 /**
@@ -86,83 +111,98 @@ export function generateWorkoutPdf(workout, options = {}) {
   const pageHeight = doc.internal.pageSize.getHeight();
   const margin = 20;
   const contentWidth = pageWidth - margin * 2;
-  let y = 0;
+
+  let y = margin;
 
   // ── Header Bar ──
   doc.setFillColor(...COLORS.ink);
-  doc.rect(0, 0, pageWidth, 42, 'F');
-
-  // Brand accent line
+  doc.rect(0, 0, pageWidth, 44, 'F');
   doc.setFillColor(...COLORS.sunset);
-  doc.rect(0, 42, pageWidth, 3, 'F');
+  doc.rect(0, 44, pageWidth, 1.5, 'F');
 
-  // Logo in header (actual image is 817x625, ratio 1.307:1)
-  const logoHeight = 22;
-  const logoWidth = logoHeight * (817 / 625);
-  const textOffsetX = logoBase64 ? margin + logoWidth + 4 : margin;
+  // Logo — square aspect ratio, not squished, positioned with breathing room
   if (logoBase64) {
-    doc.addImage(logoBase64, 'PNG', margin, 8, logoWidth, logoHeight);
+    try {
+      doc.addImage(logoBase64, 'PNG', margin - 7, 8, 35, 27);
+    } catch { /* skip if logo fails */ }
   }
+  const textStart = logoBase64 ? margin + 37 : margin;
 
-  // Brand name
-  doc.setFont('helvetica', 'bold');
-  doc.setFontSize(22);
+  // Title
   doc.setTextColor(...COLORS.white);
-  doc.text('HYRAX FITNESS', textOffsetX, 18);
+  doc.setFontSize(16);
+  doc.setFont('helvetica', 'bold');
+  doc.text('HYRAX FITNESS', textStart, 13);
 
-  // Tagline
-  doc.setFont('helvetica', 'normal');
   doc.setFontSize(9);
-  doc.setTextColor(...COLORS.sand);
-  doc.text('START-STOP SCRAMBLE & CARRY TRAINING', textOffsetX, 24);
+  doc.setFont('helvetica', 'normal');
+  doc.setTextColor(...COLORS.sunrise);
+  doc.text('Signature Workout', textStart, 19);
 
-  // User name (right-aligned)
-  if (userProfile?.givenName || userProfile?.familyName) {
-    const userName = [userProfile.givenName, userProfile.familyName].filter(Boolean).join(' ');
-    doc.setFont('helvetica', 'normal');
-    doc.setFontSize(15);
-    doc.setTextColor(...COLORS.sand);
-    doc.text(`${userName}`, pageWidth - margin, 16, { align: 'right' });
+  // Workout title in header
+  doc.setFontSize(10);
+  doc.setFont('helvetica', 'bold');
+  doc.setTextColor(...COLORS.white);
+  const titleLines = doc.splitTextToSize(workout.title || 'Workout', contentWidth);
+  doc.text(titleLines, textStart, 25);
+
+  // Type badge
+  const typeBadge = workout.type === 'rest' ? 'REST DAY' : workout.type === 'active_recovery' ? 'ACTIVE RECOVERY' : 'TRAINING';
+  doc.setFontSize(7);
+  doc.setTextColor(...COLORS.sunrise);
+  doc.text(typeBadge, textStart, 31);
+
+  // Duration + Focus
+  if (workout.duration || workout.focus?.length) {
+    doc.setFontSize(7);
+    doc.setTextColor(180, 180, 180);
+    const metaParts = [];
+    if (workout.duration) metaParts.push(sanitize(workout.duration));
+    if (workout.focus?.length) metaParts.push(workout.focus.map(t => t.replace(/[-_]/g, ' ')).join(', '));
+    doc.text(metaParts.join('  |  '), textStart, 37);
   }
 
-  // Tier capsule (right-aligned, below name)
-  if (userTier) {
-    const tierColors = {
-      'Pup': COLORS.sand,
-      'Rock Runner': COLORS.sunset,
-      'Iron Dassie': COLORS.earth,
-    };
-    const capsuleColor = tierColors[userTier] || COLORS.sand;
-    const tierLabel = userTier.toUpperCase();
+  // Right side: User info
+  const userName = userProfile
+    ? [userProfile.givenName, userProfile.familyName].filter(Boolean).join(' ')
+    : '';
+  if (userName) {
+    doc.setFontSize(12);
     doc.setFont('helvetica', 'bold');
-    doc.setFontSize(7.5);
-    const tierTextWidth = doc.getTextWidth(tierLabel) + 6;
-    const capsuleX = pageWidth - margin - tierTextWidth;
-    const capsuleY = 20;
-    doc.setFillColor(...capsuleColor);
-    doc.roundedRect(capsuleX, capsuleY, tierTextWidth, 5.5, 2, 2, 'F');
     doc.setTextColor(...COLORS.white);
-    doc.text(tierLabel, capsuleX + 3, capsuleY + 4);
+    doc.text(userName, pageWidth - margin, 15, { align: 'right' });
   }
 
-  // Date generated (right-aligned)
-  const dateStr = new Date().toLocaleDateString('en-US', {
-    year: 'numeric',
-    month: 'short',
-    day: 'numeric',
-  });
-  doc.setFont('helvetica', 'normal');
-  doc.setFontSize(9);
-  doc.setTextColor(...COLORS.sand);
-  doc.text(`${dateStr}`, pageWidth - margin, 32, { align: 'right' });
+  if (userTier) {
+    const tierColor = TIER_COLORS[userTier] || COLORS.sand;
+    doc.setFontSize(9);
+    doc.setFont('helvetica', 'bold');
+    const tierText = userTier;
+    const tierWidth = doc.getTextWidth(tierText) + 8;
+    const tierX = pageWidth - margin - tierWidth;
+    doc.setFillColor(...tierColor);
+    doc.roundedRect(tierX, 19, tierWidth, 9, 3, 3, 'F');
+    doc.setTextColor(...COLORS.white);
+    doc.text(tierText, tierX + tierWidth / 2, 23, { align: 'center' });
+  }
 
-  y = 56;
+  // Date
+  doc.setTextColor(180, 180, 180);
+  doc.setFontSize(8);
+  doc.setFont('helvetica', 'normal');
+  const dateStr = workout.date
+    ? new Date(workout.date + 'T12:00:00Z').toLocaleDateString('en-US', {
+        weekday: 'long', year: 'numeric', month: 'long', day: 'numeric',
+      })
+    : new Date().toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
+  doc.text(dateStr, pageWidth - margin, 32, { align: 'right' });
+
+  y = 54;
 
   // ── Title ──
   doc.setFont('helvetica', 'bold');
   doc.setFontSize(20);
   doc.setTextColor(...COLORS.ink);
-  const titleLines = doc.splitTextToSize(workout.title || 'Workout', contentWidth);
   doc.text(titleLines, margin, y);
   y += titleLines.length * 8 + 4;
 
@@ -430,7 +470,7 @@ export function generateWorkoutPdf(workout, options = {}) {
             doc.setTextColor(...COLORS.sunrise);
             const tipLabel = nextDiff.charAt(0).toUpperCase() + nextDiff.slice(1);
             doc.text(
-              `Tip: You've logged this ${exHistory.count} times at this level \u2014 consider trying ${tipLabel}!`,
+              `Tip: You've logged this ${exHistory.count} times at this level - consider trying ${tipLabel}!`,
               margin + 14, y
             );
             y += 4.5;
@@ -480,12 +520,12 @@ export function generateWorkoutPdf(workout, options = {}) {
   doc.setFont('helvetica', 'bold');
   doc.setFontSize(10);
   doc.setTextColor(...COLORS.earth);
-  doc.text('BASK \u2014 COOLDOWN', margin + 5, y + 2);
+  doc.text('BASK - COOLDOWN', margin + 5, y + 2);
 
   doc.setFont('helvetica', 'normal');
   doc.setFontSize(8.5);
   doc.setTextColor(...COLORS.ink);
-  const baskText = 'Take 5\u201310 minutes to bask in your effort. Slow your breathing, walk it off, and stretch the major muscle groups used. ' +
+  const baskText = 'Take 5-10 minutes to bask in your effort. Slow your breathing, walk it off, and stretch the major muscle groups used. ' +
     'Hydrate, reflect on what felt strong, and note any areas to focus on next time.';
   const baskLines = doc.splitTextToSize(baskText, contentWidth - 10);
   doc.text(baskLines, margin + 5, y + 9);
