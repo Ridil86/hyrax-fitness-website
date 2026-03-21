@@ -317,7 +317,7 @@ export default function MyRoutine() {
             className="btn small routine-pdf-btn"
             onClick={() => downloadRoutinePdf(workout, { userProfile, userTier })}
           >
-            PDF
+            Download Print-Ready PDF
           </button>
         </div>
         {workout.coachingNotes && (
