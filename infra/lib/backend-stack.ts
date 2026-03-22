@@ -138,6 +138,17 @@ export class BackendStack extends cdk.Stack {
       })
     );
 
+    // AWS Marketplace permissions for Bedrock model subscriptions
+    apiFn.addToRolePolicy(
+      new iam.PolicyStatement({
+        actions: [
+          'aws-marketplace:ViewSubscriptions',
+          'aws-marketplace:Subscribe',
+        ],
+        resources: ['*'],
+      })
+    );
+
     // ── MediaConvert Video Transcoding Pipeline ──
 
     // IAM Role that MediaConvert assumes to access S3

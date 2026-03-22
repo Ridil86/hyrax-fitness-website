@@ -4,6 +4,7 @@ import {
   GetCommand,
   QueryCommand,
   PutCommand,
+  UpdateCommand,
 } from '@aws-sdk/lib-dynamodb';
 import { LambdaClient, InvokeCommand } from '@aws-sdk/client-lambda';
 import type { APIGatewayProxyEvent, APIGatewayProxyResult } from 'aws-lambda';
@@ -735,20 +736,14 @@ export async function swapDailyWorkout(
     // Parse optional preferences from body
     const body = JSON.parse(event.body || '{}');
 
-    // Save generating placeholder
+    // Mark existing workout as swapping (preserve old data for rollback)
     await client.send(
-      new PutCommand({
+      new UpdateCommand({
         TableName: TABLE_NAME,
-        Item: {
-          pk: `USER#${claims.sub}`,
-          sk: `DAILY_WORKOUT#${today}`,
-          gsi1pk: 'DAILY_WORKOUT',
-          gsi1sk: `${today}#${claims.sub}`,
-          status: 'generating',
-          date: today,
-          generatedAt: new Date().toISOString(),
-          swapCount: currentSwapCount + 1,
-        },
+        Key: { pk: `USER#${claims.sub}`, sk: `DAILY_WORKOUT#${today}` },
+        UpdateExpression: 'SET #status = :status, swapCount = :sc',
+        ExpressionAttributeNames: { '#status': 'status' },
+        ExpressionAttributeValues: { ':status': 'generating', ':sc': currentSwapCount + 1 },
       })
     );
 
@@ -872,15 +867,23 @@ export async function swapRoutineAsync(payload: {
     console.log(`Swap completed for ${userSub} on ${today}`);
   } catch (error) {
     console.error('swapRoutineAsync error:', error);
-    await client.send(new PutCommand({
-      TableName: TABLE_NAME,
-      Item: {
-        pk: `USER#${userSub}`, sk: `DAILY_WORKOUT#${today}`,
-        gsi1pk: 'DAILY_WORKOUT', gsi1sk: `${today}#${userSub}`,
-        status: 'error', date: today, error: 'Swap generation failed',
-        generatedAt: new Date().toISOString(), swapCount: payload.swapCount,
-      },
-    }));
+    // Restore the original workout status instead of destroying it
+    try {
+      await client.send(
+        new UpdateCommand({
+          TableName: TABLE_NAME,
+          Key: { pk: `USER#${userSub}`, sk: `DAILY_WORKOUT#${today}` },
+          UpdateExpression: 'SET #status = :status, swapError = :err',
+          ExpressionAttributeNames: { '#status': 'status' },
+          ExpressionAttributeValues: {
+            ':status': 'ready',
+            ':err': String((error as Error).message || 'Swap generation failed'),
+          },
+        })
+      );
+    } catch (rollbackErr) {
+      console.error('Failed to rollback swap status:', rollbackErr);
+    }
   }
 }
 
