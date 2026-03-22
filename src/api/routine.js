@@ -1,5 +1,11 @@
 import { apiGet, apiPost } from './client';
 
+/** Get the user's local date as YYYY-MM-DD */
+function localDate() {
+  const d = new Date();
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+}
+
 /**
  * Generate today's AI-powered daily workout.
  * Kicks off async generation and polls until ready.
@@ -8,8 +14,9 @@ import { apiGet, apiPost } from './client';
  * @returns {Promise<object>} The generated workout
  */
 export async function generateDailyWorkout(token, onStatusChange) {
+  const today = localDate();
   // Kick off generation (returns 202 with { status: 'generating' })
-  const initial = await apiPost('/api/routine/generate', {}, token);
+  const initial = await apiPost('/api/routine/generate', { clientDate: today }, token);
 
   // If the workout already existed and was returned directly, return it
   if (initial.status !== 'generating') {
@@ -23,14 +30,14 @@ export async function generateDailyWorkout(token, onStatusChange) {
   for (let i = 0; i < MAX_POLLS; i++) {
     await new Promise((r) => setTimeout(r, 3000));
     try {
-      const result = await apiGet('/api/routine/today', token);
+      const result = await apiGet(`/api/routine/today?date=${today}`, token);
       if (result.status === 'generating') continue;
       if (result.status === 'error') {
         throw new Error(result.error || 'Workout generation failed');
       }
       return result;
     } catch (err) {
-      // 404 means not ready yet — keep polling
+      // 404 means not ready yet - keep polling
       if (err.status === 404) continue;
       throw err;
     }
@@ -45,7 +52,7 @@ export async function generateDailyWorkout(token, onStatusChange) {
  * @param {{ avoidFocus?: string[], preferFocus?: string[] }} options
  */
 export function swapDailyWorkout(token, options = {}) {
-  return apiPost('/api/routine/swap', options, token);
+  return apiPost('/api/routine/swap', { ...options, clientDate: localDate() }, token);
 }
 
 /**
@@ -61,7 +68,7 @@ export function previewRoutinePrompts(token) {
  * @param {string} token - Cognito ID token
  */
 export function fetchTodayWorkout(token) {
-  return apiGet('/api/routine/today', token);
+  return apiGet(`/api/routine/today?date=${localDate()}`, token);
 }
 
 /**

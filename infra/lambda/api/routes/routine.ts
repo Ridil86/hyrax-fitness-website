@@ -23,8 +23,19 @@ function hasTierAccess(userTier: string, requiredTier: string): boolean {
 }
 
 // ── Date helpers ──
-function todayStr(): string {
-  return new Date().toISOString().slice(0, 10); // YYYY-MM-DD
+function todayStr(event?: APIGatewayProxyEvent): string {
+  // Prefer client-provided local date to avoid UTC mismatch
+  if (event) {
+    // Check query string param
+    const qsDate = event.queryStringParameters?.date;
+    if (qsDate && /^\d{4}-\d{2}-\d{2}$/.test(qsDate)) return qsDate;
+    // Check request body
+    try {
+      const body = event.body ? JSON.parse(event.body) : {};
+      if (body.clientDate && /^\d{4}-\d{2}-\d{2}$/.test(body.clientDate)) return body.clientDate;
+    } catch { /* ignore parse errors */ }
+  }
+  return new Date().toISOString().slice(0, 10); // fallback to UTC
 }
 
 function daysAgo(n: number): string {
@@ -420,7 +431,7 @@ export async function generateDailyWorkout(
   if (!claims?.sub) return forbidden('Authentication required');
 
   try {
-    const today = todayStr();
+    const today = todayStr(event);
 
     // 1. Load user profile (for tier check + fitness profile)
     const profileResult = await client.send(
@@ -694,7 +705,7 @@ export async function swapDailyWorkout(
   if (!claims?.sub) return forbidden('Authentication required');
 
   try {
-    const today = todayStr();
+    const today = todayStr(event);
 
     // Load profile
     const profileResult = await client.send(
@@ -884,7 +895,7 @@ export async function previewPrompts(
   if (!isAdmin(event)) return forbidden('Admin access required');
 
   try {
-    const today = todayStr();
+    const today = todayStr(event);
 
     // Load user profile
     const profileResult = await client.send(
@@ -987,7 +998,7 @@ export async function getTodayWorkout(
   if (!claims?.sub) return forbidden('Authentication required');
 
   try {
-    const today = todayStr();
+    const today = todayStr(event);
     const result = await client.send(
       new GetCommand({
         TableName: TABLE_NAME,
