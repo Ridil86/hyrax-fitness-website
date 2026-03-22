@@ -213,7 +213,7 @@ export async function downloadRoutinePdf(workout, options = {}) {
   doc.setFont('helvetica', 'bold');
   doc.setTextColor(...COLORS.earth);
   doc.text(titleLines[0] || title, margin, y);
-  y += 4;
+  y += 6;
 
   // ── Coaching Notes ──
   if (workout.coachingNotes) {
@@ -250,7 +250,7 @@ export async function downloadRoutinePdf(workout, options = {}) {
       doc.text(warmLines[li], margin + 5, y + 15 + li * LINE_HEIGHT);
     }
 
-    y += boxHeight + 6;
+    y += boxHeight + 8;
   }
 
   // ── Exercises ──
@@ -265,17 +265,15 @@ export async function downloadRoutinePdf(workout, options = {}) {
     for (let i = 0; i < workout.exercises.length; i++) {
       const ex = workout.exercises[i];
 
-      // Pre-calculate height for this exercise
-      const exHeight = calcExerciseHeight(doc, ex, exTextWidth);
-      y = checkPageBreak(doc, y, exHeight, pageHeight, margin);
+      // Estimate height for page break check (generous overestimate is fine)
+      const estHeight = calcExerciseHeight(doc, ex, exTextWidth);
+      y = checkPageBreak(doc, y, estHeight, pageHeight, margin);
 
-      // Alternate row background - drawn at calculated height
-      if (i % 2 === 0) {
-        doc.setFillColor(250, 248, 242);
-        doc.rect(margin, y - 3, contentWidth, exHeight, 'F');
-      }
+      // Record start position for zebra stripe
+      const exStartY = y - 3;
+      const exStartPage = doc.getCurrentPageInfo().pageNumber;
 
-      // Number circle - radius 4, slightly larger
+      // Number circle - radius 4
       doc.setFillColor(...COLORS.sunset);
       doc.circle(margin + 5, y + 3, 4, 'F');
       doc.setTextColor(...COLORS.white);
@@ -351,6 +349,89 @@ export async function downloadRoutinePdf(workout, options = {}) {
 
       y += 4;
 
+      // Draw zebra stripe BEHIND the content we just rendered (using actual measured height)
+      // Only works if exercise didn't cross a page break
+      const exEndPage = doc.getCurrentPageInfo().pageNumber;
+      if (i % 2 === 0 && exStartPage === exEndPage) {
+        const actualHeight = (y - 2) - exStartY;
+        const currentPage = doc.getCurrentPageInfo().pageNumber;
+        // Save current graphics state, draw the background, then re-draw content on top
+        // jsPDF doesn't support z-ordering, so we use a white rect first then the stripe
+        doc.setFillColor(250, 248, 242);
+        doc.rect(margin, exStartY, contentWidth, actualHeight, 'F');
+
+        // Re-render all content on this exercise over the background
+        let ry = exStartY + 3;
+
+        // Number circle
+        doc.setFillColor(...COLORS.sunset);
+        doc.circle(margin + 5, ry + 3, 4, 'F');
+        doc.setTextColor(...COLORS.white);
+        doc.setFontSize(10);
+        doc.setFont('helvetica', 'bold');
+        doc.text(String(i + 1), margin + 5, ry + 4.2, { align: 'center' });
+
+        // Exercise name
+        doc.setTextColor(...COLORS.ink);
+        doc.setFontSize(11);
+        doc.setFont('helvetica', 'bold');
+        doc.text(exName, margin + 12, ry + 4);
+
+        // Prescription
+        if (prescParts.length) {
+          doc.setFontSize(9);
+          doc.setFont('helvetica', 'normal');
+          doc.setTextColor(...COLORS.rock);
+          doc.text(prescParts.join('  |  '), margin + 12, ry + 9.5);
+        }
+        ry += 13;
+
+        // Modification level badge
+        if (ex.modificationLevel) {
+          doc.setFontSize(8);
+          doc.setFont('helvetica', 'bold');
+          doc.setTextColor(...COLORS.sunset);
+          doc.text(ex.modificationLevel.toUpperCase(), margin + 12, ry);
+          ry += 5;
+        }
+
+        // Modification name + description
+        if (ex.modificationName || ex.modificationDescription) {
+          doc.setFontSize(8.5);
+          doc.setFont('helvetica', 'normal');
+          doc.setTextColor(...COLORS.earth);
+          const modText2 = sanitize(ex.modificationName || '') +
+            (ex.modificationDescription ? ': ' + sanitize(ex.modificationDescription) : '');
+          const modLines2 = doc.splitTextToSize(modText2, exTextWidth);
+          for (let li = 0; li < modLines2.length; li++) {
+            doc.text(modLines2[li], margin + 12, ry);
+            ry += SM_LINE_HEIGHT;
+          }
+          ry += 1;
+        }
+
+        // Equipment
+        if (ex.equipment?.length > 0) {
+          doc.setFontSize(8);
+          doc.setFont('helvetica', 'normal');
+          doc.setTextColor(...COLORS.rock);
+          doc.text('Equipment: ' + ex.equipment.map(e => e.equipmentName).join(', '), margin + 12, ry);
+          ry += SM_LINE_HEIGHT;
+        }
+
+        // Notes
+        if (ex.notes) {
+          doc.setFontSize(8.5);
+          doc.setFont('helvetica', 'italic');
+          doc.setTextColor(...COLORS.earth);
+          const noteLines2 = doc.splitTextToSize(sanitize(ex.notes), exTextWidth);
+          for (let li = 0; li < noteLines2.length; li++) {
+            doc.text(noteLines2[li], margin + 12, ry);
+            ry += SM_LINE_HEIGHT;
+          }
+        }
+      }
+
       // Separator line
       if (i < workout.exercises.length - 1) {
         doc.setDrawColor(230, 225, 215);
@@ -359,9 +440,6 @@ export async function downloadRoutinePdf(workout, options = {}) {
 
       y += 2;
     }
-
-    // Remove excess padding.
-    y -= 2;
   }
 
   // ── Bask (Cooldown) ──
