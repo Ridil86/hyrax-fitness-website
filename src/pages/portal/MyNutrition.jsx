@@ -42,8 +42,11 @@ export default function MyNutrition() {
         ]);
         if (cancelled) return;
         if (profileData) setFitnessProfile(profileData);
-        if (npData?.nutritionProfile) setNutritionProfile(npData.nutritionProfile);
-        else if (npData && !npData.error) setNutritionProfile(npData);
+        // Only set nutritionProfile if the actual profile data exists (not just the wrapper)
+        const np = npData?.nutritionProfile;
+        if (np && typeof np === 'object' && Object.keys(np).length > 0) {
+          setNutritionProfile(np);
+        }
 
         if (todayData?.status === 'generating') {
           setGenerating(true);
