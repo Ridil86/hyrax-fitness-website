@@ -125,7 +125,8 @@ export function buildNutritionUserPrompt(
   recentLogs: any[],
   recentNutritionPlans: any[],
   today: string,
-  userTier?: string
+  userTier?: string,
+  recentMealLogs?: any[]
 ): string {
   const lines: string[] = [];
 
@@ -318,6 +319,30 @@ export function buildNutritionUserPrompt(
     lines.push('');
   }
 
+  // ── Recent Meal Completion Logs ──
+  if (recentMealLogs && recentMealLogs.length > 0) {
+    lines.push(`## Recent Meal Completion History (what the user actually ate)`);
+    const byDate: Record<string, any[]> = {};
+    for (const log of recentMealLogs) {
+      const date = log.planDate || (log.completedAt || '').slice(0, 10);
+      if (!byDate[date]) byDate[date] = [];
+      byDate[date].push(log);
+    }
+    for (const [date, entries] of Object.entries(byDate).sort(([a], [b]) => b.localeCompare(a)).slice(0, 7)) {
+      const meals = entries.map((m: any) => {
+        let s = m.mealName || 'Meal';
+        if (m.source === 'adhoc') s += ' [unplanned]';
+        if (m.modifications) s += ` [modified: ${m.modifications}]`;
+        if (m.skipped) s += ' [SKIPPED]';
+        if (m.rating) s += ` rating:${m.rating}/5`;
+        return s;
+      }).join(', ');
+      lines.push(`- ${date}: ${meals}`);
+    }
+    lines.push('Use this data to adjust today\'s plan. If user frequently skips meals or modifies them, account for their actual preferences.');
+    lines.push('');
+  }
+
   // ── ALLERGEN REMINDER (safety double-check) ──
   lines.push(`## !! ALLERGEN REMINDER - FINAL CHECK !!`);
   if (allergies.length > 0) {
@@ -473,7 +498,8 @@ export async function generateNutritionAsync(payload: {
 
     // Load today's workout + recent context in parallel
     const fourteenDaysAgo = daysAgo(14);
-    const [todayWorkoutResult, logsResult, nutritionPlansResult] = await Promise.all([
+    const sevenDaysAgo = daysAgo(7);
+    const [todayWorkoutResult, logsResult, nutritionPlansResult, mealLogsResult] = await Promise.all([
       client.send(new GetCommand({
         TableName: TABLE_NAME,
         Key: { pk: `USER#${userSub}`, sk: `DAILY_WORKOUT#${today}` },
@@ -498,11 +524,22 @@ export async function generateNutritionAsync(payload: {
         ScanIndexForward: false,
         Limit: 7,
       })),
+      client.send(new QueryCommand({
+        TableName: TABLE_NAME,
+        KeyConditionExpression: 'pk = :pk AND sk BETWEEN :from AND :to',
+        ExpressionAttributeValues: {
+          ':pk': `USER#${userSub}`,
+          ':from': `MEAL_LOG#${sevenDaysAgo}`,
+          ':to': `MEAL_LOG#${new Date().toISOString()}~`,
+        },
+        ScanIndexForward: false,
+      })),
     ]);
 
     const todayWorkout = todayWorkoutResult.Item || null;
     const recentLogs = logsResult.Items || [];
     const recentNutritionPlans = nutritionPlansResult.Items || [];
+    const recentMealLogs = mealLogsResult.Items || [];
 
     // Build prompts
     const systemPrompt = buildNutritionSystemPrompt();
@@ -513,7 +550,8 @@ export async function generateNutritionAsync(payload: {
       recentLogs,
       recentNutritionPlans,
       today,
-      userTier
+      userTier,
+      recentMealLogs
     );
 
     // Call Bedrock

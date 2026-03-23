@@ -166,7 +166,8 @@ function buildUserPrompt(
   recentDailyWorkouts: any[],
   exercises: any[],
   today: string,
-  userTier?: string
+  userTier?: string,
+  nutritionContext?: { caloricGoal?: string; macroPreference?: string; allergies?: string[] } | null
 ): string {
   const lines: string[] = [];
 
@@ -336,6 +337,16 @@ function buildUserPrompt(
     if (skippedDates.length > 0) {
       lines.push(`Skipped dates: ${skippedDates.join(', ')}`);
     }
+    lines.push('');
+  }
+
+  // Nutrition awareness (for recovery/energy context)
+  if (nutritionContext) {
+    lines.push(`## Nutrition Context`);
+    if (nutritionContext.caloricGoal) lines.push(`Caloric Goal: ${nutritionContext.caloricGoal}`);
+    if (nutritionContext.macroPreference) lines.push(`Macro Preference: ${nutritionContext.macroPreference}`);
+    if (nutritionContext.allergies?.length) lines.push(`Note: User has food allergies - do not reference specific foods in coaching notes.`);
+    lines.push('Consider the user\'s nutrition targets when suggesting workout intensity and recovery.');
     lines.push('');
   }
 
@@ -613,6 +624,11 @@ export async function generateRoutineAsync(payload: {
     const recentDailyWorkouts = dailyWorkoutsResult.Items || [];
 
     // Build prompts
+    const nutritionContext = profile.nutritionProfile ? {
+      caloricGoal: profile.nutritionProfile.caloricGoal,
+      macroPreference: profile.nutritionProfile.macroPreference,
+      allergies: profile.nutritionProfile.allergies,
+    } : null;
     const systemPrompt = buildSystemPrompt(exercises, workouts, equipment);
     const userPrompt = buildUserPrompt(
       profile.fitnessProfile,
@@ -620,7 +636,8 @@ export async function generateRoutineAsync(payload: {
       recentDailyWorkouts,
       exercises,
       today,
-      userTier
+      userTier,
+      nutritionContext
     );
 
     // Call Bedrock
@@ -815,7 +832,12 @@ export async function swapRoutineAsync(payload: {
 
     const exercises = exerciseResult.Items || [];
     const systemPrompt = buildSystemPrompt(exercises, workoutResult.Items || [], equipmentResult.Items || []);
-    let userPrompt = buildUserPrompt(profile.fitnessProfile, logsResult.Items || [], dailyWorkoutsResult.Items || [], exercises, today, userTier);
+    const swapNutritionContext = profile.nutritionProfile ? {
+      caloricGoal: profile.nutritionProfile.caloricGoal,
+      macroPreference: profile.nutritionProfile.macroPreference,
+      allergies: profile.nutritionProfile.allergies,
+    } : null;
+    let userPrompt = buildUserPrompt(profile.fitnessProfile, logsResult.Items || [], dailyWorkoutsResult.Items || [], exercises, today, userTier, swapNutritionContext);
 
     userPrompt += `\n## SWAP REQUEST\n`;
     userPrompt += `The user rejected this workout: "${rejectedTitle}" (focus: ${rejectedFocus.join(', ')})\n`;

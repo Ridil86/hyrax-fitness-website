@@ -9,6 +9,13 @@ import type { APIGatewayProxyEvent, APIGatewayProxyResult } from 'aws-lambda';
 import { success, badRequest, forbidden, serverError } from '../utils/response';
 import { extractClaims, isAdmin } from '../utils/auth';
 import { invokeClaude } from '../utils/bedrock';
+import {
+  loadExercises, loadWorkouts, loadEquipment,
+  loadUserCompletionLogs, loadUserMealLogs,
+  loadTodayWorkout, loadTodayNutrition, loadUserProfile,
+  buildExerciseCatalogText, buildWorkoutCatalogText, buildEquipmentCatalogText,
+  formatCompletionLogsSummary, formatMealLogsSummary,
+} from '../utils/catalog';
 import { randomUUID } from 'crypto';
 
 const client = DynamoDBDocumentClient.from(new DynamoDBClient({}));
@@ -64,17 +71,21 @@ export async function sendChatMessage(
       return badRequest(`Daily message limit reached (${MAX_MESSAGES_PER_DAY} messages/day)`);
     }
 
-    // Load context: today's workout + fitness profile
-    const todayWorkoutResult = await client.send(
-      new GetCommand({
-        TableName: TABLE_NAME,
-        Key: { pk: `USER#${claims.sub}`, sk: `DAILY_WORKOUT#${today}` },
-      })
-    );
-
-    // Load recent chat history for conversation continuity
-    const historyResult = await client.send(
-      new QueryCommand({
+    // Load all context in parallel
+    const [
+      userProfile, todayWorkout, todayNutrition,
+      exerciseItems, workoutItems, equipmentItems,
+      completionLogs, mealLogs, chatHistoryResult,
+    ] = await Promise.all([
+      loadUserProfile(claims.sub),
+      loadTodayWorkout(claims.sub, today),
+      loadTodayNutrition(claims.sub, today),
+      loadExercises(),
+      loadWorkouts(),
+      loadEquipment(),
+      loadUserCompletionLogs(claims.sub, 14),
+      loadUserMealLogs(claims.sub, 7),
+      client.send(new QueryCommand({
         TableName: TABLE_NAME,
         KeyConditionExpression: 'pk = :pk AND begins_with(sk, :prefix)',
         ExpressionAttributeValues: {
@@ -83,35 +94,100 @@ export async function sendChatMessage(
         },
         ScanIndexForward: true,
         Limit: 20,
-      })
-    );
-    const chatHistory = historyResult.Items || [];
+      })),
+    ]);
+    const chatHistory = chatHistoryResult.Items || [];
+    const fp = userProfile?.fitnessProfile || profile?.fitnessProfile;
+    const np = userProfile?.nutritionProfile || profile?.nutritionProfile;
+    const userName = [
+      userProfile?.givenName || profile?.givenName,
+      userProfile?.familyName || profile?.familyName,
+    ].filter(Boolean).join(' ') || 'athlete';
 
-    // Build system prompt
-    const userName = [profile.givenName, profile.familyName].filter(Boolean).join(' ') || 'athlete';
-    const fp = profile.fitnessProfile;
-    let systemPrompt = `You are the Hyrax Fitness Personal Coach for ${userName}. You are a knowledgeable, encouraging, and concise personal training assistant.\n\n`;
-    systemPrompt += `## User Context\n`;
+    // Build comprehensive system prompt
+    let systemPrompt = `You are the Hyrax Fitness Personal Coach for ${userName}. You are a knowledgeable training partner who gives direct, confident, actionable advice.
+
+## FORMATTING RULES (CRITICAL)
+- NEVER use em-dashes or en-dashes. Use hyphens (-) only.
+- NEVER use emojis or Unicode symbols. Use plain ASCII text only.
+- Do NOT start responses with "Great question!", "That's a great point!", "Absolutely!", or similar sycophantic openers.
+- Do NOT be patronizing or overly enthusiastic. Be direct and helpful like a knowledgeable training partner.
+- Use "you" naturally. Be personable without being performative.
+- Keep responses concise (2-4 sentences) unless the user asks for detailed explanations.
+- When giving lists, use plain hyphens for bullets.
+
+## HYRAX FITNESS PHILOSOPHY
+Hyrax Fitness is built around the Forage-Bask cycle - a nature-inspired training methodology emphasizing functional, outdoor-ready fitness. "Forage" represents the training effort (high-intensity, functional movements). "Bask" represents recovery (cooldown, stretching, reflection). Every workout follows this cycle. Training emphasizes real-world strength, loaded carries, bodyweight mastery, and metabolic conditioning. All exercises use Hyrax signature names.
+
+## EXERCISE CATALOG
+These are the official Hyrax Fitness exercises. Reference ONLY these when discussing exercises:
+${buildExerciseCatalogText(exerciseItems)}
+
+## WORKOUT TEMPLATES
+${buildWorkoutCatalogText(workoutItems)}
+
+## EQUIPMENT CATALOG
+${buildEquipmentCatalogText(equipmentItems)}
+
+## USER FITNESS PROFILE
+`;
+
     if (fp) {
       systemPrompt += `Experience: ${fp.experienceLevel || 'intermediate'}\n`;
       systemPrompt += `Goals: ${(fp.fitnessGoals || []).join(', ')}\n`;
+      systemPrompt += `Days/Week: ${fp.daysPerWeek || '?'}\n`;
+      systemPrompt += `Preferred Duration: ${fp.preferredDuration || '?'} min\n`;
+      systemPrompt += `Intensity: ${fp.intensity || '?'}\n`;
+      systemPrompt += `Environment: ${fp.environment || '?'}\n`;
+      systemPrompt += `Available Equipment: ${(fp.availableEquipment || []).join(', ') || 'Unknown'}\n`;
+      systemPrompt += `Indoor/Outdoor: ${fp.indoorOutdoor || '?'}\n`;
+      systemPrompt += `Time of Day: ${fp.timeOfDay || '?'}\n`;
+      systemPrompt += `Location: ${fp.city || ''}, ${fp.region || ''}\n`;
       systemPrompt += `Limitations: ${(fp.limitations || []).filter((l: string) => l !== 'none').join(', ') || 'None'}\n`;
-      if (fp.injuries) systemPrompt += `Injuries: ${fp.injuries}\n`;
+      if (fp.injuries) systemPrompt += `Injuries/Notes: ${fp.injuries}\n`;
+      if (fp.focusAreas?.length) systemPrompt += `Focus Areas: ${fp.focusAreas.join(', ')}\n`;
+      if (fp.age) systemPrompt += `Age: ${fp.age}\n`;
+    } else {
+      systemPrompt += `No fitness profile completed yet.\n`;
     }
 
-    const todayWorkout = todayWorkoutResult.Item;
-    if (todayWorkout) {
-      systemPrompt += `\n## Today's Workout\n`;
-      systemPrompt += `Title: ${todayWorkout.title}\n`;
-      systemPrompt += `Duration: ${todayWorkout.duration}\n`;
-      systemPrompt += `Exercises: ${(todayWorkout.exercises || []).map((e: any) => e.exerciseName).join(', ')}\n`;
+    if (np) {
+      systemPrompt += `\n## USER NUTRITION PROFILE\n`;
+      if (np.allergies?.length) systemPrompt += `ALLERGIES (CRITICAL - never suggest foods containing these): ${np.allergies.join(', ')}\n`;
+      if (np.dietaryRestrictions?.length) systemPrompt += `Dietary Restrictions: ${np.dietaryRestrictions.join(', ')}\n`;
+      if (np.caloricGoal) systemPrompt += `Caloric Goal: ${np.caloricGoal}\n`;
+      if (np.macroPreference) systemPrompt += `Macro Preference: ${np.macroPreference}\n`;
+      if (np.mealsPerDay) systemPrompt += `Meals/Day: ${np.mealsPerDay}\n`;
+      if (np.cookingSkill) systemPrompt += `Cooking Skill: ${np.cookingSkill}\n`;
+      if (np.supplements?.length) systemPrompt += `Supplements: ${np.supplements.join(', ')}\n`;
     }
 
-    systemPrompt += `\n## Rules\n`;
-    systemPrompt += `- Be concise and actionable (2-3 sentences unless more detail is asked for)\n`;
-    systemPrompt += `- Answer questions about training, form, modifications, nutrition timing, and recovery\n`;
-    systemPrompt += `- Stay in the context of fitness and the Hyrax training methodology\n`;
-    systemPrompt += `- If the user's question is unrelated to fitness, politely redirect\n`;
+    if (todayWorkout && todayWorkout.status === 'ready') {
+      systemPrompt += `\n## TODAY'S WORKOUT\n`;
+      systemPrompt += `Title: ${todayWorkout.title}\nType: ${todayWorkout.type || 'training'}\nDuration: ${todayWorkout.duration}\n`;
+      systemPrompt += `Focus: ${(todayWorkout.focus || []).join(', ')}\n`;
+      systemPrompt += `Exercises: ${(todayWorkout.exercises || []).map((e: any) => `${e.exerciseName} (${e.sets}x${e.reps})`).join(', ')}\n`;
+    }
+
+    if (todayNutrition && todayNutrition.status === 'ready') {
+      systemPrompt += `\n## TODAY'S NUTRITION PLAN\n`;
+      systemPrompt += `Title: ${todayNutrition.title}\nCalories: ${todayNutrition.totalCalories}\n`;
+      if (todayNutrition.macros) systemPrompt += `Macros: P:${todayNutrition.macros.protein} C:${todayNutrition.macros.carbs} F:${todayNutrition.macros.fat}\n`;
+      systemPrompt += `Meals: ${(todayNutrition.meals || []).map((m: any) => `${m.name} (${m.calories} cal)`).join(', ')}\n`;
+    }
+
+    systemPrompt += `\n## RECENT WORKOUT HISTORY (14 days)\n${formatCompletionLogsSummary(completionLogs, 14)}`;
+    systemPrompt += `\n\n## RECENT MEAL HISTORY (7 days)\n${formatMealLogsSummary(mealLogs, 7)}`;
+
+    systemPrompt += `\n\n## BEHAVIOR RULES
+- Answer questions about training, form, exercise modifications, nutrition, recovery, and Hyrax methodology.
+- When discussing exercises, ONLY reference Hyrax Fitness exercises from the catalog above using official names.
+- When giving form cues or modifications, reference the specific modification level data from the catalog.
+- Use the user's recent training and meal history to give personalized advice.
+- If asked about nutrition, reference their nutrition profile and recent meal data.
+- If asked about something outside fitness/nutrition/recovery, politely redirect.
+- Never recommend exercises or workouts that conflict with the user's listed injuries or limitations.
+- Keep responses focused and practical. Avoid filler.`;
 
     // Build messages array including history
     const messages: Array<{ role: string; content: string }> = [];
