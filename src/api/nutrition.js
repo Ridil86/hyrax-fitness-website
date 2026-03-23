@@ -67,3 +67,11 @@ export function fetchNutritionHistory(token) {
 export function fetchNutritionByDate(token, date) {
   return apiGet(`/api/nutrition/${date}`, token);
 }
+
+/**
+ * Preview the nutrition prompts (admin only).
+ * @param {string} token - Cognito ID token
+ */
+export function previewNutritionPrompts(token) {
+  return apiPost('/api/nutrition/preview', {}, token);
+}

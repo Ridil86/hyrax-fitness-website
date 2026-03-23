@@ -718,3 +718,105 @@ export async function getNutritionByDate(
     return serverError('Failed to fetch nutrition plan');
   }
 }
+
+/**
+ * POST /api/nutrition/preview — Admin-only preview of nutrition prompts
+ */
+export async function previewNutritionPrompts(
+  event: APIGatewayProxyEvent
+): Promise<APIGatewayProxyResult> {
+  if (!isAdmin(event)) return forbidden('Admin access required');
+  const claims = extractClaims(event);
+  if (!claims?.sub) return forbidden('Authentication required');
+
+  try {
+    const today = todayStr(event);
+
+    // Load profile
+    const profileResult = await client.send(
+      new GetCommand({ TableName: TABLE_NAME, Key: { pk: `USER#${claims.sub}`, sk: 'PROFILE' } })
+    );
+    const profile = profileResult.Item;
+    const nutritionProfile = profile?.nutritionProfile || null;
+    const fitnessProfile = profile?.fitnessProfile || null;
+    const userTier = profile?.tier || 'Pup';
+
+    // Load context in parallel
+    const fourteenDaysAgo = daysAgo(14);
+    const sevenDaysAgo = daysAgo(7);
+    const [todayWorkoutResult, logsResult, nutritionPlansResult, mealLogsResult] = await Promise.all([
+      client.send(new GetCommand({
+        TableName: TABLE_NAME,
+        Key: { pk: `USER#${claims.sub}`, sk: `DAILY_WORKOUT#${today}` },
+      })),
+      client.send(new QueryCommand({
+        TableName: TABLE_NAME,
+        KeyConditionExpression: 'pk = :pk AND sk BETWEEN :from AND :to',
+        ExpressionAttributeValues: {
+          ':pk': `USER#${claims.sub}`,
+          ':from': `LOG#${fourteenDaysAgo}`,
+          ':to': `LOG#${new Date().toISOString()}~`,
+        },
+        ScanIndexForward: false,
+      })),
+      client.send(new QueryCommand({
+        TableName: TABLE_NAME,
+        KeyConditionExpression: 'pk = :pk AND begins_with(sk, :prefix)',
+        ExpressionAttributeValues: {
+          ':pk': `USER#${claims.sub}`,
+          ':prefix': 'DAILY_NUTRITION#',
+        },
+        ScanIndexForward: false,
+        Limit: 7,
+      })),
+      client.send(new QueryCommand({
+        TableName: TABLE_NAME,
+        KeyConditionExpression: 'pk = :pk AND sk BETWEEN :from AND :to',
+        ExpressionAttributeValues: {
+          ':pk': `USER#${claims.sub}`,
+          ':from': `MEAL_LOG#${sevenDaysAgo}`,
+          ':to': `MEAL_LOG#${new Date().toISOString()}~`,
+        },
+        ScanIndexForward: false,
+      })),
+    ]);
+
+    const todayWorkout = todayWorkoutResult.Item || null;
+    const recentLogs = logsResult.Items || [];
+    const recentNutritionPlans = nutritionPlansResult.Items || [];
+    const recentMealLogs = mealLogsResult.Items || [];
+
+    // Build prompts
+    const systemPrompt = buildNutritionSystemPrompt();
+    const userPrompt = buildNutritionUserPrompt(
+      nutritionProfile,
+      fitnessProfile,
+      todayWorkout,
+      recentLogs,
+      recentNutritionPlans,
+      today,
+      userTier,
+      recentMealLogs
+    );
+
+    const estimatedTokens = Math.ceil((systemPrompt.length + userPrompt.length) / 4);
+
+    return success({
+      systemPrompt,
+      userPrompt,
+      estimatedTokens,
+      contextStats: {
+        hasNutritionProfile: !!nutritionProfile,
+        hasFitnessProfile: !!fitnessProfile,
+        todayWorkoutAvailable: !!(todayWorkout && todayWorkout.status === 'ready'),
+        recentCompletionLogs: recentLogs.length,
+        recentNutritionPlans: recentNutritionPlans.length,
+        recentMealLogs: recentMealLogs.length,
+        userTier,
+      },
+    });
+  } catch (error) {
+    console.error('previewNutritionPrompts error:', error);
+    return serverError('Failed to generate nutrition prompt preview');
+  }
+}

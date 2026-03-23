@@ -16,3 +16,11 @@ export function sendChatMessage(token, message) {
 export function fetchChatHistory(token) {
   return apiGet('/api/chat/history', token);
 }
+
+/**
+ * Preview the chat system prompt (admin only).
+ * @param {string} token - Cognito ID token
+ */
+export function previewChatPrompts(token) {
+  return apiPost('/api/chat/preview', {}, token);
+}

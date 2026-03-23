@@ -702,6 +702,12 @@ export class BackendStack extends cdk.Stack {
       authorizationType: apigateway.AuthorizationType.COGNITO,
     });
 
+    const nutritionPreview = nutritionResource.addResource('preview');
+    nutritionPreview.addMethod('POST', lambdaIntegration, {
+      authorizer,
+      authorizationType: apigateway.AuthorizationType.COGNITO,
+    });
+
     const nutritionDate = nutritionResource.addResource('{date}');
     nutritionDate.addMethod('GET', lambdaIntegration, {
       authorizer,
@@ -779,6 +785,11 @@ export class BackendStack extends cdk.Stack {
     // AI Chat routes (Iron Dassie only, all authenticated)
     const chatResource = apiResource.addResource('chat');
     chatResource.addMethod('POST', lambdaIntegration, {
+      authorizer,
+      authorizationType: apigateway.AuthorizationType.COGNITO,
+    });
+    const chatPreview = chatResource.addResource('preview');
+    chatPreview.addMethod('POST', lambdaIntegration, {
       authorizer,
       authorizationType: apigateway.AuthorizationType.COGNITO,
     });

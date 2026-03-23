@@ -37,10 +37,11 @@ import {
   generateDailyWorkout, generateRoutineAsync, swapDailyWorkout, swapRoutineAsync,
   previewPrompts, getTodayWorkout, listWorkoutHistory, getWorkoutByDate, getAdminUserRoutines,
 } from './routes/routine';
-import { sendChatMessage, getChatHistory } from './routes/chat';
+import { sendChatMessage, getChatHistory, previewChatPrompts } from './routes/chat';
 import {
   generateDailyNutrition, generateNutritionAsync,
   getTodayNutrition, listNutritionHistory, getNutritionByDate,
+  previewNutritionPrompts,
 } from './routes/nutrition';
 import {
   createMealLog, createMealPlanLog, listMealLogs, getMealLogStats, deleteMealLog,
@@ -467,6 +468,9 @@ export const handler = async (
     }
 
     // ── AI Chat Routes (Iron Dassie only) ──
+    if (path === '/api/chat/preview' && method === 'POST') {
+      return previewChatPrompts(event);
+    }
     if (path === '/api/chat/history' && method === 'GET') {
       return getChatHistory(event);
     }
@@ -505,6 +509,9 @@ export const handler = async (
     }
 
     // ── AI Nutrition Routes (authenticated, Iron Dassie only) ──
+    if (path === '/api/nutrition/preview' && method === 'POST') {
+      return previewNutritionPrompts(event);
+    }
     if (path === '/api/nutrition/generate' && method === 'POST') {
       return generateDailyNutrition(event);
     }
