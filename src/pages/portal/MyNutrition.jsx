@@ -68,6 +68,13 @@ export default function MyNutrition() {
     return () => { cancelled = true; };
   }, [getIdToken, hasAccess]);
 
+  // Redirect to questionnaire if nutrition profile not completed
+  useEffect(() => {
+    if (!loading && hasAccess && fitnessProfile && !nutritionProfile) {
+      navigate('/portal/nutrition-questionnaire', { replace: true });
+    }
+  }, [loading, hasAccess, fitnessProfile, nutritionProfile, navigate]);
+
   /** Poll for a generating plan until ready */
   async function fetchTodayNutritionPoll(token) {
     const MAX_POLLS = 30;
@@ -155,13 +162,6 @@ export default function MyNutrition() {
       </div>
     );
   }
-
-  // Redirect to questionnaire if nutrition profile not completed
-  useEffect(() => {
-    if (!loading && fitnessProfile && !nutritionProfile) {
-      navigate('/portal/nutrition-questionnaire', { replace: true });
-    }
-  }, [loading, fitnessProfile, nutritionProfile, navigate]);
 
   if (!nutritionProfile) {
     return (
