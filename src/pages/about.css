@@ -1,0 +1,164 @@
+/* ── About Page ── */
+
+.about-page {
+  background: var(--paper);
+}
+
+/* Hero Banner */
+.about-hero {
+  position: relative;
+  height: 360px;
+  overflow: hidden;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.about-hero-bg {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.about-hero-overlay {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(180deg, rgba(27, 18, 10, 0.7) 0%, rgba(27, 18, 10, 0.85) 100%);
+}
+
+.about-hero-content {
+  position: relative;
+  z-index: 1;
+  text-align: center;
+  padding: 2rem;
+}
+
+.about-hero-content h1 {
+  color: #fff;
+  font-size: 2.8rem;
+  margin: 0 0 0.5rem;
+}
+
+.about-hero-sub {
+  color: var(--sunrise);
+  font-size: 1.15rem;
+  margin: 0;
+  font-style: italic;
+}
+
+/* Dassie section on About page - remove top padding since hero precedes it */
+.about-dassie {
+  padding-top: 3rem;
+}
+
+/* Story + Science sections */
+.about-story,
+.about-science {
+  padding: 4rem 0;
+}
+
+.about-science {
+  background: var(--sand-10, rgba(211, 191, 151, 0.08));
+}
+
+.about-story-grid {
+  margin-top: 2rem;
+}
+
+.about-story-card {
+  background: #fff;
+  border-radius: 18px;
+  padding: 2.5rem;
+  box-shadow: 0 2px 12px rgba(27, 18, 10, 0.06);
+}
+
+.about-founder h3 {
+  color: var(--sunset);
+  font-size: 1.5rem;
+  margin: 0 0 0.25rem;
+}
+
+.about-founder-title {
+  color: var(--rock);
+  font-size: 0.95rem;
+  font-style: italic;
+  margin: 0 0 1.25rem;
+}
+
+.about-founder p {
+  color: var(--ink);
+  line-height: 1.7;
+  margin: 0 0 1rem;
+}
+
+.about-founder p:last-child {
+  margin-bottom: 0;
+}
+
+.about-founder a {
+  color: var(--sunset);
+  text-decoration: none;
+  font-weight: 600;
+}
+
+.about-founder a:hover {
+  text-decoration: underline;
+}
+
+/* Mission section */
+.about-mission {
+  padding: 4rem 0;
+  background: var(--ink);
+}
+
+.about-mission-inner {
+  text-align: center;
+  max-width: 720px;
+  margin: 0 auto;
+}
+
+.about-mission-inner h2 {
+  color: var(--sunrise);
+  font-size: 2rem;
+  margin: 0 0 1.5rem;
+}
+
+.about-mission-inner p {
+  color: rgba(255, 255, 255, 0.85);
+  font-size: 1.05rem;
+  line-height: 1.75;
+  margin: 0 0 1rem;
+}
+
+.about-mission-inner p:last-child {
+  margin-bottom: 0;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .about-hero {
+    height: 280px;
+  }
+
+  .about-hero-content h1 {
+    font-size: 2rem;
+  }
+
+  .about-hero-sub {
+    font-size: 1rem;
+  }
+
+  .about-story-card {
+    padding: 1.5rem;
+  }
+
+  .about-founder h3 {
+    font-size: 1.25rem;
+  }
+
+  .about-mission-inner h2 {
+    font-size: 1.6rem;
+  }
+}

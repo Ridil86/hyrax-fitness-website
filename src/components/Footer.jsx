@@ -7,6 +7,7 @@ const footerLinks = {
     { to: '/programs', label: 'Programs' },
     { to: '/gallery', label: 'Gallery' },
     { to: '/faq', label: 'FAQ' },
+    { to: '/about', label: 'About' },
   ],
   Resources: [
     { to: '/get-started', label: 'Get Started' },

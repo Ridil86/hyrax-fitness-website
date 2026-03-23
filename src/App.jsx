@@ -19,6 +19,7 @@ const GetStarted = lazy(() => import('./components/GetStarted'));
 const Programs = lazy(() => import('./components/Programs'));
 const Gallery = lazy(() => import('./components/Gallery'));
 const FAQ = lazy(() => import('./components/FAQ'));
+const About = lazy(() => import('./pages/About'));
 
 // Auth pages
 const Login = lazy(() => import('./pages/Login'));
@@ -133,7 +134,6 @@ function HomePage() {
     <>
       <GoogleOAuthHandler />
       <Hero />
-      <LazySection><Dassie /></LazySection>
       <LazySection><Method /></LazySection>
       <LazySection><Workouts /></LazySection>
       <LazySection><Testimonials /></LazySection>
@@ -155,6 +155,7 @@ export default function App() {
             <Route path="/programs" element={<LazySection><Programs /></LazySection>} />
             <Route path="/gallery" element={<LazySection><Gallery /></LazySection>} />
             <Route path="/faq" element={<LazySection><FAQ /></LazySection>} />
+            <Route path="/about" element={<LazySection><About /></LazySection>} />
             {/* Legal routes */}
             <Route path="/terms" element={<LazySection><TermsOfUse /></LazySection>} />
             <Route path="/privacy" element={<LazySection><PrivacyPolicy /></LazySection>} />
