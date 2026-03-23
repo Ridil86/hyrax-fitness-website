@@ -4,10 +4,11 @@ import './Footer.css';
 const footerLinks = {
   Explore: [
     { to: '/#method', label: 'Method' },
+    { to: '/about', label: 'About' },
+    { to: '/events', label: 'Events' },
     { to: '/programs', label: 'Programs' },
     { to: '/gallery', label: 'Gallery' },
     { to: '/faq', label: 'FAQ' },
-    { to: '/about', label: 'About' },
   ],
   Resources: [
     { to: '/get-started', label: 'Get Started' },

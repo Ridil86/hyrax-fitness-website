@@ -56,7 +56,7 @@ export default function GetStarted() {
                 </p>
               </div>
             </div>
-            <Link to="/programs#events" className="card card-link">
+            <Link to="/events" className="card card-link">
               <div className="cardPad">
                 <strong>{d.eventCardTitle || 'Want an event?'}</strong>
                 <LazyImage

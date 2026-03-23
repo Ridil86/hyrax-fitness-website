@@ -246,57 +246,6 @@ export default function Programs() {
           </motion.div>
         </div>
 
-        {/* Events Section */}
-        <div className="events-section" id="events">
-          <ScrollReveal>
-            <div className="sectionHead" style={{ marginTop: 54 }}>
-              <div>
-                <h2>{d.eventsHeading || 'Hyrax Fitness Events'}</h2>
-                <p className="muted">
-                  {d.eventsSubheading || 'Bring the Hyrax system to your community with branded events and competitions.'}
-                </p>
-              </div>
-              <span className="pill">{d.eventsPill || 'Host or Compete'}</span>
-            </div>
-          </ScrollReveal>
-
-          <ScrollReveal>
-            <div className="events-band">
-              <div className="events-content">
-                <h3>{d.eventsTitle || 'Host Your Own Hyrax Event'}</h3>
-                <p>
-                  {d.eventsBody || 'Whether you run a gym, coach a team, or organize community fitness days, you can bring the Hyrax experience to your crew. We provide the programming, branding, and support so you can focus on your athletes.'}
-                </p>
-                <ul className="events-list">
-                  {(d.eventsList || [
-                    'Ready-to-run event formats for groups of any size',
-                    'Official Hyrax branding and promotional materials',
-                    'Scalable workouts for mixed fitness levels',
-                    'Scoring templates and leaderboard tools',
-                  ]).map((item, i) => (
-                    <li key={i}>{item}</li>
-                  ))}
-                </ul>
-                <p className="muted" style={{ marginTop: 14 }}>
-                  {d.eventsNote || 'Interested in hosting or want to find an event near you? Reach out and we will help you get started.'}
-                </p>
-                <a
-                  className="btn primary"
-                  href={`mailto:${d.eventsEmail || 'events@hyraxfitness.com'}`}
-                  style={{ marginTop: 8, display: 'inline-block' }}
-                >
-                  Contact Us
-                </a>
-                <span className="events-email">{d.eventsEmail || 'events@hyraxfitness.com'}</span>
-              </div>
-              <LazyImage
-                src="/img/hyrax-event-hosting-800x600.jpg"
-                alt="Hyrax Fitness event with athletes competing outdoors"
-                className="events-image"
-              />
-            </div>
-          </ScrollReveal>
-        </div>
       </div>
     </section>
   );

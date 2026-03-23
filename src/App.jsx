@@ -20,6 +20,7 @@ const Programs = lazy(() => import('./components/Programs'));
 const Gallery = lazy(() => import('./components/Gallery'));
 const FAQ = lazy(() => import('./components/FAQ'));
 const About = lazy(() => import('./pages/About'));
+const Events = lazy(() => import('./pages/Events'));
 
 // Auth pages
 const Login = lazy(() => import('./pages/Login'));
@@ -156,6 +157,7 @@ export default function App() {
             <Route path="/gallery" element={<LazySection><Gallery /></LazySection>} />
             <Route path="/faq" element={<LazySection><FAQ /></LazySection>} />
             <Route path="/about" element={<LazySection><About /></LazySection>} />
+            <Route path="/events" element={<LazySection><Events /></LazySection>} />
             {/* Legal routes */}
             <Route path="/terms" element={<LazySection><TermsOfUse /></LazySection>} />
             <Route path="/privacy" element={<LazySection><PrivacyPolicy /></LazySection>} />
