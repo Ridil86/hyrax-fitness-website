@@ -83,6 +83,9 @@ const MyRoutine = lazy(() => import('./pages/portal/MyRoutine'));
 const RoutineHistory = lazy(() => import('./pages/portal/RoutineHistory'));
 const TrainingChat = lazy(() => import('./pages/portal/TrainingChat'));
 const Benchmarks = lazy(() => import('./pages/portal/Benchmarks'));
+const NutritionQuestionnaire = lazy(() => import('./pages/portal/NutritionQuestionnaire'));
+const MyNutrition = lazy(() => import('./pages/portal/MyNutrition'));
+const NutritionHistory = lazy(() => import('./pages/portal/NutritionHistory'));
 
 // Cookie consent
 const CookieConsent = lazy(() => import('./components/CookieConsent'));
@@ -189,6 +192,9 @@ export default function App() {
               <Route path="routine/history" element={<LazySection><RoutineHistory /></LazySection>} />
               <Route path="questionnaire" element={<LazySection><FitnessQuestionnaire /></LazySection>} />
               <Route path="chat" element={<LazySection><TrainingChat /></LazySection>} />
+              <Route path="nutrition" element={<LazySection><MyNutrition /></LazySection>} />
+              <Route path="nutrition/history" element={<LazySection><NutritionHistory /></LazySection>} />
+              <Route path="nutrition-questionnaire" element={<LazySection><NutritionQuestionnaire /></LazySection>} />
               <Route path="benchmarks" element={<LazySection><Benchmarks /></LazySection>} />
               <Route path="activity" element={<LazySection><ActivityLog /></LazySection>} />
               <Route path="progress" element={<LazySection><ProgressDashboard /></LazySection>} />

@@ -336,6 +336,92 @@ export async function updateFitnessProfile(
 }
 
 /**
+ * GET /api/profile/nutrition - Get the current user's nutrition profile (AUTHENTICATED)
+ */
+export async function getNutritionProfile(
+  event: APIGatewayProxyEvent
+): Promise<APIGatewayProxyResult> {
+  const claims = extractClaims(event);
+  if (!claims?.sub) {
+    return forbidden('Authentication required');
+  }
+
+  try {
+    const result = await client.send(
+      new GetCommand({
+        TableName: TABLE_NAME,
+        Key: {
+          pk: `USER#${claims.sub}`,
+          sk: 'PROFILE',
+        },
+        ProjectionExpression: 'nutritionProfile, nutritionProfileCompletedAt',
+      })
+    );
+
+    return success({
+      nutritionProfile: result.Item?.nutritionProfile || null,
+      nutritionProfileCompletedAt: result.Item?.nutritionProfileCompletedAt || null,
+    });
+  } catch (error) {
+    console.error('getNutritionProfile error:', error);
+    return serverError('Failed to fetch nutrition profile');
+  }
+}
+
+/**
+ * PUT /api/profile/nutrition - Save/update the current user's nutrition profile (AUTHENTICATED)
+ */
+export async function updateNutritionProfile(
+  event: APIGatewayProxyEvent
+): Promise<APIGatewayProxyResult> {
+  const claims = extractClaims(event);
+  if (!claims?.sub) {
+    return forbidden('Authentication required');
+  }
+
+  try {
+    const body = JSON.parse(event.body || '{}');
+    const { nutritionProfile } = body;
+
+    if (!nutritionProfile || typeof nutritionProfile !== 'object') {
+      return badRequest('nutritionProfile object is required');
+    }
+
+    const now = new Date().toISOString();
+
+    const result = await client.send(
+      new UpdateCommand({
+        TableName: TABLE_NAME,
+        Key: {
+          pk: `USER#${claims.sub}`,
+          sk: 'PROFILE',
+        },
+        UpdateExpression: 'SET #np = :np, #npca = :npca, #ua = :ua',
+        ExpressionAttributeNames: {
+          '#np': 'nutritionProfile',
+          '#npca': 'nutritionProfileCompletedAt',
+          '#ua': 'updatedAt',
+        },
+        ExpressionAttributeValues: {
+          ':np': nutritionProfile,
+          ':npca': now,
+          ':ua': now,
+        },
+        ReturnValues: 'ALL_NEW',
+      })
+    );
+
+    return success({
+      nutritionProfile: result.Attributes?.nutritionProfile,
+      nutritionProfileCompletedAt: result.Attributes?.nutritionProfileCompletedAt,
+    });
+  } catch (error) {
+    console.error('updateNutritionProfile error:', error);
+    return serverError('Failed to update nutrition profile');
+  }
+}
+
+/**
  * GET /api/users/{username}/fitness-profile - Admin-only: get a user's fitness profile
  */
 export async function getAdminUserFitnessProfile(

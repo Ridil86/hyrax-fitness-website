@@ -132,7 +132,7 @@ export async function sendChatMessage(
     const { BedrockRuntimeClient, InvokeModelCommand } = await import('@aws-sdk/client-bedrock-runtime');
     const bedrockClient = new BedrockRuntimeClient({ region: 'us-east-1' });
     const response = await bedrockClient.send(new InvokeModelCommand({
-      modelId: 'us.anthropic.claude-sonnet-4-20250514',
+      modelId: 'us.anthropic.claude-haiku-4-5-20251001-v1:0',
       contentType: 'application/json',
       accept: 'application/json',
       body: new TextEncoder().encode(bedrockBody),

@@ -670,6 +670,44 @@ export class BackendStack extends cdk.Stack {
       authorizationType: apigateway.AuthorizationType.COGNITO,
     });
 
+    // Nutrition profile sub-route (authenticated)
+    const nutritionProfileResource = profileResource.addResource('nutrition');
+    nutritionProfileResource.addMethod('GET', lambdaIntegration, {
+      authorizer,
+      authorizationType: apigateway.AuthorizationType.COGNITO,
+    });
+    nutritionProfileResource.addMethod('PUT', lambdaIntegration, {
+      authorizer,
+      authorizationType: apigateway.AuthorizationType.COGNITO,
+    });
+
+    // AI Nutrition routes (all authenticated, Iron Dassie only enforced in handler)
+    const nutritionResource = apiResource.addResource('nutrition');
+
+    const nutritionGenerate = nutritionResource.addResource('generate');
+    nutritionGenerate.addMethod('POST', lambdaIntegration, {
+      authorizer,
+      authorizationType: apigateway.AuthorizationType.COGNITO,
+    });
+
+    const nutritionToday = nutritionResource.addResource('today');
+    nutritionToday.addMethod('GET', lambdaIntegration, {
+      authorizer,
+      authorizationType: apigateway.AuthorizationType.COGNITO,
+    });
+
+    const nutritionHistory = nutritionResource.addResource('history');
+    nutritionHistory.addMethod('GET', lambdaIntegration, {
+      authorizer,
+      authorizationType: apigateway.AuthorizationType.COGNITO,
+    });
+
+    const nutritionDate = nutritionResource.addResource('{date}');
+    nutritionDate.addMethod('GET', lambdaIntegration, {
+      authorizer,
+      authorizationType: apigateway.AuthorizationType.COGNITO,
+    });
+
     // AI Routine routes (all authenticated)
     const routineResource = apiResource.addResource('routine');
 

@@ -10,7 +10,7 @@ import { getUploadUrl } from './routes/upload';
 import { getUserUploadUrl } from './routes/user-upload';
 import { logAuditEvent, listAuditLogs, getAuditStats } from './routes/audit';
 import { createAccount } from './routes/signup';
-import { getProfile, createProfile, updateProfile, getFitnessProfile, updateFitnessProfile, getAdminUserFitnessProfile } from './routes/profile';
+import { getProfile, createProfile, updateProfile, getFitnessProfile, updateFitnessProfile, getNutritionProfile, updateNutritionProfile, getAdminUserFitnessProfile } from './routes/profile';
 import { listEquipment, getEquipment, createEquipment, updateEquipment, deleteEquipment } from './routes/equipment';
 import { listExercises, getExercise, createExercise, updateExercise, deleteExercise } from './routes/exercises';
 import { listWorkouts, getWorkout, createWorkout, updateWorkout, deleteWorkout } from './routes/workouts';
@@ -38,6 +38,10 @@ import {
   previewPrompts, getTodayWorkout, listWorkoutHistory, getWorkoutByDate, getAdminUserRoutines,
 } from './routes/routine';
 import { sendChatMessage, getChatHistory } from './routes/chat';
+import {
+  generateDailyNutrition, generateNutritionAsync,
+  getTodayNutrition, listNutritionHistory, getNutritionByDate,
+} from './routes/nutrition';
 import { notFound, serverError } from './utils/response';
 
 export const handler = async (
@@ -53,6 +57,11 @@ export const handler = async (
   if (event.__asyncRoutineSwap) {
     console.log('Async routine swap for', event.userSub);
     await swapRoutineAsync(event);
+    return { statusCode: 200, headers: {}, body: 'ok' };
+  }
+  if (event.__asyncNutritionGeneration) {
+    console.log('Async nutrition generation for', event.userSub);
+    await generateNutritionAsync(event);
     return { statusCode: 200, headers: {}, body: 'ok' };
   }
 
@@ -115,6 +124,10 @@ export const handler = async (
     if (path === '/api/profile/fitness') {
       if (method === 'GET') return getFitnessProfile(event);
       if (method === 'PUT') return updateFitnessProfile(event);
+    }
+    if (path === '/api/profile/nutrition') {
+      if (method === 'GET') return getNutritionProfile(event);
+      if (method === 'PUT') return updateNutritionProfile(event);
     }
 
     if (path === '/api/profile') {
@@ -486,6 +499,22 @@ export const handler = async (
     if (routineDateMatch) {
       event.pathParameters = { ...event.pathParameters, date: routineDateMatch[1] };
       if (method === 'GET') return getWorkoutByDate(event);
+    }
+
+    // ── AI Nutrition Routes (authenticated, Iron Dassie only) ──
+    if (path === '/api/nutrition/generate' && method === 'POST') {
+      return generateDailyNutrition(event);
+    }
+    if (path === '/api/nutrition/today' && method === 'GET') {
+      return getTodayNutrition(event);
+    }
+    if (path === '/api/nutrition/history' && method === 'GET') {
+      return listNutritionHistory(event);
+    }
+    const nutritionDateMatch = path.match(/^\/api\/nutrition\/([^/]+)$/);
+    if (nutritionDateMatch) {
+      event.pathParameters = { ...event.pathParameters, date: nutritionDateMatch[1] };
+      if (method === 'GET') return getNutritionByDate(event);
     }
 
     return notFound(`No route found for ${method} ${path}`);
