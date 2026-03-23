@@ -408,6 +408,91 @@ export async function getAnalyticsOverview(
       totalOutputTokens: (routineStats?.billingCycle?.outputTokens || 0) + (nutritionStats?.billingCycle?.outputTokens || 0) + (chatStats?.billingCycle?.outputTokens || 0),
     };
 
+    // ── Engagement Stats ──
+    let engagementStats: any = null;
+    try {
+      const monthStart = thisMonth + '-01';
+      const totalUsers = Object.values(tierDist).reduce((s: number, n: number) => s + n, 0);
+
+      // Workout adherence: generated workouts vs completion logs this month
+      const routineItems = routineStats?.thisMonthTotal || 0;
+      const monthCompletions = monthlyResult.Items?.[0]?.count || thisMonthTotal;
+
+      // Meal adherence: count nutrition plans and meal logs this month
+      const nutPlansThisMonth = nutritionStats?.thisMonthTotal || 0;
+      let mealsPlanned = 0;
+      let mealsLogged = 0;
+      let adhocMeals = 0;
+      let totalRating = 0;
+      let ratedCount = 0;
+
+      // Query meal logs for this month
+      try {
+        const mealLogResult = await client.send(new QueryCommand({
+          TableName: TABLE_NAME,
+          IndexName: 'GSI1',
+          KeyConditionExpression: 'gsi1pk = :pk AND gsi1sk >= :from',
+          ExpressionAttributeValues: { ':pk': 'MEAL_LOG', ':from': monthStart },
+        }));
+        const mealItems = mealLogResult.Items || [];
+        mealsLogged = mealItems.filter((m: any) => m.source === 'plan').length;
+        adhocMeals = mealItems.filter((m: any) => m.source === 'adhoc').length;
+        for (const m of mealItems) {
+          if (m.rating) { totalRating += m.rating; ratedCount++; }
+        }
+        // Estimate planned meals: avg 4 meals per plan
+        mealsPlanned = nutPlansThisMonth * 4;
+      } catch { /* best effort */ }
+
+      // Questionnaire completion: scan user profiles
+      let fitnessComplete = 0;
+      let nutritionComplete = 0;
+      let bothComplete = 0;
+      try {
+        const profileScan = await client.send(new QueryCommand({
+          TableName: TABLE_NAME,
+          IndexName: 'GSI1',
+          KeyConditionExpression: 'gsi1pk = :pk',
+          ExpressionAttributeValues: { ':pk': 'USER' },
+          ProjectionExpression: 'fitnessProfile, nutritionProfile',
+        }));
+        for (const p of (profileScan.Items || [])) {
+          const hasFp = p.fitnessProfile && typeof p.fitnessProfile === 'object' && Object.keys(p.fitnessProfile).length > 0;
+          const hasNp = p.nutritionProfile && typeof p.nutritionProfile === 'object' && Object.keys(p.nutritionProfile).length > 0;
+          if (hasFp) fitnessComplete++;
+          if (hasNp) nutritionComplete++;
+          if (hasFp && hasNp) bothComplete++;
+        }
+      } catch { /* best effort */ }
+
+      const workoutAdherenceRate = routineItems > 0 ? Math.round((monthCompletions / Math.max(routineItems, 1)) * 100) : 0;
+      const mealAdherenceRate = mealsPlanned > 0 ? Math.round((mealsLogged / mealsPlanned) * 100) : 0;
+
+      engagementStats = {
+        workoutAdherence: {
+          generated: routineItems,
+          completed: monthCompletions,
+          rate: Math.min(workoutAdherenceRate, 100),
+        },
+        mealAdherence: {
+          plansGenerated: nutPlansThisMonth,
+          mealsPlanned,
+          mealsLogged,
+          adhocMeals,
+          rate: Math.min(mealAdherenceRate, 100),
+          avgRating: ratedCount > 0 ? Number((totalRating / ratedCount).toFixed(1)) : null,
+        },
+        questionnaireCompletion: {
+          fitnessComplete,
+          nutritionComplete,
+          bothComplete,
+          totalUsers,
+        },
+      };
+    } catch (err) {
+      console.error('Failed to compute engagement stats:', err);
+    }
+
     return success({
       allTimeTotal,
       thisMonthTotal,
@@ -421,6 +506,7 @@ export async function getAnalyticsOverview(
       nutritionStats,
       chatStats,
       combinedBilling,
+      engagementStats,
     });
   } catch (error) {
     console.error('getAnalyticsOverview error:', error);

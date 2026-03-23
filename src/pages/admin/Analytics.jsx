@@ -228,6 +228,8 @@ export default function Analytics() {
   const [overview, setOverview] = useState(null);
   const [trends, setTrends] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [aiExpanded, setAiExpanded] = useState(false);
+  const [aiTab, setAiTab] = useState('routines');
 
   useEffect(() => {
     let cancelled = false;
@@ -425,146 +427,213 @@ export default function Analytics() {
         </div>
       </div>
 
-      {/* AI Routine Generation Stats */}
-      {overview?.routineStats && <AIRoutineSection stats={overview.routineStats} tierDistribution={overview.tierDistribution} />}
+      {/* ── Collapsible AI Usage & Costs ── */}
+      {(overview?.routineStats || overview?.nutritionStats || overview?.chatStats) && (
+        <div className="analytics-collapsible">
+          <button className="analytics-collapsible-header" onClick={() => setAiExpanded(!aiExpanded)}>
+            <h2>AI Usage &amp; Costs</h2>
+            <span className="collapsible-summary">
+              {overview.combinedBilling ? fmtCost(overview.combinedBilling.totalCost) + ' total' : ''} | {
+                (overview.routineStats?.thisMonthTotal || 0) +
+                (overview.nutritionStats?.thisMonthTotal || 0) +
+                (overview.chatStats?.thisMonthTotal || 0)
+              } requests this month
+            </span>
+            <span className="collapsible-chevron">{aiExpanded ? '\u25B2' : '\u25BC'}</span>
+          </button>
 
-      {/* AI Nutrition Stats */}
-      {overview?.nutritionStats && (
-        <div className="analytics-chart-card">
-          <h2 className="analytics-chart-title">AI Nutrition Generation</h2>
-          <div className="admin-stats ai-stats-grid">
-            <div className="admin-stat-card">
-              <div className="stat-label">This Month</div>
-              <div className="stat-value">{overview.nutritionStats.thisMonthTotal}</div>
-              <div className="stat-sub">plans</div>
-            </div>
-            <div className="admin-stat-card">
-              <div className="stat-label">This Week</div>
-              <div className="stat-value">{overview.nutritionStats.thisWeekTotal}</div>
-              <div className="stat-sub">plans</div>
-            </div>
-            <div className="admin-stat-card">
-              <div className="stat-label">Input Tokens</div>
-              <div className="stat-value">{fmtTokens(overview.nutritionStats.totalInputTokens)}</div>
-              <div className="stat-sub">avg {fmtTokens(overview.nutritionStats.avgInputTokensPerGen)}/gen</div>
-            </div>
-            <div className="admin-stat-card">
-              <div className="stat-label">Output Tokens</div>
-              <div className="stat-value">{fmtTokens(overview.nutritionStats.totalOutputTokens)}</div>
-              <div className="stat-sub">avg {fmtTokens(overview.nutritionStats.avgOutputTokensPerGen)}/gen</div>
-            </div>
-          </div>
-          {overview.nutritionStats.billingCycle && (
-            <div className="ai-billing-card">
-              <div className="ai-billing-header">
-                <h3>Billing Cycle Cost Estimate</h3>
-                <span className="ai-billing-period">{overview.nutritionStats.billingCycle.startDate} to {overview.nutritionStats.billingCycle.endDate}</span>
+          {aiExpanded && (
+            <div className="analytics-collapsible-body">
+              {/* Combined cost summary - always visible */}
+              {overview.combinedBilling && (
+                <div className="admin-stats ai-stats-grid" style={{ marginBottom: 20 }}>
+                  <div className="admin-stat-card">
+                    <div className="stat-label">Routines</div>
+                    <div className="stat-value">{fmtCost(overview.combinedBilling.routineCost)}</div>
+                    <div className="stat-sub">{overview.routineStats?.billingCycle?.generations || 0} generations</div>
+                  </div>
+                  <div className="admin-stat-card">
+                    <div className="stat-label">Nutrition</div>
+                    <div className="stat-value">{fmtCost(overview.combinedBilling.nutritionCost)}</div>
+                    <div className="stat-sub">{overview.nutritionStats?.billingCycle?.generations || 0} plans</div>
+                  </div>
+                  <div className="admin-stat-card">
+                    <div className="stat-label">AI Coach</div>
+                    <div className="stat-value">{fmtCost(overview.combinedBilling.chatCost)}</div>
+                    <div className="stat-sub">{overview.chatStats?.billingCycle?.messages || 0} messages</div>
+                  </div>
+                  <div className="admin-stat-card" style={{ borderLeft: '3px solid var(--sunset)' }}>
+                    <div className="stat-label">Total AI Cost</div>
+                    <div className="stat-value" style={{ color: 'var(--sunset)' }}>{fmtCost(overview.combinedBilling.totalCost)}</div>
+                    <div className="stat-sub">{fmtTokens(overview.combinedBilling.totalInputTokens + overview.combinedBilling.totalOutputTokens)} tokens</div>
+                  </div>
+                </div>
+              )}
+
+              {/* Tab bar */}
+              <div className="ai-tab-bar">
+                <button className={`ai-tab-btn ${aiTab === 'routines' ? 'active' : ''}`} onClick={() => setAiTab('routines')}>Routines</button>
+                <button className={`ai-tab-btn ${aiTab === 'nutrition' ? 'active' : ''}`} onClick={() => setAiTab('nutrition')}>Nutrition</button>
+                <button className={`ai-tab-btn ${aiTab === 'chat' ? 'active' : ''}`} onClick={() => setAiTab('chat')}>AI Coach</button>
               </div>
-              <div className="ai-billing-grid">
-                <div className="ai-billing-item">
-                  <span className="ai-billing-label">Input</span>
-                  <span className="ai-billing-tokens">{fmtTokens(overview.nutritionStats.billingCycle.inputTokens)} tokens</span>
-                  <span className="ai-billing-rate">@ $1/M</span>
-                  <span className="ai-billing-cost">{fmtCost(overview.nutritionStats.billingCycle.estimatedCostInput)}</span>
+
+              {/* Routines tab */}
+              {aiTab === 'routines' && overview.routineStats && (
+                <AIRoutineSection stats={overview.routineStats} tierDistribution={overview.tierDistribution} />
+              )}
+
+              {/* Nutrition tab */}
+              {aiTab === 'nutrition' && overview.nutritionStats && (
+                <div>
+                  <div className="admin-stats ai-stats-grid">
+                    <div className="admin-stat-card">
+                      <div className="stat-label">This Month</div>
+                      <div className="stat-value">{overview.nutritionStats.thisMonthTotal}</div>
+                      <div className="stat-sub">plans</div>
+                    </div>
+                    <div className="admin-stat-card">
+                      <div className="stat-label">This Week</div>
+                      <div className="stat-value">{overview.nutritionStats.thisWeekTotal}</div>
+                      <div className="stat-sub">plans</div>
+                    </div>
+                    <div className="admin-stat-card">
+                      <div className="stat-label">Input Tokens</div>
+                      <div className="stat-value">{fmtTokens(overview.nutritionStats.totalInputTokens)}</div>
+                      <div className="stat-sub">avg {fmtTokens(overview.nutritionStats.avgInputTokensPerGen)}/gen</div>
+                    </div>
+                    <div className="admin-stat-card">
+                      <div className="stat-label">Output Tokens</div>
+                      <div className="stat-value">{fmtTokens(overview.nutritionStats.totalOutputTokens)}</div>
+                      <div className="stat-sub">avg {fmtTokens(overview.nutritionStats.avgOutputTokensPerGen)}/gen</div>
+                    </div>
+                  </div>
+                  {overview.nutritionStats.billingCycle && (
+                    <div className="ai-billing-card">
+                      <div className="ai-billing-header">
+                        <h3>Billing Cycle Cost Estimate</h3>
+                        <span className="ai-billing-period">{overview.nutritionStats.billingCycle.startDate} to {overview.nutritionStats.billingCycle.endDate}</span>
+                      </div>
+                      <div className="ai-billing-grid">
+                        <div className="ai-billing-item">
+                          <span className="ai-billing-label">Input</span>
+                          <span className="ai-billing-tokens">{fmtTokens(overview.nutritionStats.billingCycle.inputTokens)} tokens</span>
+                          <span className="ai-billing-rate">@ $1/M</span>
+                          <span className="ai-billing-cost">{fmtCost(overview.nutritionStats.billingCycle.estimatedCostInput)}</span>
+                        </div>
+                        <div className="ai-billing-item">
+                          <span className="ai-billing-label">Output</span>
+                          <span className="ai-billing-tokens">{fmtTokens(overview.nutritionStats.billingCycle.outputTokens)} tokens</span>
+                          <span className="ai-billing-rate">@ $5/M</span>
+                          <span className="ai-billing-cost">{fmtCost(overview.nutritionStats.billingCycle.estimatedCostOutput)}</span>
+                        </div>
+                        <div className="ai-billing-item ai-billing-total">
+                          <span className="ai-billing-label">Total</span>
+                          <span className="ai-billing-tokens">{overview.nutritionStats.billingCycle.generations} plans</span>
+                          <span className="ai-billing-rate"></span>
+                          <span className="ai-billing-cost ai-billing-cost-total">{fmtCost(overview.nutritionStats.billingCycle.estimatedCostTotal)}</span>
+                        </div>
+                      </div>
+                    </div>
+                  )}
                 </div>
-                <div className="ai-billing-item">
-                  <span className="ai-billing-label">Output</span>
-                  <span className="ai-billing-tokens">{fmtTokens(overview.nutritionStats.billingCycle.outputTokens)} tokens</span>
-                  <span className="ai-billing-rate">@ $5/M</span>
-                  <span className="ai-billing-cost">{fmtCost(overview.nutritionStats.billingCycle.estimatedCostOutput)}</span>
+              )}
+
+              {/* Chat tab */}
+              {aiTab === 'chat' && overview.chatStats && (
+                <div>
+                  <div className="admin-stats ai-stats-grid">
+                    <div className="admin-stat-card">
+                      <div className="stat-label">This Month</div>
+                      <div className="stat-value">{overview.chatStats.thisMonthTotal}</div>
+                      <div className="stat-sub">messages</div>
+                    </div>
+                    <div className="admin-stat-card">
+                      <div className="stat-label">This Week</div>
+                      <div className="stat-value">{overview.chatStats.thisWeekTotal}</div>
+                      <div className="stat-sub">messages</div>
+                    </div>
+                    <div className="admin-stat-card">
+                      <div className="stat-label">Input Tokens</div>
+                      <div className="stat-value">{fmtTokens(overview.chatStats.totalInputTokens)}</div>
+                      <div className="stat-sub">avg {fmtTokens(overview.chatStats.avgInputTokensPerMsg)}/msg</div>
+                    </div>
+                    <div className="admin-stat-card">
+                      <div className="stat-label">Output Tokens</div>
+                      <div className="stat-value">{fmtTokens(overview.chatStats.totalOutputTokens)}</div>
+                      <div className="stat-sub">avg {fmtTokens(overview.chatStats.avgOutputTokensPerMsg)}/msg</div>
+                    </div>
+                  </div>
+                  {overview.chatStats.billingCycle && (
+                    <div className="ai-billing-card">
+                      <div className="ai-billing-header">
+                        <h3>Billing Cycle Cost Estimate</h3>
+                        <span className="ai-billing-period">{overview.chatStats.billingCycle.startDate} to {overview.chatStats.billingCycle.endDate}</span>
+                      </div>
+                      <div className="ai-billing-grid">
+                        <div className="ai-billing-item">
+                          <span className="ai-billing-label">Input</span>
+                          <span className="ai-billing-tokens">{fmtTokens(overview.chatStats.billingCycle.inputTokens)} tokens</span>
+                          <span className="ai-billing-rate">@ $1/M</span>
+                          <span className="ai-billing-cost">{fmtCost(overview.chatStats.billingCycle.estimatedCostInput)}</span>
+                        </div>
+                        <div className="ai-billing-item">
+                          <span className="ai-billing-label">Output</span>
+                          <span className="ai-billing-tokens">{fmtTokens(overview.chatStats.billingCycle.outputTokens)} tokens</span>
+                          <span className="ai-billing-rate">@ $5/M</span>
+                          <span className="ai-billing-cost">{fmtCost(overview.chatStats.billingCycle.estimatedCostOutput)}</span>
+                        </div>
+                        <div className="ai-billing-item ai-billing-total">
+                          <span className="ai-billing-label">Total</span>
+                          <span className="ai-billing-tokens">{overview.chatStats.billingCycle.messages} messages</span>
+                          <span className="ai-billing-rate"></span>
+                          <span className="ai-billing-cost ai-billing-cost-total">{fmtCost(overview.chatStats.billingCycle.estimatedCostTotal)}</span>
+                        </div>
+                      </div>
+                    </div>
+                  )}
                 </div>
-                <div className="ai-billing-item ai-billing-total">
-                  <span className="ai-billing-label">Total</span>
-                  <span className="ai-billing-tokens">{overview.nutritionStats.billingCycle.generations} plans</span>
-                  <span className="ai-billing-rate"></span>
-                  <span className="ai-billing-cost ai-billing-cost-total">{fmtCost(overview.nutritionStats.billingCycle.estimatedCostTotal)}</span>
-                </div>
-              </div>
+              )}
             </div>
           )}
         </div>
       )}
 
-      {/* AI Coach Chat Stats */}
-      {overview?.chatStats && (
+      {/* ── User Engagement ── */}
+      {overview?.engagementStats && (
         <div className="analytics-chart-card">
-          <h2 className="analytics-chart-title">AI Coach Chat</h2>
-          <div className="admin-stats ai-stats-grid">
-            <div className="admin-stat-card">
-              <div className="stat-label">This Month</div>
-              <div className="stat-value">{overview.chatStats.thisMonthTotal}</div>
-              <div className="stat-sub">messages</div>
-            </div>
-            <div className="admin-stat-card">
-              <div className="stat-label">This Week</div>
-              <div className="stat-value">{overview.chatStats.thisWeekTotal}</div>
-              <div className="stat-sub">messages</div>
-            </div>
-            <div className="admin-stat-card">
-              <div className="stat-label">Input Tokens</div>
-              <div className="stat-value">{fmtTokens(overview.chatStats.totalInputTokens)}</div>
-              <div className="stat-sub">avg {fmtTokens(overview.chatStats.avgInputTokensPerMsg)}/msg</div>
-            </div>
-            <div className="admin-stat-card">
-              <div className="stat-label">Output Tokens</div>
-              <div className="stat-value">{fmtTokens(overview.chatStats.totalOutputTokens)}</div>
-              <div className="stat-sub">avg {fmtTokens(overview.chatStats.avgOutputTokensPerMsg)}/msg</div>
-            </div>
-          </div>
-          {overview.chatStats.billingCycle && (
-            <div className="ai-billing-card">
-              <div className="ai-billing-header">
-                <h3>Billing Cycle Cost Estimate</h3>
-                <span className="ai-billing-period">{overview.chatStats.billingCycle.startDate} to {overview.chatStats.billingCycle.endDate}</span>
-              </div>
-              <div className="ai-billing-grid">
-                <div className="ai-billing-item">
-                  <span className="ai-billing-label">Input</span>
-                  <span className="ai-billing-tokens">{fmtTokens(overview.chatStats.billingCycle.inputTokens)} tokens</span>
-                  <span className="ai-billing-rate">@ $1/M</span>
-                  <span className="ai-billing-cost">{fmtCost(overview.chatStats.billingCycle.estimatedCostInput)}</span>
-                </div>
-                <div className="ai-billing-item">
-                  <span className="ai-billing-label">Output</span>
-                  <span className="ai-billing-tokens">{fmtTokens(overview.chatStats.billingCycle.outputTokens)} tokens</span>
-                  <span className="ai-billing-rate">@ $5/M</span>
-                  <span className="ai-billing-cost">{fmtCost(overview.chatStats.billingCycle.estimatedCostOutput)}</span>
-                </div>
-                <div className="ai-billing-item ai-billing-total">
-                  <span className="ai-billing-label">Total</span>
-                  <span className="ai-billing-tokens">{overview.chatStats.billingCycle.messages} messages</span>
-                  <span className="ai-billing-rate"></span>
-                  <span className="ai-billing-cost ai-billing-cost-total">{fmtCost(overview.chatStats.billingCycle.estimatedCostTotal)}</span>
-                </div>
-              </div>
-            </div>
-          )}
-        </div>
-      )}
+          <h2 className="analytics-chart-title">User Engagement</h2>
 
-      {/* Combined AI Cost Summary */}
-      {overview?.combinedBilling && (
-        <div className="analytics-chart-card">
-          <h2 className="analytics-chart-title">Combined AI Costs - Current Billing Cycle</h2>
-          <div className="admin-stats ai-stats-grid">
-            <div className="admin-stat-card">
-              <div className="stat-label">Routines</div>
-              <div className="stat-value">{fmtCost(overview.combinedBilling.routineCost)}</div>
+          <div className="engagement-grid">
+            <div className="engagement-card">
+              <div className="stat-label">Workout Adherence</div>
+              <div className="stat-value">{overview.engagementStats.workoutAdherence?.rate || 0}%</div>
+              <div className="stat-sub">{overview.engagementStats.workoutAdherence?.completed || 0} / {overview.engagementStats.workoutAdherence?.generated || 0} completed</div>
+              <div className="adherence-bar"><div className="adherence-bar-fill" style={{ width: `${overview.engagementStats.workoutAdherence?.rate || 0}%` }} /></div>
             </div>
-            <div className="admin-stat-card">
-              <div className="stat-label">Nutrition</div>
-              <div className="stat-value">{fmtCost(overview.combinedBilling.nutritionCost)}</div>
+            <div className="engagement-card">
+              <div className="stat-label">Meal Adherence</div>
+              <div className="stat-value">{overview.engagementStats.mealAdherence?.rate || 0}%</div>
+              <div className="stat-sub">{overview.engagementStats.mealAdherence?.mealsLogged || 0} / {overview.engagementStats.mealAdherence?.mealsPlanned || 0} meals logged</div>
+              <div className="adherence-bar"><div className="adherence-bar-fill" style={{ width: `${overview.engagementStats.mealAdherence?.rate || 0}%` }} /></div>
             </div>
-            <div className="admin-stat-card">
-              <div className="stat-label">AI Coach</div>
-              <div className="stat-value">{fmtCost(overview.combinedBilling.chatCost)}</div>
+            <div className="engagement-card">
+              <div className="stat-label">Fitness Profile</div>
+              <div className="stat-value">{overview.engagementStats.questionnaireCompletion?.fitnessComplete || 0}</div>
+              <div className="stat-sub">of {overview.engagementStats.questionnaireCompletion?.totalUsers || 0} users completed</div>
             </div>
-            <div className="admin-stat-card" style={{ borderLeft: '3px solid var(--sunset)' }}>
-              <div className="stat-label">Total AI Cost</div>
-              <div className="stat-value" style={{ color: 'var(--sunset)' }}>{fmtCost(overview.combinedBilling.totalCost)}</div>
-              <div className="stat-sub">{fmtTokens(overview.combinedBilling.totalInputTokens + overview.combinedBilling.totalOutputTokens)} tokens</div>
+            <div className="engagement-card">
+              <div className="stat-label">Nutrition Profile</div>
+              <div className="stat-value">{overview.engagementStats.questionnaireCompletion?.nutritionComplete || 0}</div>
+              <div className="stat-sub">of {overview.engagementStats.questionnaireCompletion?.totalUsers || 0} users completed</div>
             </div>
           </div>
+
+          {overview.engagementStats.mealAdherence?.adhocMeals > 0 && (
+            <p style={{ fontSize: '.84rem', color: 'var(--rock)', marginBottom: 12 }}>
+              {overview.engagementStats.mealAdherence.adhocMeals} unplanned meals logged this month
+              {overview.engagementStats.mealAdherence.avgRating ? ` | Avg meal rating: ${overview.engagementStats.mealAdherence.avgRating}/5` : ''}
+            </p>
+          )}
         </div>
       )}
 

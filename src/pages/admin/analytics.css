@@ -285,3 +285,160 @@
     text-align: left;
   }
 }
+
+/* ── Collapsible Section ── */
+
+.analytics-collapsible {
+  background: #fff;
+  border: 1px solid rgba(211, 191, 151, .3);
+  border-radius: 12px;
+  box-shadow: 0 1px 3px rgba(27, 18, 10, .06);
+  margin-bottom: 24px;
+  overflow: hidden;
+}
+
+.analytics-collapsible-header {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 16px 24px;
+  background: none;
+  border: none;
+  cursor: pointer;
+  font-family: inherit;
+  gap: 12px;
+}
+
+.analytics-collapsible-header:hover {
+  background: rgba(242, 133, 1, .04);
+}
+
+.analytics-collapsible-header h2 {
+  margin: 0;
+  font-size: 1.15rem;
+  color: var(--ink);
+}
+
+.collapsible-summary {
+  font-size: .84rem;
+  color: var(--rock);
+  flex: 1;
+  text-align: right;
+}
+
+.collapsible-chevron {
+  font-size: .9rem;
+  color: var(--rock);
+  transition: transform .2s;
+}
+
+.analytics-collapsible-body {
+  padding: 0 24px 24px;
+}
+
+/* ── AI Tab Bar ── */
+
+.ai-tab-bar {
+  display: flex;
+  gap: 4px;
+  margin-bottom: 20px;
+  border-bottom: 2px solid rgba(211, 191, 151, .3);
+  padding-bottom: 0;
+}
+
+.ai-tab-btn {
+  padding: 8px 18px;
+  border: none;
+  background: none;
+  font-family: inherit;
+  font-size: .88rem;
+  font-weight: 600;
+  color: var(--rock);
+  cursor: pointer;
+  border-bottom: 2px solid transparent;
+  margin-bottom: -2px;
+  transition: color .15s, border-color .15s;
+}
+
+.ai-tab-btn:hover {
+  color: var(--sunset);
+}
+
+.ai-tab-btn.active {
+  color: var(--sunset);
+  border-bottom-color: var(--sunset);
+}
+
+/* ── Engagement Stats ── */
+
+.engagement-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 16px;
+  margin-bottom: 20px;
+}
+
+.engagement-card {
+  background: var(--paper);
+  border-radius: 10px;
+  padding: 16px;
+  text-align: center;
+}
+
+.engagement-card .stat-value {
+  font-size: 1.6rem;
+  font-weight: 700;
+  color: var(--ink);
+}
+
+.engagement-card .stat-label {
+  font-size: .78rem;
+  color: var(--rock);
+  text-transform: uppercase;
+  letter-spacing: .5px;
+  margin-bottom: 4px;
+}
+
+.engagement-card .stat-sub {
+  font-size: .78rem;
+  color: var(--earth);
+  margin-top: 4px;
+}
+
+.adherence-bar {
+  height: 6px;
+  background: rgba(211, 191, 151, .3);
+  border-radius: 3px;
+  margin-top: 8px;
+  overflow: hidden;
+}
+
+.adherence-bar-fill {
+  height: 100%;
+  background: var(--sunset);
+  border-radius: 3px;
+  transition: width .3s;
+}
+
+.engagement-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: .85rem;
+}
+
+.engagement-table th {
+  text-align: left;
+  padding: 8px 12px;
+  border-bottom: 2px solid var(--sand);
+  color: var(--earth);
+  font-size: .78rem;
+  text-transform: uppercase;
+  letter-spacing: .5px;
+}
+
+.engagement-table td {
+  padding: 8px 12px;
+  border-bottom: 1px solid rgba(211, 191, 151, .2);
+  color: var(--ink);
+}
