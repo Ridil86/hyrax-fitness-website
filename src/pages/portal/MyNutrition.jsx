@@ -5,6 +5,7 @@ import { fetchNutritionProfile } from '../../api/nutritionProfile';
 import { generateDailyNutrition, fetchTodayNutrition } from '../../api/nutrition';
 import { fetchProfile } from '../../api/profile';
 import { hasTierAccess } from '../../utils/tiers';
+import { createMealLog, fetchMealLogs } from '../../api/mealLog';
 import './my-nutrition.css';
 
 /** Strip em-dashes and emojis from AI output */
@@ -26,6 +27,13 @@ export default function MyNutrition() {
   const [error, setError] = useState(null);
   const [expandedMeal, setExpandedMeal] = useState(null);
   const [groceryChecked, setGroceryChecked] = useState({});
+  // Meal logging state
+  const [completedMeals, setCompletedMeals] = useState(new Set());
+  const [loggingMeal, setLoggingMeal] = useState(null); // index of meal being logged
+  const [mealLogForm, setMealLogForm] = useState({ modifications: '', rating: 0, notes: '' });
+  const [logSubmitting, setLogSubmitting] = useState(false);
+  const [showAdhocForm, setShowAdhocForm] = useState(false);
+  const [adhocForm, setAdhocForm] = useState({ name: '', items: [{ food: '', amount: '', calories: '' }], notes: '' });
 
   const navigate = useNavigate();
   const hasAccess = hasTierAccess(userTier, 'Iron Dassie');
@@ -111,6 +119,109 @@ export default function MyNutrition() {
       setGenerating(false);
     }
   }, [getIdToken]);
+
+  // Load today's meal logs to mark completed meals
+  useEffect(() => {
+    if (!plan?.date) return;
+    let cancelled = false;
+    (async () => {
+      try {
+        const token = await getIdToken();
+        const result = await fetchMealLogs({ date: plan.date }, token);
+        if (!cancelled && result?.logs) {
+          const logged = new Set();
+          result.logs.forEach((log) => {
+            if (log.source === 'plan' && log.mealNumber != null) {
+              logged.add(log.mealNumber);
+            }
+          });
+          setCompletedMeals(logged);
+        }
+      } catch { /* best-effort */ }
+    })();
+    return () => { cancelled = true; };
+  }, [plan?.date, getIdToken]);
+
+  const handleLogMeal = async (mealIdx) => {
+    const meal = plan?.meals?.[mealIdx];
+    if (!meal) return;
+    setLogSubmitting(true);
+    try {
+      const token = await getIdToken();
+      await createMealLog({
+        source: 'plan',
+        planDate: plan.date,
+        mealNumber: mealIdx,
+        mealName: meal.name || `Meal ${mealIdx + 1}`,
+        items: meal.items || [],
+        calories: meal.calories || 0,
+        macros: meal.macros || null,
+        modifications: mealLogForm.modifications || null,
+        rating: mealLogForm.rating || null,
+        notes: mealLogForm.notes || '',
+      }, token);
+      setCompletedMeals((prev) => new Set([...prev, mealIdx]));
+      setLoggingMeal(null);
+      setMealLogForm({ modifications: '', rating: 0, notes: '' });
+    } catch (err) {
+      setError('Failed to log meal. Please try again.');
+    } finally {
+      setLogSubmitting(false);
+    }
+  };
+
+  const handleLogAllRemaining = async () => {
+    if (!plan?.meals) return;
+    setLogSubmitting(true);
+    try {
+      const token = await getIdToken();
+      const unlogged = plan.meals
+        .map((meal, idx) => ({ meal, idx }))
+        .filter(({ idx }) => !completedMeals.has(idx));
+      if (unlogged.length === 0) return;
+      const mealsPayload = unlogged.map(({ meal, idx }) => ({
+        source: 'plan',
+        planDate: plan.date,
+        mealNumber: idx,
+        mealName: meal.name || `Meal ${idx + 1}`,
+        items: meal.items || [],
+        calories: meal.calories || 0,
+        macros: meal.macros || null,
+      }));
+      const { createMealPlanLog } = await import('../../api/mealLog');
+      await createMealPlanLog({ planDate: plan.date, meals: mealsPayload }, token);
+      const allIdxs = new Set([...completedMeals, ...unlogged.map(({ idx }) => idx)]);
+      setCompletedMeals(allIdxs);
+    } catch {
+      setError('Failed to log meals.');
+    } finally {
+      setLogSubmitting(false);
+    }
+  };
+
+  const handleAdhocSubmit = async () => {
+    if (!adhocForm.name.trim()) return;
+    setLogSubmitting(true);
+    try {
+      const token = await getIdToken();
+      const items = adhocForm.items.filter((i) => i.food.trim());
+      const totalCal = items.reduce((sum, i) => sum + (parseInt(i.calories, 10) || 0), 0);
+      await createMealLog({
+        source: 'adhoc',
+        planDate: plan?.date || new Date().toISOString().slice(0, 10),
+        mealName: adhocForm.name,
+        items: items.map((i) => ({ food: i.food, amount: i.amount, calories: parseInt(i.calories, 10) || 0 })),
+        calories: totalCal,
+        notes: adhocForm.notes || '',
+      }, token);
+      setShowAdhocForm(false);
+      setAdhocForm({ name: '', items: [{ food: '', amount: '', calories: '' }], notes: '' });
+    } catch {
+      setError('Failed to log meal.');
+    } finally {
+      setLogSubmitting(false);
+    }
+  };
 
   const toggleMeal = (idx) => {
     setExpandedMeal(expandedMeal === idx ? null : idx);
@@ -349,7 +460,7 @@ export default function MyNutrition() {
             {meals.map((meal, idx) => (
               <div
                 key={idx}
-                className={`nutrition-meal-card ${expandedMeal === idx ? 'expanded' : ''}`}
+                className={`nutrition-meal-card ${expandedMeal === idx ? 'expanded' : ''} ${completedMeals.has(idx) ? 'logged' : ''}`}
               >
                 <button
                   type="button"
@@ -367,6 +478,7 @@ export default function MyNutrition() {
                       {meal.timing && meal.timing !== 'null' && <span className="nutrition-timing-tag">{meal.timing}</span>}
                     </span>
                   </div>
+                  {completedMeals.has(idx) && <span className="meal-logged-badge" title="Logged">&#x2705;</span>}
                   <span className="nutrition-meal-chevron">{expandedMeal === idx ? '\u25B2' : '\u25BC'}</span>
                 </button>
 
@@ -398,11 +510,133 @@ export default function MyNutrition() {
                     {meal.prepNotes && (
                       <p className="nutrition-prep-notes">{sanitize(meal.prepNotes)}</p>
                     )}
+
+                    {/* Log meal action */}
+                    {!completedMeals.has(idx) ? (
+                      loggingMeal === idx ? (
+                        <div className="meal-log-form">
+                          <textarea
+                            placeholder="Any modifications? (optional)"
+                            value={mealLogForm.modifications}
+                            onChange={(e) => setMealLogForm((f) => ({ ...f, modifications: e.target.value }))}
+                            rows={2}
+                          />
+                          <div className="meal-log-rating">
+                            <span>Rating:</span>
+                            {[1, 2, 3, 4, 5].map((star) => (
+                              <button
+                                key={star}
+                                type="button"
+                                className={`meal-rating-star ${mealLogForm.rating >= star ? 'active' : ''}`}
+                                onClick={() => setMealLogForm((f) => ({ ...f, rating: star }))}
+                              >&#9733;</button>
+                            ))}
+                          </div>
+                          <input
+                            type="text"
+                            placeholder="Notes (optional)"
+                            value={mealLogForm.notes}
+                            onChange={(e) => setMealLogForm((f) => ({ ...f, notes: e.target.value }))}
+                          />
+                          <div className="meal-log-actions">
+                            <button className="btn primary btn-sm" onClick={() => handleLogMeal(idx)} disabled={logSubmitting}>
+                              {logSubmitting ? 'Logging...' : 'Log Meal'}
+                            </button>
+                            <button className="btn secondary btn-sm" onClick={() => { setLoggingMeal(null); setMealLogForm({ modifications: '', rating: 0, notes: '' }); }}>
+                              Cancel
+                            </button>
+                          </div>
+                        </div>
+                      ) : (
+                        <button className="btn secondary btn-sm meal-log-btn" onClick={(e) => { e.stopPropagation(); setLoggingMeal(idx); }}>
+                          Log This Meal
+                        </button>
+                      )
+                    ) : (
+                      <div className="meal-logged-msg">Meal logged</div>
+                    )}
                   </div>
                 )}
               </div>
             ))}
           </div>
+
+          {/* Log all remaining + Ad-hoc meal */}
+          <div className="meal-log-footer">
+            {plan.meals && completedMeals.size < plan.meals.length && (
+              <button className="btn secondary btn-sm" onClick={handleLogAllRemaining} disabled={logSubmitting}>
+                {logSubmitting ? 'Logging...' : `Log All Remaining (${plan.meals.length - completedMeals.size})`}
+              </button>
+            )}
+            <button className="btn secondary btn-sm" onClick={() => setShowAdhocForm(!showAdhocForm)}>
+              {showAdhocForm ? 'Cancel' : 'Log Unplanned Meal'}
+            </button>
+          </div>
+
+          {/* Ad-hoc meal form */}
+          {showAdhocForm && (
+            <div className="adhoc-meal-form">
+              <h4>Log Unplanned Meal</h4>
+              <input
+                type="text"
+                placeholder="Meal name (e.g., Afternoon Snack)"
+                value={adhocForm.name}
+                onChange={(e) => setAdhocForm((f) => ({ ...f, name: e.target.value }))}
+              />
+              {adhocForm.items.map((item, iIdx) => (
+                <div key={iIdx} className="adhoc-item-row">
+                  <input
+                    type="text"
+                    placeholder="Food item"
+                    value={item.food}
+                    onChange={(e) => {
+                      const items = [...adhocForm.items];
+                      items[iIdx] = { ...items[iIdx], food: e.target.value };
+                      setAdhocForm((f) => ({ ...f, items }));
+                    }}
+                  />
+                  <input
+                    type="text"
+                    placeholder="Amount"
+                    value={item.amount}
+                    onChange={(e) => {
+                      const items = [...adhocForm.items];
+                      items[iIdx] = { ...items[iIdx], amount: e.target.value };
+                      setAdhocForm((f) => ({ ...f, items }));
+                    }}
+                  />
+                  <input
+                    type="number"
+                    placeholder="Cal"
+                    value={item.calories}
+                    onChange={(e) => {
+                      const items = [...adhocForm.items];
+                      items[iIdx] = { ...items[iIdx], calories: e.target.value };
+                      setAdhocForm((f) => ({ ...f, items }));
+                    }}
+                  />
+                  {adhocForm.items.length > 1 && (
+                    <button type="button" className="adhoc-remove-btn" onClick={() => {
+                      setAdhocForm((f) => ({ ...f, items: f.items.filter((_, i) => i !== iIdx) }));
+                    }}>&times;</button>
+                  )}
+                </div>
+              ))}
+              <button type="button" className="btn secondary btn-sm" onClick={() => {
+                setAdhocForm((f) => ({ ...f, items: [...f.items, { food: '', amount: '', calories: '' }] }));
+              }}>+ Add Item</button>
+              <input
+                type="text"
+                placeholder="Notes (optional)"
+                value={adhocForm.notes}
+                onChange={(e) => setAdhocForm((f) => ({ ...f, notes: e.target.value }))}
+                style={{ marginTop: 8 }}
+              />
+              <button className="btn primary btn-sm" onClick={handleAdhocSubmit} disabled={logSubmitting || !adhocForm.name.trim()} style={{ marginTop: 8 }}>
+                {logSubmitting ? 'Logging...' : 'Log Meal'}
+              </button>
+            </div>
+          )}
         </div>
       )}
 

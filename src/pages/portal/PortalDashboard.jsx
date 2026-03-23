@@ -7,6 +7,7 @@ import { fetchLogStats, fetchUserLogs, fetchCalendarData } from '../../api/compl
 import { fetchTodayWorkout } from '../../api/routine';
 import { fetchTodayNutrition } from '../../api/nutrition';
 import { fetchNutritionProfile } from '../../api/nutritionProfile';
+import { createMealLog, fetchMealLogs } from '../../api/mealLog';
 import { hasTierAccess } from '../../utils/tiers';
 import './portal-dashboard.css';
 
@@ -82,6 +83,7 @@ export default function PortalDashboard() {
   const [todayWorkout, setTodayWorkout] = useState(null);
   const [todayNutrition, setTodayNutrition] = useState(null);
   const [hasNutritionProfile, setHasNutritionProfile] = useState(false);
+  const [dashMealLogged, setDashMealLogged] = useState(new Set());
 
   useEffect(() => {
     let cancelled = false;
@@ -140,7 +142,20 @@ export default function PortalDashboard() {
           if (isIronDassie) {
             const nutData = results[4];
             const nutProfile = results[5];
-            if (nutData && !nutData.error) setTodayNutrition(nutData);
+            if (nutData && !nutData.error) {
+              setTodayNutrition(nutData);
+              // Load today's meal logs
+              try {
+                const mealLogsResult = await fetchMealLogs({ date: nutData.date }, token);
+                if (!cancelled && mealLogsResult?.logs) {
+                  const logged = new Set();
+                  mealLogsResult.logs.forEach((log) => {
+                    if (log.source === 'plan' && log.mealNumber != null) logged.add(log.mealNumber);
+                  });
+                  setDashMealLogged(logged);
+                }
+              } catch { /* best-effort */ }
+            }
             if (nutProfile?.nutritionProfile) setHasNutritionProfile(true);
           }
         }
@@ -365,10 +380,49 @@ export default function PortalDashboard() {
               </div>
               <p style={{ margin: '0 0 8px', fontWeight: 600, fontSize: '.96rem' }}>{todayNutrition.title || 'Meal Plan'}</p>
               {todayNutrition.meals?.length > 0 && (
-                <p style={{ margin: '0 0 10px', fontSize: '.84rem', color: 'var(--rock)' }}>
-                  {todayNutrition.meals.length} meals
-                  {todayNutrition.macros ? ` \u00B7 P: ${todayNutrition.macros.protein} C: ${todayNutrition.macros.carbs} F: ${todayNutrition.macros.fat}` : ''}
-                </p>
+                <>
+                  <div style={{ margin: '0 0 10px' }}>
+                    <span style={{ fontSize: '.84rem', color: 'var(--rock)' }}>
+                      {dashMealLogged.size}/{todayNutrition.meals.length} meals logged
+                    </span>
+                  </div>
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: 4, marginBottom: 10 }}>
+                    {todayNutrition.meals.map((meal, idx) => (
+                      <label key={idx} style={{
+                        display: 'flex', alignItems: 'center', gap: 8,
+                        fontSize: '.84rem', color: dashMealLogged.has(idx) ? '#2e7d32' : 'var(--ink)',
+                        cursor: dashMealLogged.has(idx) ? 'default' : 'pointer',
+                      }}>
+                        <input
+                          type="checkbox"
+                          checked={dashMealLogged.has(idx)}
+                          disabled={dashMealLogged.has(idx)}
+                          onChange={async () => {
+                            if (dashMealLogged.has(idx)) return;
+                            try {
+                              const token = await getIdToken();
+                              await createMealLog({
+                                source: 'plan',
+                                planDate: todayNutrition.date,
+                                mealNumber: idx,
+                                mealName: meal.name || `Meal ${idx + 1}`,
+                                items: meal.items || [],
+                                calories: meal.calories || 0,
+                                macros: meal.macros || null,
+                              }, token);
+                              setDashMealLogged((prev) => new Set([...prev, idx]));
+                            } catch { /* best-effort */ }
+                          }}
+                          style={{ accentColor: 'var(--sunset)' }}
+                        />
+                        <span style={{ textDecoration: dashMealLogged.has(idx) ? 'line-through' : 'none' }}>
+                          {meal.name || `Meal ${idx + 1}`}
+                          {meal.calories ? ` (${meal.calories} cal)` : ''}
+                        </span>
+                      </label>
+                    ))}
+                  </div>
+                </>
               )}
               <Link to="/portal/nutrition" className="dashboard-view-more">
                 View Full Plan &rarr;

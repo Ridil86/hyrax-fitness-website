@@ -42,6 +42,9 @@ import {
   generateDailyNutrition, generateNutritionAsync,
   getTodayNutrition, listNutritionHistory, getNutritionByDate,
 } from './routes/nutrition';
+import {
+  createMealLog, createMealPlanLog, listMealLogs, getMealLogStats, deleteMealLog,
+} from './routes/meal-log';
 import { notFound, serverError } from './utils/response';
 
 export const handler = async (
@@ -515,6 +518,25 @@ export const handler = async (
     if (nutritionDateMatch) {
       event.pathParameters = { ...event.pathParameters, date: nutritionDateMatch[1] };
       if (method === 'GET') return getNutritionByDate(event);
+    }
+
+    // ── Meal Logging Routes (authenticated) ──
+    if (path === '/api/meal-logs/plan' && method === 'POST') {
+      return createMealPlanLog(event);
+    }
+    if (path === '/api/meal-logs/stats' && method === 'GET') {
+      return getMealLogStats(event);
+    }
+    if (path === '/api/meal-logs' && method === 'GET') {
+      return listMealLogs(event);
+    }
+    if (path === '/api/meal-logs' && method === 'POST') {
+      return createMealLog(event);
+    }
+    const mealLogIdMatch = path.match(/^\/api\/meal-logs\/([^/]+)$/);
+    if (mealLogIdMatch && method === 'DELETE') {
+      event.pathParameters = { ...event.pathParameters, id: mealLogIdMatch[1] };
+      return deleteMealLog(event);
     }
 
     return notFound(`No route found for ${method} ${path}`);

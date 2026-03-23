@@ -708,6 +708,35 @@ export class BackendStack extends cdk.Stack {
       authorizationType: apigateway.AuthorizationType.COGNITO,
     });
 
+    // Meal Logging routes (all authenticated)
+    const mealLogsResource = apiResource.addResource('meal-logs');
+    mealLogsResource.addMethod('GET', lambdaIntegration, {
+      authorizer,
+      authorizationType: apigateway.AuthorizationType.COGNITO,
+    });
+    mealLogsResource.addMethod('POST', lambdaIntegration, {
+      authorizer,
+      authorizationType: apigateway.AuthorizationType.COGNITO,
+    });
+
+    const mealLogsPlan = mealLogsResource.addResource('plan');
+    mealLogsPlan.addMethod('POST', lambdaIntegration, {
+      authorizer,
+      authorizationType: apigateway.AuthorizationType.COGNITO,
+    });
+
+    const mealLogsStats = mealLogsResource.addResource('stats');
+    mealLogsStats.addMethod('GET', lambdaIntegration, {
+      authorizer,
+      authorizationType: apigateway.AuthorizationType.COGNITO,
+    });
+
+    const mealLogId = mealLogsResource.addResource('{id}');
+    mealLogId.addMethod('DELETE', lambdaIntegration, {
+      authorizer,
+      authorizationType: apigateway.AuthorizationType.COGNITO,
+    });
+
     // AI Routine routes (all authenticated)
     const routineResource = apiResource.addResource('routine');
 
