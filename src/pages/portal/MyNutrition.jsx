@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import { fetchNutritionProfile } from '../../api/nutritionProfile';
 import { generateDailyNutrition, fetchTodayNutrition } from '../../api/nutrition';
@@ -27,6 +27,7 @@ export default function MyNutrition() {
   const [expandedMeal, setExpandedMeal] = useState(null);
   const [groceryChecked, setGroceryChecked] = useState({});
 
+  const navigate = useNavigate();
   const hasAccess = hasTierAccess(userTier, 'Iron Dassie');
 
   useEffect(() => {
@@ -155,18 +156,19 @@ export default function MyNutrition() {
     );
   }
 
+  // Redirect to questionnaire if nutrition profile not completed
+  useEffect(() => {
+    if (!loading && fitnessProfile && !nutritionProfile) {
+      navigate('/portal/nutrition-questionnaire', { replace: true });
+    }
+  }, [loading, fitnessProfile, nutritionProfile, navigate]);
+
   if (!nutritionProfile) {
     return (
       <div className="nutrition-page">
         <div className="admin-page-header">
           <h1>My Nutrition</h1>
-          <p>AI-powered personalized daily nutrition plans</p>
-        </div>
-        <div className="nutrition-gate">
-          <div className="nutrition-gate-icon">&#x1F957;</div>
-          <h2>Complete Your Nutrition Profile</h2>
-          <p>Tell us about your dietary preferences, allergies, and nutritional goals so we can create the perfect plan for you.</p>
-          <Link to="/portal/nutrition-questionnaire" className="btn primary">Start Nutrition Questionnaire</Link>
+          <p>Redirecting to questionnaire...</p>
         </div>
       </div>
     );
@@ -209,6 +211,13 @@ export default function MyNutrition() {
           >
             {generating ? 'Generating...' : 'Generate Today\u2019s Nutrition Plan'}
           </button>
+          {nutritionProfile && (
+            <div className="nutrition-profile-summary">
+              {nutritionProfile.mealsPerDay && <span><strong>Meals:</strong> {nutritionProfile.mealsPerDay}/day</span>}
+              {nutritionProfile.caloricGoal && <span><strong>Calories:</strong> {nutritionProfile.caloricGoal}</span>}
+              {nutritionProfile.dietaryRestrictions?.length > 0 && <span><strong>Diet:</strong> {nutritionProfile.dietaryRestrictions.join(', ')}</span>}
+            </div>
+          )}
           <Link to="/portal/nutrition-questionnaire" className="nutrition-edit-link">Edit Nutrition Profile</Link>
         </div>
       </div>

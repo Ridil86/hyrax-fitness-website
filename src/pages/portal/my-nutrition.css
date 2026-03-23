@@ -55,6 +55,16 @@
   margin-bottom: 16px;
 }
 
+.nutrition-profile-summary {
+  display: flex;
+  gap: 16px;
+  flex-wrap: wrap;
+  justify-content: center;
+  margin-top: 12px;
+  font-size: 0.84rem;
+  color: var(--earth);
+}
+
 .nutrition-edit-link {
   display: inline-block;
   margin-top: 8px;

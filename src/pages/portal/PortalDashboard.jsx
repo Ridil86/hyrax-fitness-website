@@ -5,6 +5,8 @@ import { useTiers } from '../../hooks/useTiers';
 import { fetchProfile } from '../../api/profile';
 import { fetchLogStats, fetchUserLogs, fetchCalendarData } from '../../api/completionLog';
 import { fetchTodayWorkout } from '../../api/routine';
+import { fetchTodayNutrition } from '../../api/nutrition';
+import { fetchNutritionProfile } from '../../api/nutritionProfile';
 import { hasTierAccess } from '../../utils/tiers';
 import './portal-dashboard.css';
 
@@ -78,6 +80,8 @@ export default function PortalDashboard() {
   const [recentLogs, setRecentLogs] = useState([]);
   const [calendarData, setCalendarData] = useState({});
   const [todayWorkout, setTodayWorkout] = useState(null);
+  const [todayNutrition, setTodayNutrition] = useState(null);
+  const [hasNutritionProfile, setHasNutritionProfile] = useState(false);
 
   useEffect(() => {
     let cancelled = false;
@@ -111,18 +115,34 @@ export default function PortalDashboard() {
     (async () => {
       try {
         const token = await getIdToken();
-        const [statsData, logsData, calData, todayData] = await Promise.all([
+        const fetches = [
           fetchLogStats(token),
           fetchUserLogs({ limit: 3 }, token),
           fetchCalendarData(now.getFullYear(), now.getMonth() + 1, token),
           fetchTodayWorkout(token).catch(() => null),
-        ]);
+        ];
+        // Iron Dassie: also fetch nutrition data
+        const isIronDassie = hasTierAccess(profile.tier, 'Iron Dassie');
+        if (isIronDassie) {
+          fetches.push(
+            fetchTodayNutrition(token).catch(() => null),
+            fetchNutritionProfile(token).catch(() => null),
+          );
+        }
+        const results = await Promise.all(fetches);
+        const [statsData, logsData, calData, todayData] = results;
         if (!cancelled) {
           setActivityStats(statsData);
           const logs = Array.isArray(logsData) ? logsData : logsData?.logs || [];
           setRecentLogs(logs.slice(0, 3));
           setCalendarData(calData || {});
           if (todayData && !todayData.error) setTodayWorkout(todayData);
+          if (isIronDassie) {
+            const nutData = results[4];
+            const nutProfile = results[5];
+            if (nutData && !nutData.error) setTodayNutrition(nutData);
+            if (nutProfile?.nutritionProfile) setHasNutritionProfile(true);
+          }
         }
       } catch (err) {
         console.error('Failed to load dashboard activity data:', err);
@@ -310,6 +330,64 @@ export default function PortalDashboard() {
           <div className="dashboard-locked-msg">
             <span>{'\u{1F512}'}</span>
             <span>AI-powered routines are available with Rock Runner and above.</span>
+            <Link to="/portal/subscription">Upgrade &rarr;</Link>
+          </div>
+        )}
+      </div>
+
+      {/* Today's Meal Plan — Iron Dassie only */}
+      <div className="portal-card">
+        <h3>{'\u{1F957}'} Today&rsquo;s Meal Plan</h3>
+        {hasTierAccess(profile?.tier, 'Iron Dassie') ? (
+          !hasNutritionProfile ? (
+            <>
+              <p style={{ margin: '0 0 12px', fontSize: '.88rem', color: 'var(--rock)' }}>
+                Complete your nutrition questionnaire to unlock personalized daily meal plans.
+              </p>
+              <Link to="/portal/nutrition-questionnaire" className="dashboard-view-more">
+                Start Nutrition Questionnaire &rarr;
+              </Link>
+            </>
+          ) : todayNutrition ? (
+            <>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 10 }}>
+                <span style={{
+                  fontSize: '.78rem', fontWeight: 600, padding: '2px 10px',
+                  borderRadius: 12,
+                  background: todayNutrition.type === 'rest_day' ? 'rgba(27,18,10,.06)' : 'rgba(242,133,1,.12)',
+                  color: todayNutrition.type === 'rest_day' ? 'var(--rock)' : 'var(--sunset)',
+                }}>
+                  {todayNutrition.type === 'rest_day' ? 'Rest Day' : todayNutrition.type === 'active_recovery' ? 'Recovery' : 'Training Day'}
+                </span>
+                {todayNutrition.totalCalories && (
+                  <span style={{ fontSize: '.82rem', color: 'var(--rock)' }}>{todayNutrition.totalCalories} cal</span>
+                )}
+              </div>
+              <p style={{ margin: '0 0 8px', fontWeight: 600, fontSize: '.96rem' }}>{todayNutrition.title || 'Meal Plan'}</p>
+              {todayNutrition.meals?.length > 0 && (
+                <p style={{ margin: '0 0 10px', fontSize: '.84rem', color: 'var(--rock)' }}>
+                  {todayNutrition.meals.length} meals
+                  {todayNutrition.macros ? ` \u00B7 P: ${todayNutrition.macros.protein} C: ${todayNutrition.macros.carbs} F: ${todayNutrition.macros.fat}` : ''}
+                </p>
+              )}
+              <Link to="/portal/nutrition" className="dashboard-view-more">
+                View Full Plan &rarr;
+              </Link>
+            </>
+          ) : (
+            <>
+              <p style={{ margin: '0 0 12px', fontSize: '.88rem', color: 'var(--rock)' }}>
+                No meal plan generated yet today. Let your AI nutrition assistant create one for you.
+              </p>
+              <Link to="/portal/nutrition" className="dashboard-view-more">
+                Generate Meal Plan &rarr;
+              </Link>
+            </>
+          )
+        ) : (
+          <div className="dashboard-locked-msg">
+            <span>{'\u{1F512}'}</span>
+            <span>AI-powered nutrition plans are available with Iron Dassie.</span>
             <Link to="/portal/subscription">Upgrade &rarr;</Link>
           </div>
         )}
