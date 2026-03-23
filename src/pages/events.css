@@ -173,6 +173,19 @@
   font-size: 0.95rem;
 }
 
+/* Promo Image */
+.events-promo-wrapper {
+  margin-top: 2.5rem;
+  border-radius: 18px;
+  overflow: hidden;
+}
+
+.events-promo-img {
+  width: 100%;
+  display: block;
+  border-radius: 18px;
+}
+
 /* CTA */
 .events-cta {
   padding: 4rem 0;

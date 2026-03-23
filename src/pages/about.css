@@ -28,6 +28,18 @@
   background: linear-gradient(180deg, rgba(27, 18, 10, 0.7) 0%, rgba(27, 18, 10, 0.85) 100%);
 }
 
+.about-hero-watermark {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 50%;
+  max-width: 400px;
+  opacity: 0.06;
+  pointer-events: none;
+  z-index: 0;
+}
+
 .about-hero-content {
   position: relative;
   z-index: 1;

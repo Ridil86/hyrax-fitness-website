@@ -26,6 +26,12 @@ export default function About() {
           className="about-hero-bg"
         />
         <div className="about-hero-overlay" />
+        <img
+          src="/img/hyrax-fitness-logo-512x512.png"
+          alt=""
+          className="about-hero-watermark"
+          aria-hidden="true"
+        />
         <div className="about-hero-content">
           <ScrollReveal>
             <h1>About Hyrax Fitness</h1>

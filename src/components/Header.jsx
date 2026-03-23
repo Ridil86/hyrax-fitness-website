@@ -27,7 +27,6 @@ export default function Header() {
     { to: '/about', label: 'About' },
     { to: '/events', label: 'Events' },
     { to: '/programs', label: 'Programs' },
-    { to: '/gallery', label: 'Gallery' },
     { to: '/faq', label: 'FAQ' },
   ];
 

@@ -46,7 +46,7 @@ export default function Events() {
       {/* Hero */}
       <section className="events-hero">
         <LazyImage
-          src="/img/hyrax-event-hosting-800x600.jpg"
+          src="/img/events-hero-bg.jpg"
           alt="Hyrax Fitness event with athletes competing outdoors"
           className="events-hero-bg"
         />
@@ -138,7 +138,7 @@ export default function Events() {
                 </p>
               </div>
               <LazyImage
-                src="/img/hyrax-event-hosting-800x600.jpg"
+                src="/img/events-hero-bg.jpg"
                 alt="Hyrax Fitness event with athletes competing outdoors"
                 className="events-host-image"
               />
@@ -168,6 +168,12 @@ export default function Events() {
                   <span>{item}</span>
                 </div>
               ))}
+            </div>
+          </ScrollReveal>
+
+          <ScrollReveal>
+            <div className="events-promo-wrapper">
+              <LazyImage src="/img/events-promo.jpg" alt="Hyrax Fitness Event" className="events-promo-img" />
             </div>
           </ScrollReveal>
         </div>
