@@ -364,7 +364,7 @@ export default function MyNutrition() {
                     <span className="nutrition-meal-meta">
                       {meal.time && <span>{meal.time}</span>}
                       {meal.calories && <span>{meal.calories} cal</span>}
-                      {meal.timing && <span className="nutrition-timing-tag">{meal.timing}</span>}
+                      {meal.timing && meal.timing !== 'null' && <span className="nutrition-timing-tag">{meal.timing}</span>}
                     </span>
                   </div>
                   <span className="nutrition-meal-chevron">{expandedMeal === idx ? '\u25B2' : '\u25BC'}</span>
@@ -428,7 +428,7 @@ export default function MyNutrition() {
               <div key={idx} className="nutrition-supplement-item">
                 <span className="nutrition-supplement-name">{sanitize(supp.name)}</span>
                 {supp.dosage && <span className="nutrition-supplement-dosage">{supp.dosage}</span>}
-                {supp.timing && <span className="nutrition-supplement-timing">{supp.timing}</span>}
+                {supp.timing && supp.timing !== 'null' && <span className="nutrition-supplement-timing">{supp.timing}</span>}
               </div>
             ))}
           </div>
