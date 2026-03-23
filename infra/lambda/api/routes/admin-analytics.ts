@@ -290,6 +290,124 @@ export async function getAnalyticsOverview(
       console.error('Failed to fetch routine stats:', err);
     }
 
+    // ── Nutrition generation stats (DAILY_NUTRITION via GSI1) ──
+    let nutritionStats: any = null;
+    try {
+      const nutResult = await client.send(
+        new QueryCommand({
+          TableName: TABLE_NAME,
+          IndexName: 'GSI1',
+          KeyConditionExpression: 'gsi1pk = :pk AND gsi1sk >= :from',
+          ExpressionAttributeValues: { ':pk': 'DAILY_NUTRITION', ':from': thirtyDaysAgo },
+        })
+      );
+      const nutItems = (nutResult.Items || []).filter((r: any) => r.status !== 'generating');
+      const monthStart = thisMonth + '-01';
+      const monthNut = nutItems.filter((r: any) => (r.date || '') >= monthStart);
+      const weekNut = nutItems.filter((r: any) => (r.date || '') >= weekAgo);
+
+      let nutInputTokens = 0, nutOutputTokens = 0;
+      let nutBillingInput = 0, nutBillingOutput = 0;
+      for (const r of nutItems) {
+        const input = r.tokenUsage?.inputTokens || 0;
+        const output = r.tokenUsage?.outputTokens || 0;
+        nutInputTokens += input;
+        nutOutputTokens += output;
+        if ((r.date || '') >= monthStart) { nutBillingInput += input; nutBillingOutput += output; }
+      }
+
+      const COST_INPUT = 1; // Haiku 4.5
+      const COST_OUTPUT = 5;
+      nutritionStats = {
+        thisMonthTotal: monthNut.length,
+        thisWeekTotal: weekNut.length,
+        totalInputTokens: nutInputTokens,
+        totalOutputTokens: nutOutputTokens,
+        totalTokensUsed: nutInputTokens + nutOutputTokens,
+        avgInputTokensPerGen: nutItems.length > 0 ? Math.round(nutInputTokens / nutItems.length) : 0,
+        avgOutputTokensPerGen: nutItems.length > 0 ? Math.round(nutOutputTokens / nutItems.length) : 0,
+        billingCycle: {
+          startDate: monthStart,
+          endDate: today,
+          generations: monthNut.length,
+          inputTokens: nutBillingInput,
+          outputTokens: nutBillingOutput,
+          estimatedCostInput: Number(((nutBillingInput / 1_000_000) * COST_INPUT).toFixed(4)),
+          estimatedCostOutput: Number(((nutBillingOutput / 1_000_000) * COST_OUTPUT).toFixed(4)),
+          estimatedCostTotal: Number(((nutBillingInput / 1_000_000) * COST_INPUT + (nutBillingOutput / 1_000_000) * COST_OUTPUT).toFixed(4)),
+        },
+      };
+    } catch (err) {
+      console.error('Failed to fetch nutrition stats:', err);
+    }
+
+    // ── AI Coach Chat stats (CHAT_MESSAGE via GSI1) ──
+    let chatStats: any = null;
+    try {
+      const chatResult = await client.send(
+        new QueryCommand({
+          TableName: TABLE_NAME,
+          IndexName: 'GSI1',
+          KeyConditionExpression: 'gsi1pk = :pk AND gsi1sk >= :from',
+          ExpressionAttributeValues: { ':pk': 'CHAT_MESSAGE', ':from': thirtyDaysAgo },
+        })
+      );
+      const chatItems = (chatResult.Items || []).filter((r: any) => r.tokenUsage);
+      const monthStart = thisMonth + '-01';
+      const monthChat = chatItems.filter((r: any) => (r.createdAt || '').slice(0, 10) >= monthStart);
+      const weekChat = chatItems.filter((r: any) => (r.createdAt || '').slice(0, 10) >= weekAgo);
+
+      let chatInputTokens = 0, chatOutputTokens = 0;
+      let chatBillingInput = 0, chatBillingOutput = 0;
+      for (const r of chatItems) {
+        const input = r.tokenUsage?.inputTokens || r.tokenUsage?.input_tokens || 0;
+        const output = r.tokenUsage?.outputTokens || r.tokenUsage?.output_tokens || 0;
+        chatInputTokens += input;
+        chatOutputTokens += output;
+        const date = (r.createdAt || '').slice(0, 10);
+        if (date >= monthStart) { chatBillingInput += input; chatBillingOutput += output; }
+      }
+
+      const COST_INPUT = 1;
+      const COST_OUTPUT = 5;
+      chatStats = {
+        thisMonthTotal: monthChat.length,
+        thisWeekTotal: weekChat.length,
+        totalMessages: chatItems.length,
+        totalInputTokens: chatInputTokens,
+        totalOutputTokens: chatOutputTokens,
+        totalTokensUsed: chatInputTokens + chatOutputTokens,
+        avgInputTokensPerMsg: chatItems.length > 0 ? Math.round(chatInputTokens / chatItems.length) : 0,
+        avgOutputTokensPerMsg: chatItems.length > 0 ? Math.round(chatOutputTokens / chatItems.length) : 0,
+        billingCycle: {
+          startDate: monthStart,
+          endDate: today,
+          messages: monthChat.length,
+          inputTokens: chatBillingInput,
+          outputTokens: chatBillingOutput,
+          estimatedCostInput: Number(((chatBillingInput / 1_000_000) * COST_INPUT).toFixed(4)),
+          estimatedCostOutput: Number(((chatBillingOutput / 1_000_000) * COST_OUTPUT).toFixed(4)),
+          estimatedCostTotal: Number(((chatBillingInput / 1_000_000) * COST_INPUT + (chatBillingOutput / 1_000_000) * COST_OUTPUT).toFixed(4)),
+        },
+      };
+    } catch (err) {
+      console.error('Failed to fetch chat stats:', err);
+    }
+
+    // ── Combined AI cost summary ──
+    const combinedBilling = {
+      routineCost: routineStats?.billingCycle?.estimatedCostTotal || 0,
+      nutritionCost: nutritionStats?.billingCycle?.estimatedCostTotal || 0,
+      chatCost: chatStats?.billingCycle?.estimatedCostTotal || 0,
+      totalCost: Number((
+        (routineStats?.billingCycle?.estimatedCostTotal || 0) +
+        (nutritionStats?.billingCycle?.estimatedCostTotal || 0) +
+        (chatStats?.billingCycle?.estimatedCostTotal || 0)
+      ).toFixed(4)),
+      totalInputTokens: (routineStats?.billingCycle?.inputTokens || 0) + (nutritionStats?.billingCycle?.inputTokens || 0) + (chatStats?.billingCycle?.inputTokens || 0),
+      totalOutputTokens: (routineStats?.billingCycle?.outputTokens || 0) + (nutritionStats?.billingCycle?.outputTokens || 0) + (chatStats?.billingCycle?.outputTokens || 0),
+    };
+
     return success({
       allTimeTotal,
       thisMonthTotal,
@@ -300,6 +418,9 @@ export async function getAnalyticsOverview(
       tierDistribution: tierDist,
       totalUsers: Object.values(tierDist).reduce((s, n) => s + n, 0),
       routineStats,
+      nutritionStats,
+      chatStats,
+      combinedBilling,
     });
   } catch (error) {
     console.error('getAnalyticsOverview error:', error);

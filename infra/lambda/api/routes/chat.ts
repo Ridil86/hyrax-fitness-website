@@ -161,9 +161,13 @@ export async function sendChatMessage(
         Item: {
           pk: `USER#${claims.sub}`,
           sk: `CHAT#${new Date(Date.now() + 1).toISOString()}#${assistantMsgId}`,
+          gsi1pk: 'CHAT_MESSAGE',
+          gsi1sk: `${now}#${claims.sub}`,
           role: 'assistant',
           content: assistantMessage,
           createdAt: new Date(Date.now() + 1).toISOString(),
+          tokenUsage: responseBody.usage || null,
+          modelId: 'us.anthropic.claude-haiku-4-5-20251001-v1:0',
         },
       })),
     ]);
