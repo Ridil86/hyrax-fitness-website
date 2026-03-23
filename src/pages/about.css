@@ -7,7 +7,7 @@
 /* Hero Banner */
 .about-hero {
   position: relative;
-  height: 360px;
+  min-height: 420px;
   overflow: hidden;
   display: flex;
   align-items: center;
@@ -44,8 +44,24 @@
 .about-hero-sub {
   color: var(--sunrise);
   font-size: 1.15rem;
-  margin: 0;
+  margin: 0 0 1.5rem;
   font-style: italic;
+}
+
+.about-hero-mission {
+  max-width: 720px;
+  margin: 0 auto;
+}
+
+.about-hero-mission p {
+  color: rgba(255, 255, 255, 0.85);
+  font-size: 1.05rem;
+  line-height: 1.75;
+  margin: 0 0 0.75rem;
+}
+
+.about-hero-mission p:last-child {
+  margin-bottom: 0;
 }
 
 /* Dassie section on About page - remove top padding since hero precedes it */
@@ -107,39 +123,10 @@
   text-decoration: underline;
 }
 
-/* Mission section */
-.about-mission {
-  padding: 4rem 0;
-  background: var(--ink);
-}
-
-.about-mission-inner {
-  text-align: center;
-  max-width: 720px;
-  margin: 0 auto;
-}
-
-.about-mission-inner h2 {
-  color: var(--sunrise);
-  font-size: 2rem;
-  margin: 0 0 1.5rem;
-}
-
-.about-mission-inner p {
-  color: rgba(255, 255, 255, 0.85);
-  font-size: 1.05rem;
-  line-height: 1.75;
-  margin: 0 0 1rem;
-}
-
-.about-mission-inner p:last-child {
-  margin-bottom: 0;
-}
-
 /* Responsive */
 @media (max-width: 768px) {
   .about-hero {
-    height: 280px;
+    min-height: 320px;
   }
 
   .about-hero-content h1 {
@@ -158,7 +145,7 @@
     font-size: 1.25rem;
   }
 
-  .about-mission-inner h2 {
-    font-size: 1.6rem;
+  .about-hero-mission p {
+    font-size: 0.95rem;
   }
 }

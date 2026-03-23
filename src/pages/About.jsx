@@ -18,7 +18,7 @@ export default function About() {
 
   return (
     <div className="about-page">
-      {/* Hero Banner */}
+      {/* Hero Banner + Mission */}
       <section className="about-hero">
         <LazyImage
           src="/img/the-dassie-1024x576.jpg"
@@ -30,6 +30,14 @@ export default function About() {
           <ScrollReveal>
             <h1>About Hyrax Fitness</h1>
             <p className="about-hero-sub">Where nature's most underestimated athlete meets cutting-edge AI</p>
+            <div className="about-hero-mission">
+              <p>
+                Hyrax Fitness exists to make elite-level training accessible to everyone. By combining a training philosophy rooted in nature with AI-powered personalization, we deliver programs that adapt to each individual - their goals, their equipment, their schedule, and their body. Whether you are training in a fully equipped gym, your living room, or a park, the Hyrax Method meets you where you are and grows with you as you progress.
+              </p>
+              <p>
+                No gatekeeping. No gimmicks. Just smart, effective training designed by experts and delivered by technology that learns what works for you.
+              </p>
+            </div>
           </ScrollReveal>
         </div>
       </section>
@@ -108,10 +116,10 @@ export default function About() {
                   As a tech entrepreneur, former rock climber, and lifelong fitness enthusiast, Kristian spent years searching for a training philosophy that combined raw functional strength with intelligent recovery. The answer came from an unlikely source during time spent in South Africa.
                 </p>
                 <p>
-                  Watching the dassie - the rock hyrax - navigate sheer cliff faces and mountainous terrain with effortless agility left a lasting impression. These small, unassuming animals scaled surfaces that would challenge experienced climbers, yet between bursts of explosive movement they remained perfectly calm and composed. It was the embodiment of everything Kristian believed training should be: powerful when it matters, deliberate in recovery, and accessible regardless of size or starting point.
+                  Watching the "dassie", also known as the rock hyrax, navigate sheer cliff faces and mountainous terrain with effortless agility left a lasting impression. These small, unassuming animals scaled surfaces that would challenge experienced climbers, yet between bursts of explosive movement they remained perfectly calm and composed. It was the embodiment of everything Kristian believed training should be: powerful when it matters, deliberate in recovery, and accessible regardless of size or starting point.
                 </p>
                 <p>
-                  That observation became the seed of Hyrax Fitness. By combining the training philosophy inspired by the dassie with the power of artificial intelligence, Kristian built a system that creates truly personalized programs for anyone, anywhere, at any fitness level. No cookie-cutter routines. No one-size-fits-all plans. Every workout and nutrition plan is built around the individual, adapting as they grow stronger.
+                  That observation became the seed of Hyrax Fitness. By combining the training philosophy inspired by the dassie with the power of artificial intelligence, Kristian built a system that creates truly personalized programs for anyone, anywhere, at any fitness level. No cookie-cutter routines. No one-size-fits-all plans. Every workout and nutrition plan is built around the individual, adapting as they grow.
                 </p>
               </div>
             </ScrollReveal>
@@ -152,22 +160,6 @@ export default function About() {
         </div>
       </section>
 
-      {/* Our Mission */}
-      <section className="about-mission">
-        <div className="wrap">
-          <ScrollReveal>
-            <div className="about-mission-inner">
-              <h2>Our Mission</h2>
-              <p>
-                Hyrax Fitness exists to make elite-level training accessible to everyone. By combining a training philosophy rooted in nature with AI-powered personalization, we deliver programs that adapt to each individual - their goals, their equipment, their schedule, and their body. Whether you are training in a fully equipped gym, your living room, or a park, the Hyrax Method meets you where you are and grows with you as you progress.
-              </p>
-              <p>
-                No gatekeeping. No gimmicks. Just smart, effective training designed by experts and delivered by technology that learns what works for you.
-              </p>
-            </div>
-          </ScrollReveal>
-        </div>
-      </section>
     </div>
   );
 }
