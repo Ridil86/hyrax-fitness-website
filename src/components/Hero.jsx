@@ -15,13 +15,13 @@ const fadeUp = {
 
 // Fallback data while API loads (prevents empty hero on first paint)
 const fallback = {
-  headline: 'Your Personal Training System, Powered by AI',
-  leadStrong: 'Hyrax Fitness combines a nature-inspired training method with AI-powered personalization to deliver custom workouts, nutrition plans, and real-time coaching - all tailored to your goals, equipment, and schedule.',
-  leadSub: 'Train anywhere. 30-45 minute sessions. Beginner to elite. No long grindy cardio.',
+  headline: 'Fitness That Adapts to You',
+  leadStrong: 'Custom workouts, personalized nutrition, and a digital coach that knows your goals. Built around a nature-inspired method designed for real results in 30-45 minutes.',
+  leadSub: 'Train anywhere. Beginner to elite. No long grindy cardio.',
   ctaText: 'Start Free',
   stats: [
     { value: '4 Levels', label: 'Beginner to Elite' },
-    { value: 'AI-Powered', label: 'Workouts, Nutrition, Coaching' },
+    { value: 'Fully Custom', label: 'Workouts, Nutrition, Coaching' },
     { value: 'Free to Start', label: 'No credit card required' },
   ],
 };
@@ -57,6 +57,9 @@ export default function Hero() {
                   alt="Hyrax Fitness logo"
                   variants={fadeUp}
                 />
+                <motion.span className="heroTagline" variants={fadeUp}>
+                  Scramble. Haul. Bolt. Recover.
+                </motion.span>
                 <motion.h1 className="heroHeadline" variants={fadeUp}>
                   {d.headline}
                 </motion.h1>

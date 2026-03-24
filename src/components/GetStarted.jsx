@@ -17,7 +17,7 @@ export default function GetStarted() {
                 <span className="pill">Start here</span>
                 <h2 style={{ margin: '12px 0 10px' }}>Ready to train smarter?</h2>
                 <p className="muted" style={{ margin: '0 0 6px' }}>
-                  Create your free account in under a minute. Start with the full workout library and community access, then upgrade when you are ready for AI-powered personalization, custom nutrition plans, and real-time coaching.
+                  Create your free account in under a minute. Start with the full library and community, then upgrade for custom programs and coaching.
                 </p>
                 {isAuthenticated ? (
                   <Link className="btn primary" to="/portal">Go to Dashboard</Link>
@@ -45,7 +45,7 @@ export default function GetStarted() {
                 <span className="tier-card-badge" style={{ background: 'var(--sand)' }}>Free</span>
                 <strong>Explore the Method</strong>
                 <p className="muted" style={{ margin: '8px 0 0' }}>
-                  Access the workout library, movement tutorials, downloadable guides, and community forum. No credit card required.
+                  Workout library, movement tutorials, guides, and community. No credit card required.
                 </p>
               </div>
             </div>
@@ -54,7 +54,7 @@ export default function GetStarted() {
                 <span className="tier-card-badge" style={{ background: 'var(--sunset)' }}>$5/mo</span>
                 <strong>Get Personalized</strong>
                 <p className="muted" style={{ margin: '8px 0 0' }}>
-                  Unlock AI-generated daily workouts, progress tracking, benchmarks, and detailed analytics tailored to your goals.
+                  Custom daily workouts, progress tracking, benchmarks, and analytics tailored to you.
                 </p>
               </div>
             </div>
@@ -63,7 +63,7 @@ export default function GetStarted() {
                 <span className="tier-card-badge" style={{ background: 'var(--earth)' }}>$20/mo</span>
                 <strong>The Full System</strong>
                 <p className="muted" style={{ margin: '8px 0 0' }}>
-                  Everything in Rock Runner plus custom nutrition plans, AI coaching chat, and priority support.
+                  Custom nutrition plans, digital coaching, priority support, and everything in Rock Runner.
                 </p>
               </div>
             </div>

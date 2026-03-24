@@ -30,32 +30,32 @@ const platformFeatures = [
   {
     title: 'Custom Daily Workouts',
     tier: 'Rock Runner',
-    desc: 'AI-generated routines tailored to your goals, equipment, and training history. New every day, with swap and regenerate options.',
+    desc: 'Fresh routines every day, tailored to your goals, equipment, and training history.',
   },
   {
     title: 'Personalized Nutrition Plans',
     tier: 'Iron Dassie',
-    desc: 'Daily meal plans accounting for your allergies, preferences, workout schedule, and fitness goals. Complete with grocery lists and macro breakdowns.',
+    desc: 'Meal plans built around your allergies, preferences, and fitness goals. Includes grocery lists and macros.',
   },
   {
-    title: 'AI Training Coach',
+    title: 'Digital Training Coach',
     tier: 'Iron Dassie',
-    desc: 'Ask questions about form, recovery, modifications, and nutrition. Your coach knows your full training and diet history.',
+    desc: 'Ask about form, recovery, or nutrition. Your coach knows your full history.',
   },
   {
     title: 'Progress Tracking & Benchmarks',
     tier: 'Rock Runner',
-    desc: 'Log workouts and meals, track personal bests across 5 benchmark exercises, and visualize your progress with charts and calendars.',
+    desc: 'Log workouts and meals. Track personal bests. Visualize progress with charts and calendars.',
   },
   {
     title: 'Workout & Video Library',
     tier: 'Free',
-    desc: '15 signature workouts, 15 exercises with 4 difficulty levels each, and a growing video library of movement tutorials and full sessions.',
+    desc: '15 signature workouts, 60+ exercises at 4 difficulty levels, and a growing video library.',
   },
   {
     title: 'Community Forum',
     tier: 'Free',
-    desc: 'Connect with other Hyrax athletes, share progress, get tips, and stay motivated together.',
+    desc: 'Connect with other Hyrax athletes. Share progress, get tips, stay motivated.',
   },
 ];
 
@@ -79,7 +79,7 @@ export default function Workouts() {
             <div className="sectionHead">
               <div>
                 <h2>15 Signature Workouts</h2>
-                <p className="muted">Every workout includes warm-up, structured exercise blocks, and a bask cooldown. Four difficulty levels from beginner to elite.</p>
+                <p className="muted">Four difficulty levels. Warm-up, training blocks, and cooldown built into every session.</p>
               </div>
               <span className="pill">Home, Gym, and Outdoors</span>
             </div>
@@ -124,8 +124,8 @@ export default function Workouts() {
           <ScrollReveal>
             <div className="sectionHead">
               <div>
-                <h2>Everything You Need to Train Smarter</h2>
-                <p className="muted">From free access to the full AI-powered experience, Hyrax grows with you.</p>
+                <h2>The Complete Platform</h2>
+                <p className="muted">Start free. Upgrade when you are ready. The platform grows with you.</p>
               </div>
               <span className="pill">The Platform</span>
             </div>
