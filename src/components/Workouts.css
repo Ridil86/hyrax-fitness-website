@@ -42,14 +42,19 @@
   font-weight: 600;
 }
 
-.workout-cat-img,
-.workout-cat-img img,
-.workout-cat-card .lazy-img img {
+.workout-cat-img-wrap {
   width: 100%;
   height: 160px;
-  object-fit: cover;
   border-radius: 12px;
+  overflow: hidden;
   margin-bottom: 0.75rem;
+}
+
+.workout-cat-img-wrap img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
 }
 
 .workout-cat-tagline {
@@ -138,13 +143,19 @@
   margin: 0 0 0.75rem;
 }
 
-.feature-card-img,
-.feature-card-img img,
-.feature-card .lazy-img img {
+.feature-card-img-wrap {
   width: 100%;
   height: 140px;
-  object-fit: cover;
   border-radius: 12px;
+  overflow: hidden;
+  margin-top: auto;
+}
+
+.feature-card-img-wrap img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
 }
 
 /* ── Responsive ── */

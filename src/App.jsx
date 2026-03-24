@@ -13,7 +13,6 @@ import './styles/global.css';
 
 const Dassie = lazy(() => import('./components/Dassie'));
 const Method = lazy(() => import('./components/Method'));
-const HowItWorks = lazy(() => import('./components/HowItWorks'));
 const Workouts = lazy(() => import('./components/Workouts'));
 const Testimonials = lazy(() => import('./components/Testimonials'));
 const GetStarted = lazy(() => import('./components/GetStarted'));
@@ -136,7 +135,6 @@ function HomePage() {
       <GoogleOAuthHandler />
       <Hero />
       <LazySection><Method /></LazySection>
-      <LazySection><HowItWorks /></LazySection>
       <LazySection><Workouts /></LazySection>
       <LazySection><Testimonials /></LazySection>
       <LazySection><GetStarted /></LazySection>

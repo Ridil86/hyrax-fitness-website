@@ -2,7 +2,6 @@ import { Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { useInView } from 'react-intersection-observer';
 import ScrollReveal from './ScrollReveal';
-import LazyImage from './LazyImage';
 import { useAuth } from '../context/AuthContext';
 import './Workouts.css';
 
@@ -107,11 +106,9 @@ export default function Workouts() {
                   <h3>{cat.category}</h3>
                   <span className="workout-cat-duration">{cat.duration}</span>
                 </div>
-                <LazyImage
-                  src={cat.img}
-                  alt={cat.category + ' workouts'}
-                  className="workout-cat-img"
-                />
+                <div className="workout-cat-img-wrap">
+                  <img src={cat.img} alt={cat.category + ' workouts'} loading="lazy" />
+                </div>
                 <p className="workout-cat-tagline">{cat.tagline}</p>
                 <ul className="workout-cat-list">
                   {cat.workouts.map((w) => (
@@ -164,11 +161,9 @@ export default function Workouts() {
                 </div>
                 <h3>{feat.title}</h3>
                 <p>{feat.desc}</p>
-                <LazyImage
-                  src={feat.img}
-                  alt={feat.title}
-                  className="feature-card-img"
-                />
+                <div className="feature-card-img-wrap">
+                  <img src={feat.img} alt={feat.title} loading="lazy" />
+                </div>
               </motion.div>
             ))}
           </div>

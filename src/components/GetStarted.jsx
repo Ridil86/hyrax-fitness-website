@@ -1,11 +1,20 @@
 import { Link } from 'react-router-dom';
+import { motion } from 'framer-motion';
+import { useInView } from 'react-intersection-observer';
 import ScrollReveal from './ScrollReveal';
 import LazyImage from './LazyImage';
 import { useAuth } from '../context/AuthContext';
 import './GetStarted.css';
 
+const howSteps = [
+  { num: '1', title: 'Sign up free', desc: 'Create your account in under a minute. No credit card required.' },
+  { num: '2', title: 'Build your profile', desc: 'Tell us your goals, equipment, and schedule. We handle the rest.' },
+  { num: '3', title: 'Start training', desc: 'Get your first custom workout and nutrition plan today.' },
+];
+
 export default function GetStarted() {
   const { isAuthenticated } = useAuth();
+  const { ref: stepsRef, inView: stepsInView } = useInView({ triggerOnce: true, threshold: 0.15 });
 
   return (
     <section id="get-started">
@@ -38,7 +47,21 @@ export default function GetStarted() {
           </div>
         </ScrollReveal>
 
-        <div style={{ height: 18 }} />
+        <div className="how-steps" ref={stepsRef}>
+          {howSteps.map((step, i) => (
+            <motion.div
+              className="how-step"
+              key={step.num}
+              initial={{ opacity: 0, y: 20 }}
+              animate={stepsInView ? { opacity: 1, y: 0 } : {}}
+              transition={{ duration: 0.4, delay: i * 0.12 }}
+            >
+              <div className="how-step-num">{step.num}</div>
+              <h3>{step.title}</h3>
+              <p>{step.desc}</p>
+            </motion.div>
+          ))}
+        </div>
 
         <ScrollReveal>
           <div className="grid3">
