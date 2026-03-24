@@ -42,6 +42,16 @@
   font-weight: 600;
 }
 
+.workout-cat-img,
+.workout-cat-img img,
+.workout-cat-card .lazy-img img {
+  width: 100%;
+  height: 160px;
+  object-fit: cover;
+  border-radius: 12px;
+  margin-bottom: 0.75rem;
+}
+
 .workout-cat-tagline {
   color: var(--ink);
   font-size: 0.92rem;
@@ -125,7 +135,16 @@
   color: var(--rock);
   font-size: 0.93rem;
   line-height: 1.6;
-  margin: 0;
+  margin: 0 0 0.75rem;
+}
+
+.feature-card-img,
+.feature-card-img img,
+.feature-card .lazy-img img {
+  width: 100%;
+  height: 140px;
+  object-fit: cover;
+  border-radius: 12px;
 }
 
 /* ── Responsive ── */

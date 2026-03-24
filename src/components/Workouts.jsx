@@ -2,24 +2,28 @@ import { Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { useInView } from 'react-intersection-observer';
 import ScrollReveal from './ScrollReveal';
+import LazyImage from './LazyImage';
 import { useAuth } from '../context/AuthContext';
 import './Workouts.css';
 
 const workoutCategories = [
   {
     category: 'Home',
+    img: '/img/signature-home.jpg',
     tagline: 'No gym required. Bodyweight and minimal equipment sessions you can do anywhere.',
     duration: '15-30 min',
     workouts: ['Dawn Forage', 'Colony Circuit', 'Burrow Burn', 'Thermal Drift', 'Pinnacle Flow'],
   },
   {
     category: 'Gym',
+    img: '/img/signature-gym.jpg',
     tagline: 'Heavy compounds, supersets, and full-facility sessions for serious training.',
     duration: '25-40 min',
     workouts: ['Kopje Complex', 'Granite Grind', 'Slab Ascent', 'Talus Storm', 'Spire Session'],
   },
   {
     category: 'Outdoors',
+    img: '/img/signature-outdoors.jpg',
     tagline: 'Trail-ready formats that turn parks, benches, and open ground into your gym.',
     duration: '20-35 min',
     workouts: ['Ridge Run', 'Outcrop', 'Bolt', 'Colony March', 'Skyline'],
@@ -30,31 +34,37 @@ const platformFeatures = [
   {
     title: 'Workout & Video Library',
     tier: 'Free',
+    img: '/img/features-library.jpg',
     desc: '15 signature workouts, 60+ exercises at 4 difficulty levels, and a growing video library.',
   },
   {
     title: 'Community Forum',
     tier: 'Free',
+    img: '/img/features-community.jpg',
     desc: 'Connect with other Hyrax athletes. Share progress, get tips, stay motivated.',
   },
   {
     title: 'Custom Daily Workouts',
     tier: 'Free Trial',
+    img: '/img/features-workouts.jpg',
     desc: 'Fresh routines every day, tailored to your goals, equipment, and training history.',
   },
   {
     title: 'Progress Tracking & Benchmarks',
     tier: 'Free Trial',
+    img: '/img/features-benchmarks.jpg',
     desc: 'Log workouts and meals. Track personal bests. Visualize progress with charts and calendars.',
   },
   {
     title: 'Personalized Nutrition Plans',
     tier: 'Free Trial',
+    img: '/img/features-nutrition.jpg',
     desc: 'Meal plans built around your allergies, preferences, and fitness goals. Includes grocery lists and macros.',
   },
   {
     title: 'Digital Training Coach',
     tier: 'Free Trial',
+    img: '/img/features-coach.jpg',
     desc: 'Ask about form, recovery, or nutrition. Your coach knows your full history.',
   },
 ];
@@ -97,6 +107,11 @@ export default function Workouts() {
                   <h3>{cat.category}</h3>
                   <span className="workout-cat-duration">{cat.duration}</span>
                 </div>
+                <LazyImage
+                  src={cat.img}
+                  alt={cat.category + ' workouts'}
+                  className="workout-cat-img"
+                />
                 <p className="workout-cat-tagline">{cat.tagline}</p>
                 <ul className="workout-cat-list">
                   {cat.workouts.map((w) => (
@@ -149,6 +164,11 @@ export default function Workouts() {
                 </div>
                 <h3>{feat.title}</h3>
                 <p>{feat.desc}</p>
+                <LazyImage
+                  src={feat.img}
+                  alt={feat.title}
+                  className="feature-card-img"
+                />
               </motion.div>
             ))}
           </div>
