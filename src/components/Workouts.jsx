@@ -2,109 +2,159 @@ import { Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { useInView } from 'react-intersection-observer';
 import ScrollReveal from './ScrollReveal';
-import LazyImage from './LazyImage';
-import { useContent } from '../hooks/useContent';
 import { useAuth } from '../context/AuthContext';
 import './Workouts.css';
 
-const fallbackWorkouts = [
-  { img: '/img/workout-outcrop-circuit-1200x900.jpg', alt: 'Circuit training outdoors near rocks', name: 'Outcrop Circuit', desc: 'Stairs or step ups, carries, crawls, and scan freezes. Repeatable and dense.' },
-  { img: '/img/workout-bolt-ladder-1200x900.jpg', alt: 'Short sprint training with cones', name: 'Bolt Ladder', desc: 'Every two minutes: burst, scramble, hold. High quality speed and power.' },
-  { img: '/img/workout-colony-session-1200x900.jpg', alt: 'Partner training with sandbags', name: 'Colony Session', desc: 'Partner switches with carries and isometrics. Social, sweaty, and scalable.' },
+const workoutCategories = [
+  {
+    category: 'Home',
+    tagline: 'No gym required. Bodyweight and minimal equipment sessions you can do anywhere.',
+    duration: '15-30 min',
+    workouts: ['Dawn Forage', 'Colony Circuit', 'Burrow Burn', 'Thermal Drift', 'Pinnacle Flow'],
+  },
+  {
+    category: 'Gym',
+    tagline: 'Heavy compounds, supersets, and full-facility sessions for serious training.',
+    duration: '25-40 min',
+    workouts: ['Kopje Complex', 'Granite Grind', 'Slab Ascent', 'Talus Storm', 'Spire Session'],
+  },
+  {
+    category: 'Outdoors',
+    tagline: 'Trail-ready formats that turn parks, benches, and open ground into your gym.',
+    duration: '20-35 min',
+    workouts: ['Ridge Run', 'Outcrop', 'Bolt', 'Colony March', 'Skyline'],
+  },
 ];
+
+const platformFeatures = [
+  {
+    title: 'Custom Daily Workouts',
+    tier: 'Rock Runner',
+    desc: 'AI-generated routines tailored to your goals, equipment, and training history. New every day, with swap and regenerate options.',
+  },
+  {
+    title: 'Personalized Nutrition Plans',
+    tier: 'Iron Dassie',
+    desc: 'Daily meal plans accounting for your allergies, preferences, workout schedule, and fitness goals. Complete with grocery lists and macro breakdowns.',
+  },
+  {
+    title: 'AI Training Coach',
+    tier: 'Iron Dassie',
+    desc: 'Ask questions about form, recovery, modifications, and nutrition. Your coach knows your full training and diet history.',
+  },
+  {
+    title: 'Progress Tracking & Benchmarks',
+    tier: 'Rock Runner',
+    desc: 'Log workouts and meals, track personal bests across 5 benchmark exercises, and visualize your progress with charts and calendars.',
+  },
+  {
+    title: 'Workout & Video Library',
+    tier: 'Free',
+    desc: '15 signature workouts, 15 exercises with 4 difficulty levels each, and a growing video library of movement tutorials and full sessions.',
+  },
+  {
+    title: 'Community Forum',
+    tier: 'Free',
+    desc: 'Connect with other Hyrax athletes, share progress, get tips, and stay motivated together.',
+  },
+];
+
+const tierColors = {
+  'Free': 'var(--sand)',
+  'Rock Runner': 'var(--sunset)',
+  'Iron Dassie': 'var(--earth)',
+};
 
 export default function Workouts() {
   const { ref: gridRef, inView: gridInView } = useInView({ triggerOnce: true, threshold: 0.1 });
-  const { data } = useContent('workouts');
+  const { ref: featRef, inView: featInView } = useInView({ triggerOnce: true, threshold: 0.1 });
   const { isAuthenticated } = useAuth();
-  const d = data || {};
-  const workouts = d.workouts || fallbackWorkouts;
-  const roundDetails = d.roundDetails || ['60s steps or stairs', '40m carry', '20m crawl', '6 scan freeze cycles'];
-  const scoreDetails = d.scoreDetails || ['Total time', 'Carry load used', 'Freeze quality', 'Breath control'];
 
   return (
-    <section id="workouts">
-      <div className="wrap">
-        <ScrollReveal>
-          <div className="sectionHead">
-            <div>
-              <h2>{d.heading || 'Signature Workouts'}</h2>
-            </div>
-            <span className="pill">{d.pill || '30 to 45 minutes'}</span>
-          </div>
-        </ScrollReveal>
-
-        <div className="workoutGrid" ref={gridRef} aria-label="Workout formats">
-          {workouts.map((w, i) => (
-            <motion.article
-              className="workout"
-              key={w.name}
-              initial={{ opacity: 0, scale: 0.95 }}
-              animate={gridInView ? { opacity: 1, scale: 1 } : {}}
-              transition={{ duration: 0.5, delay: i * 0.15 }}
-            >
-              <LazyImage
-                src={w.img}
-                alt={w.alt}
-                style={{ width: '100%', height: '100%', position: 'absolute', inset: 0 }}
-              />
-              <div className="workout-overlay" />
-              <div className="txt">
-                <strong>{w.name}</strong>
-                <span>{w.desc}</span>
+    <>
+      {/* Signature Workouts */}
+      <section id="workouts">
+        <div className="wrap">
+          <ScrollReveal>
+            <div className="sectionHead">
+              <div>
+                <h2>15 Signature Workouts</h2>
+                <p className="muted">Every workout includes warm-up, structured exercise blocks, and a bask cooldown. Four difficulty levels from beginner to elite.</p>
               </div>
-            </motion.article>
-          ))}
-        </div>
+              <span className="pill">Home, Gym, and Outdoors</span>
+            </div>
+          </ScrollReveal>
 
-        <div style={{ height: 18 }} />
-
-        <ScrollReveal>
-          <div className="split reverse">
-            <div className="card">
-              <div className="cardPad">
-                <span className="pill">{d.challengePill || 'Test Day'}</span>
-                <h3 style={{ margin: '12px 0 8px', fontSize: '1.35rem' }}>{d.challengeHeading || 'The Outcrop Challenge'}</h3>
-                <p className="muted" style={{ margin: '0 0 12px' }}>
-                  {d.challengeBody || 'A simple benchmark event: 6 rounds of scramble, haul, and bolt work. Track time to completion and keep movement quality clean.'}
-                </p>
-                <div className="grid2" aria-label="Challenge details">
-                  <div className="card" style={{ boxShadow: 'none', background: 'rgba(251,247,230,.55)' }}>
-                    <div className="cardPad">
-                      <strong>Round (x6)</strong>
-                      <div className="muted small" style={{ marginTop: 8 }}>
-                        {roundDetails.map((r, i) => <span key={i}>{r}<br /></span>)}
-                      </div>
-                    </div>
-                  </div>
-                  <div className="card" style={{ boxShadow: 'none', background: 'rgba(251,247,230,.55)' }}>
-                    <div className="cardPad">
-                      <strong>Score it</strong>
-                      <div className="muted small" style={{ marginTop: 8 }}>
-                        {scoreDetails.map((s, i) => <span key={i}>{s}<br /></span>)}
-                      </div>
-                    </div>
-                  </div>
+          <div className="workout-categories" ref={gridRef} aria-label="Workout categories">
+            {workoutCategories.map((cat, i) => (
+              <motion.div
+                className="workout-cat-card"
+                key={cat.category}
+                initial={{ opacity: 0, y: 30 }}
+                animate={gridInView ? { opacity: 1, y: 0 } : {}}
+                transition={{ duration: 0.5, delay: i * 0.12 }}
+              >
+                <div className="workout-cat-header">
+                  <h3>{cat.category}</h3>
+                  <span className="workout-cat-duration">{cat.duration}</span>
                 </div>
-                <div style={{ height: 14 }} />
-                {isAuthenticated ? (
-                  <Link className="btn primary" to="/portal">Go to My Account</Link>
-                ) : (
-                  <a className="btn primary" href="#get-started">Get Started</a>
-                )}
-              </div>
-            </div>
-
-            <div className="mediaCard">
-              <LazyImage
-                src="/img/training-carry-sandbag-1400x900.jpg"
-                alt="Sandbag carry training"
-                style={{ width: '100%', height: '100%', minHeight: 380 }}
-              />
-            </div>
+                <p className="workout-cat-tagline">{cat.tagline}</p>
+                <ul className="workout-cat-list">
+                  {cat.workouts.map((w) => (
+                    <li key={w}>{w}</li>
+                  ))}
+                </ul>
+              </motion.div>
+            ))}
           </div>
-        </ScrollReveal>
-      </div>
-    </section>
+
+          <div style={{ textAlign: 'center', marginTop: '1.5rem' }}>
+            {isAuthenticated ? (
+              <Link className="btn primary" to="/portal/workouts">Browse the Full Library</Link>
+            ) : (
+              <Link className="btn primary" to="/login">Browse the Full Library</Link>
+            )}
+          </div>
+        </div>
+      </section>
+
+      {/* Platform Features */}
+      <section id="features" className="features-section">
+        <div className="wrap">
+          <ScrollReveal>
+            <div className="sectionHead">
+              <div>
+                <h2>Everything You Need to Train Smarter</h2>
+                <p className="muted">From free access to the full AI-powered experience, Hyrax grows with you.</p>
+              </div>
+              <span className="pill">The Platform</span>
+            </div>
+          </ScrollReveal>
+
+          <div className="features-grid" ref={featRef} aria-label="Platform features">
+            {platformFeatures.map((feat, i) => (
+              <motion.div
+                className="feature-card"
+                key={feat.title}
+                initial={{ opacity: 0, y: 25 }}
+                animate={featInView ? { opacity: 1, y: 0 } : {}}
+                transition={{ duration: 0.45, delay: i * 0.1 }}
+              >
+                <div className="feature-card-top">
+                  <span
+                    className="feature-tier-badge"
+                    style={{ background: tierColors[feat.tier] || 'var(--sand)' }}
+                  >
+                    {feat.tier}
+                  </span>
+                </div>
+                <h3>{feat.title}</h3>
+                <p>{feat.desc}</p>
+              </motion.div>
+            ))}
+          </div>
+        </div>
+      </section>
+    </>
   );
 }

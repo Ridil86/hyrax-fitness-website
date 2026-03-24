@@ -16,14 +16,14 @@ const fadeUp = {
 
 // Fallback data while API loads (prevents empty hero on first paint)
 const fallback = {
-  headline: 'Train like a Hyrax',
-  leadStrong: 'Hyrax Fitness is a start-stop training system built around scrambling, hauling, short sprints, and recovery.',
-  leadSub: 'Train in the gym or outdoors without the long grindy cardio.',
-  ctaText: 'Get Started',
+  headline: 'Your Personal Training System, Powered by AI',
+  leadStrong: 'Hyrax Fitness combines a nature-inspired training method with AI-powered personalization to deliver custom workouts, nutrition plans, and real-time coaching - all tailored to your goals, equipment, and schedule.',
+  leadSub: 'Train anywhere. 30-45 minute sessions. Beginner to elite. No long grindy cardio.',
+  ctaText: 'Start Free',
   stats: [
-    { value: '30-45 min', label: 'Sessions' },
-    { value: '5', label: 'Modules' },
-    { value: '3 Tiers', label: 'Pup to Iron Dassie' },
+    { value: '4 Levels', label: 'Beginner to Elite' },
+    { value: 'AI-Powered', label: 'Workouts, Nutrition, Coaching' },
+    { value: 'Free to Start', label: 'No credit card required' },
   ],
 };
 
@@ -69,7 +69,7 @@ export default function Hero() {
                   </p>
                   <div className="heroActions">
                     {isAuthenticated ? (
-                      <Link className="btn primary" to="/portal">Go to My Account</Link>
+                      <Link className="btn primary" to="/portal">Go to Dashboard</Link>
                     ) : (
                       <Link className="btn primary" to="/get-started">{d.ctaText}</Link>
                     )}

@@ -18,14 +18,14 @@ export default function GetStarted() {
             <div className="inner">
               <div>
                 <span className="pill">{d.pill || 'Start here'}</span>
-                <h2 style={{ margin: '12px 0 10px' }}>{d.heading || 'Find your training path'}</h2>
+                <h2 style={{ margin: '12px 0 10px' }}>{d.heading || 'Ready to train smarter?'}</h2>
                 <p className="muted" style={{ margin: '0 0 6px' }}>
-                  {d.body || 'Take a quick assessment to discover your ideal Hyrax program. We\u2019ll ask about your fitness background, goals, and preferences, then build a plan that fits your life. It only takes about 2 minutes. No commitment, no credit card required.'}
+                  {d.body || 'Create your free account in under a minute. Start with the full workout library and community access, then upgrade when you are ready for AI-powered personalization, custom nutrition plans, and real-time coaching.'}
                 </p>
                 {isAuthenticated ? (
-                  <Link className="btn primary" to="/portal">Go to My Account</Link>
+                  <Link className="btn primary" to="/portal">Go to Dashboard</Link>
                 ) : (
-                  <Link className="btn primary" to="/get-started">{d.ctaText || 'Get Started'}</Link>
+                  <Link className="btn primary" to="/get-started">{d.ctaText || 'Create Free Account'}</Link>
                 )}
               </div>
 
@@ -42,32 +42,39 @@ export default function GetStarted() {
         <div style={{ height: 18 }} />
 
         <ScrollReveal>
-          <div className="grid2">
-            <div className="card">
+          <div className="grid3">
+            <div className="card tier-card">
               <div className="cardPad">
-                <strong>{d.classFormatTitle || 'Need a class format?'}</strong>
-                <LazyImage
-                  className="cardImage"
-                  src={d.classFormatImage || '/img/short-class-promo-800x600.jpg'}
-                  alt={d.classFormatImageAlt || 'Short class format promo'}
-                />
+                <span className="tier-card-badge" style={{ background: 'var(--sand)' }}>Free</span>
+                <strong>Explore the Method</strong>
                 <p className="muted" style={{ margin: '8px 0 0' }}>
-                  {d.classFormatBody || 'Run a 45 minute Hyrax class with a short bask warmup, one scramble block, one haul block, and a bolt finisher.'}
+                  Access the workout library, movement tutorials, downloadable guides, and community forum. No credit card required.
                 </p>
               </div>
             </div>
-            <Link to="/events" className="card card-link">
+            <div className="card tier-card tier-featured">
               <div className="cardPad">
-                <strong>{d.eventCardTitle || 'Want an event?'}</strong>
-                <LazyImage
-                  className="cardImage"
-                  src={d.eventCardImage || '/img/hyrax-event-hosting-800x600.jpg'}
-                  alt={d.eventCardImageAlt || 'Hyrax event hosting'}
-                />
+                <span className="tier-card-badge" style={{ background: 'var(--sunset)' }}>$5/mo</span>
+                <strong>Get Personalized</strong>
                 <p className="muted" style={{ margin: '8px 0 0' }}>
-                  {d.eventCardBody || 'Host a branded Hyrax event at your gym or find a competition near you. Get in touch to get started.'}
+                  Unlock AI-generated daily workouts, progress tracking, benchmarks, and detailed analytics tailored to your goals.
                 </p>
               </div>
+            </div>
+            <div className="card tier-card">
+              <div className="cardPad">
+                <span className="tier-card-badge" style={{ background: 'var(--earth)' }}>$20/mo</span>
+                <strong>The Full System</strong>
+                <p className="muted" style={{ margin: '8px 0 0' }}>
+                  Everything in Rock Runner plus custom nutrition plans, AI coaching chat, and priority support.
+                </p>
+              </div>
+            </div>
+          </div>
+
+          <div style={{ textAlign: 'center', marginTop: '1.25rem' }}>
+            <Link to="/programs" className="muted" style={{ color: 'var(--sunset)', fontWeight: 600, fontSize: '0.95rem' }}>
+              Compare all features &rarr;
             </Link>
           </div>
         </ScrollReveal>

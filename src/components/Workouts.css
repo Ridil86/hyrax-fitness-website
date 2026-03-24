@@ -1,59 +1,147 @@
-.workoutGrid {
+/* ── Signature Workouts: Category Cards ── */
+
+.workout-categories {
   display: grid;
   grid-template-columns: repeat(3, 1fr);
-  gap: 16px;
-  margin-top: 16px;
+  gap: 1.25rem;
+  margin-top: 1.5rem;
 }
 
-.workout {
-  border-radius: 20px;
-  overflow: hidden;
-  border: 1px solid rgba(27, 18, 10, .10);
-  box-shadow: var(--shadow);
-  position: relative;
-  background: #000;
-  min-height: 300px;
-  transition: transform 0.3s ease;
-}
-.workout:hover {
-  transform: scale(1.02);
+.workout-cat-card {
+  background: #fff;
+  border-radius: 18px;
+  padding: 1.75rem;
+  box-shadow: 0 2px 12px rgba(27, 18, 10, 0.06);
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
 }
 
-.workout img, .workout .lazy-img img {
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-  display: block;
+.workout-cat-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 20px rgba(27, 18, 10, 0.1);
 }
 
-.workout-overlay {
-  position: absolute;
-  inset: 0;
-  background:
-    linear-gradient(0deg, rgba(27, 18, 10, .68), rgba(27, 18, 10, .08) 60%),
-    radial-gradient(480px 300px at 70% 10%, rgba(253, 185, 15, .18), transparent 60%);
-  pointer-events: none;
-  z-index: 1;
+.workout-cat-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 0.5rem;
 }
 
-.workout .txt {
-  position: absolute;
-  inset: auto 16px 16px 16px;
-  z-index: 2;
+.workout-cat-header h3 {
+  color: var(--sunset);
+  font-size: 1.3rem;
+  margin: 0;
+}
+
+.workout-cat-duration {
+  font-size: 0.85rem;
+  color: var(--rock);
+  background: var(--paper);
+  padding: 0.2rem 0.6rem;
+  border-radius: 8px;
+  font-weight: 600;
+}
+
+.workout-cat-tagline {
+  color: var(--ink);
+  font-size: 0.92rem;
+  line-height: 1.55;
+  margin: 0 0 1rem;
+}
+
+.workout-cat-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.workout-cat-list li {
+  color: var(--ink);
+  font-size: 0.95rem;
+  padding: 0.35rem 0;
+  border-bottom: 1px solid rgba(211, 191, 151, 0.2);
+}
+
+.workout-cat-list li:last-child {
+  border-bottom: none;
+}
+
+.workout-cat-list li::before {
+  content: '\2022';
+  color: var(--sunset);
+  font-weight: 700;
+  margin-right: 0.5rem;
+}
+
+/* ── Platform Features Grid ── */
+
+.features-section {
+  padding: 3rem 0 2rem;
+  background: rgba(211, 191, 151, 0.06);
+}
+
+.features-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 1.25rem;
+  margin-top: 1.5rem;
+}
+
+.feature-card {
+  background: #fff;
+  border-radius: 18px;
+  padding: 1.75rem;
+  box-shadow: 0 2px 12px rgba(27, 18, 10, 0.06);
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.feature-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 20px rgba(27, 18, 10, 0.1);
+}
+
+.feature-card-top {
+  margin-bottom: 0.75rem;
+}
+
+.feature-tier-badge {
+  display: inline-block;
   color: #fff;
-}
-.workout .txt strong {
-  display: block;
-  font-size: 1.2rem;
-  letter-spacing: -.01em;
-}
-.workout .txt span {
-  display: block;
-  opacity: .86;
-  margin-top: 4px;
-  font-size: .93rem;
+  font-size: 0.75rem;
+  font-weight: 700;
+  padding: 0.2rem 0.65rem;
+  border-radius: 10px;
+  text-transform: uppercase;
+  letter-spacing: 0.02em;
 }
 
-@media (max-width: 980px), (max-width: 1200px) and (orientation: portrait) {
-  .workoutGrid { grid-template-columns: 1fr; }
+.feature-card h3 {
+  color: var(--ink);
+  font-size: 1.15rem;
+  margin: 0 0 0.5rem;
+}
+
+.feature-card p {
+  color: var(--rock);
+  font-size: 0.93rem;
+  line-height: 1.6;
+  margin: 0;
+}
+
+/* ── Responsive ── */
+
+@media (max-width: 980px) {
+  .workout-categories {
+    grid-template-columns: 1fr;
+  }
+
+  .features-grid {
+    grid-template-columns: 1fr 1fr;
+  }
+}
+
+@media (max-width: 600px) {
+  .features-grid {
+    grid-template-columns: 1fr;
+  }
 }

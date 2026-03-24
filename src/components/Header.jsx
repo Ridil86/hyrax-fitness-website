@@ -69,7 +69,10 @@ export default function Header() {
                   <Link className="btn primary" to="/portal">My Account</Link>
                 </>
               ) : (
-                <Link className="btn primary" to="/login">Sign In</Link>
+                <>
+                  <Link className="btn ghost" to="/login">Sign In</Link>
+                  <Link className="btn primary" to="/get-started">Get Started Free</Link>
+                </>
               )}
             </div>
           </div>
@@ -95,7 +98,10 @@ export default function Header() {
                       <Link className="btn primary" to="/portal" onClick={closeMenu}>My Account</Link>
                     </>
                   ) : (
-                    <Link className="btn primary" to="/login" onClick={closeMenu}>Sign In</Link>
+                    <>
+                      <Link className="btn ghost" to="/login" onClick={closeMenu}>Sign In</Link>
+                      <Link className="btn primary" to="/get-started" onClick={closeMenu}>Get Started Free</Link>
+                    </>
                   )}
                 </div>
               </motion.div>

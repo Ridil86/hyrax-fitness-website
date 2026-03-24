@@ -66,6 +66,46 @@
   box-shadow: var(--shadow);
 }
 
+/* Tier cards grid */
+.grid3 {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 1.25rem;
+}
+
+.tier-card {
+  text-align: center;
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.tier-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 20px rgba(27, 18, 10, 0.1);
+}
+
+.tier-featured {
+  border: 2px solid var(--sunset);
+}
+
+.tier-card-badge {
+  display: inline-block;
+  color: #fff;
+  font-size: 0.8rem;
+  font-weight: 700;
+  padding: 0.25rem 0.75rem;
+  border-radius: 12px;
+  margin-bottom: 0.5rem;
+  text-transform: uppercase;
+  letter-spacing: 0.02em;
+}
+
+.tier-card strong {
+  display: block;
+  font-size: 1.1rem;
+  color: var(--ink);
+}
+
 @media (max-width: 980px), (max-width: 1200px) and (orientation: portrait) {
   .ctaBand .inner { grid-template-columns: 1fr; }
+  .grid3 { grid-template-columns: 1fr; }
 }
