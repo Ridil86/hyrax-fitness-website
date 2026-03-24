@@ -26,12 +26,14 @@ export default function GetStarted() {
                 )}
               </div>
 
-              <LazyImage
-                src="/img/cta-sunset-training-1200x900.jpg"
-                alt="Training at sunset near rocks"
-                className="cta-image"
-                style={{ borderRadius: 22 }}
-              />
+              <Link to={isAuthenticated ? '/portal' : '/get-started'}>
+                <LazyImage
+                  src="/img/cta-sunset-training-1200x900.jpg"
+                  alt="Training at sunset near rocks"
+                  className="cta-image"
+                  style={{ borderRadius: 22 }}
+                />
+              </Link>
             </div>
           </div>
         </ScrollReveal>
@@ -40,7 +42,7 @@ export default function GetStarted() {
 
         <ScrollReveal>
           <div className="grid3">
-            <div className="card tier-card">
+            <Link to="/programs" className="card tier-card card-link">
               <div className="cardPad">
                 <span className="tier-card-badge" style={{ background: 'var(--sand)' }}>Free</span>
                 <strong>Explore the Method</strong>
@@ -48,8 +50,8 @@ export default function GetStarted() {
                   Workout library, movement tutorials, guides, and community. No credit card required.
                 </p>
               </div>
-            </div>
-            <div className="card tier-card tier-featured">
+            </Link>
+            <Link to="/programs" className="card tier-card tier-featured card-link">
               <div className="cardPad">
                 <span className="tier-card-badge" style={{ background: 'var(--sunset)' }}>$5/mo</span>
                 <strong>Get Personalized</strong>
@@ -57,8 +59,8 @@ export default function GetStarted() {
                   Custom daily workouts, progress tracking, benchmarks, and analytics tailored to you.
                 </p>
               </div>
-            </div>
-            <div className="card tier-card">
+            </Link>
+            <Link to="/programs" className="card tier-card card-link">
               <div className="cardPad">
                 <span className="tier-card-badge" style={{ background: 'var(--earth)' }}>$20/mo</span>
                 <strong>The Full System</strong>
@@ -66,7 +68,7 @@ export default function GetStarted() {
                   Custom nutrition plans, digital coaching, priority support, and everything in Rock Runner.
                 </p>
               </div>
-            </div>
+            </Link>
           </div>
 
           <div style={{ textAlign: 'center', marginTop: '1.25rem' }}>

@@ -28,26 +28,6 @@ const workoutCategories = [
 
 const platformFeatures = [
   {
-    title: 'Custom Daily Workouts',
-    tier: 'Rock Runner',
-    desc: 'Fresh routines every day, tailored to your goals, equipment, and training history.',
-  },
-  {
-    title: 'Personalized Nutrition Plans',
-    tier: 'Iron Dassie',
-    desc: 'Meal plans built around your allergies, preferences, and fitness goals. Includes grocery lists and macros.',
-  },
-  {
-    title: 'Digital Training Coach',
-    tier: 'Iron Dassie',
-    desc: 'Ask about form, recovery, or nutrition. Your coach knows your full history.',
-  },
-  {
-    title: 'Progress Tracking & Benchmarks',
-    tier: 'Rock Runner',
-    desc: 'Log workouts and meals. Track personal bests. Visualize progress with charts and calendars.',
-  },
-  {
     title: 'Workout & Video Library',
     tier: 'Free',
     desc: '15 signature workouts, 60+ exercises at 4 difficulty levels, and a growing video library.',
@@ -57,12 +37,31 @@ const platformFeatures = [
     tier: 'Free',
     desc: 'Connect with other Hyrax athletes. Share progress, get tips, stay motivated.',
   },
+  {
+    title: 'Custom Daily Workouts',
+    tier: 'Free Trial',
+    desc: 'Fresh routines every day, tailored to your goals, equipment, and training history.',
+  },
+  {
+    title: 'Progress Tracking & Benchmarks',
+    tier: 'Free Trial',
+    desc: 'Log workouts and meals. Track personal bests. Visualize progress with charts and calendars.',
+  },
+  {
+    title: 'Personalized Nutrition Plans',
+    tier: 'Free Trial',
+    desc: 'Meal plans built around your allergies, preferences, and fitness goals. Includes grocery lists and macros.',
+  },
+  {
+    title: 'Digital Training Coach',
+    tier: 'Free Trial',
+    desc: 'Ask about form, recovery, or nutrition. Your coach knows your full history.',
+  },
 ];
 
 const tierColors = {
   'Free': 'var(--sand)',
-  'Rock Runner': 'var(--sunset)',
-  'Iron Dassie': 'var(--earth)',
+  'Free Trial': 'var(--sunset)',
 };
 
 export default function Workouts() {
