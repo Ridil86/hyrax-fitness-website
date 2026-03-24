@@ -2,7 +2,6 @@ import { Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { useInView } from 'react-intersection-observer';
 import ScrollReveal from './ScrollReveal';
-import LazyImage from './LazyImage';
 import { useAuth } from '../context/AuthContext';
 import './GetStarted.css';
 
@@ -19,34 +18,18 @@ export default function GetStarted() {
   return (
     <section id="get-started">
       <div className="wrap">
-        <ScrollReveal>
-          <div className="ctaBand">
-            <div className="inner">
-              <div>
-                <span className="pill">Start here</span>
-                <h2 style={{ margin: '12px 0 10px' }}>Ready to train smarter?</h2>
-                <p className="muted" style={{ margin: '0 0 6px' }}>
-                  Create your free account in under a minute. Start with the full library and community, then upgrade for custom programs and coaching.
-                </p>
-                {isAuthenticated ? (
-                  <Link className="btn primary" to="/portal">Go to Dashboard</Link>
-                ) : (
-                  <Link className="btn primary" to="/get-started">Create Free Account</Link>
-                )}
-              </div>
 
-              <Link to={isAuthenticated ? '/portal' : '/get-started'}>
-                <LazyImage
-                  src="/img/cta-sunset-training-1200x900.jpg"
-                  alt="Training at sunset near rocks"
-                  className="cta-image"
-                  style={{ borderRadius: 22 }}
-                />
-              </Link>
+        {/* 1. Section Header */}
+        <ScrollReveal>
+          <div className="sectionHead">
+            <div>
+              <h2>Get Started</h2>
+              <p className="muted">Three steps. One goal. A program built around your life.</p>
             </div>
           </div>
         </ScrollReveal>
 
+        {/* 2. How It Works Steps */}
         <div className="how-steps" ref={stepsRef}>
           {howSteps.map((step, i) => (
             <motion.div
@@ -63,7 +46,9 @@ export default function GetStarted() {
           ))}
         </div>
 
+        {/* 3. Choose Your Plan */}
         <ScrollReveal>
+          <h3 className="get-started-sub-heading">Choose Your Plan</h3>
           <div className="grid3">
             <Link to="/programs" className="card tier-card card-link">
               <div className="cardPad">
@@ -100,6 +85,20 @@ export default function GetStarted() {
             </Link>
           </div>
         </ScrollReveal>
+
+        {/* 4. Closing CTA */}
+        <ScrollReveal>
+          <div className="closing-cta">
+            <h2>Ready to train smarter?</h2>
+            <p className="muted">Create your free account in under a minute. Upgrade anytime.</p>
+            {isAuthenticated ? (
+              <Link className="btn primary" to="/portal">Go to Dashboard</Link>
+            ) : (
+              <Link className="btn primary" to="/get-started">Create Free Account</Link>
+            )}
+          </div>
+        </ScrollReveal>
+
       </div>
     </section>
   );
