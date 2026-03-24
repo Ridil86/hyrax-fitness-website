@@ -14,8 +14,7 @@ import '../pages/admin/analytics.css';
 const navItems = [
   { to: '/admin', label: 'Dashboard', icon: '\u2302' },       // house
   { to: '/admin/users', label: 'Users', icon: '\u263A' },     // smiley
-  { to: '/admin/content', label: 'Content', icon: '\u270E' }, // pencil
-  { to: '/admin/faq', label: 'FAQ', icon: '?' },
+{ to: '/admin/faq', label: 'FAQ', icon: '?' },
   { to: '/admin/equipment', label: 'Equipment', icon: '\u2692' },
   { to: '/admin/exercises', label: 'Exercises', icon: '\u26A1' },
   { to: '/admin/workouts', label: 'Workouts', icon: '\u270A' },

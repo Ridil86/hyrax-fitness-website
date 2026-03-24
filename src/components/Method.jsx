@@ -2,7 +2,6 @@ import { motion } from 'framer-motion';
 import { useInView } from 'react-intersection-observer';
 import ScrollReveal from './ScrollReveal';
 import LazyImage from './LazyImage';
-import { useContent } from '../hooks/useContent';
 import './Method.css';
 
 const fallbackModules = [
@@ -29,10 +28,8 @@ const aiBullets = [
 
 export default function Method() {
   const { ref: gridRef, inView: gridInView } = useInView({ triggerOnce: true, threshold: 0.1 });
-  const { data } = useContent('method');
-  const d = data || {};
-  const modules = d.modules || fallbackModules;
-  const bullets = d.bullets || fallbackBullets;
+  const modules = fallbackModules;
+  const bullets = fallbackBullets;
 
   return (
     <section id="method">
@@ -40,12 +37,12 @@ export default function Method() {
         <ScrollReveal>
           <div className="sectionHead">
             <div>
-              <h2>{d.heading || 'The Hyrax Method'}</h2>
+              <h2>The Hyrax Method</h2>
               <p className="muted">
-                {d.subheading || 'Five modules that mirror hyrax behavior: warming, scrambling, hauling, and bolting to cover. Mix 3 to 5 modules per session for a complete training day.'}
+                Five modules that mirror hyrax behavior: warming, scrambling, hauling, and bolting to cover. Mix 3 to 5 modules per session for a complete training day.
               </p>
             </div>
-            <span className="pill">{d.pill || '5 modules'}</span>
+            <span className="pill">5 modules</span>
           </div>
         </ScrollReveal>
 
@@ -81,10 +78,10 @@ export default function Method() {
 
             <div className="card">
               <div className="cardPad">
-                <span className="pill">{d.splitPill || 'Real-World Utility'}</span>
-                <h3 style={{ margin: '12px 0 8px', fontSize: '1.35rem' }}>{d.splitHeading || 'What makes it Hyrax'}</h3>
+                <span className="pill">Real-World Utility</span>
+                <h3 style={{ margin: '12px 0 8px', fontSize: '1.35rem' }}>What makes it Hyrax</h3>
                 <p className="muted" style={{ margin: '0 0 12px' }}>
-                  {d.splitBody || 'Hyrax Fitness avoids long steady blocks. It is built around repeatable micro efforts, efficient mechanics, and deliberate recovery.'}
+                  Hyrax Fitness avoids long steady blocks. It is built around repeatable micro efforts, efficient mechanics, and deliberate recovery.
                 </p>
                 <ul className="muted" style={{ margin: 0, paddingLeft: 18 }}>
                   {bullets.map((b, i) => <li key={i}>{b}</li>)}

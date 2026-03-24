@@ -1,6 +1,5 @@
 import { Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { useContent } from '../hooks/useContent';
 import { useAuth } from '../context/AuthContext';
 import './Hero.css';
 
@@ -28,9 +27,8 @@ const fallback = {
 };
 
 export default function Hero() {
-  const { data } = useContent('hero');
   const { isAuthenticated } = useAuth();
-  const d = data || fallback;
+  const d = fallback;
 
   return (
     <section className="hero" id="top">

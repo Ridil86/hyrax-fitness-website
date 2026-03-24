@@ -1,7 +1,6 @@
 import { motion } from 'framer-motion';
 import { useInView } from 'react-intersection-observer';
 import ScrollReveal from './ScrollReveal';
-import { useContent } from '../hooks/useContent';
 import './Testimonials.css';
 
 const fallbackQuotes = [
@@ -12,9 +11,7 @@ const fallbackQuotes = [
 
 export default function Testimonials() {
   const { ref, inView } = useInView({ triggerOnce: true, threshold: 0.1 });
-  const { data } = useContent('testimonials');
-  const d = data || {};
-  const quotes = d.quotes || fallbackQuotes;
+  const quotes = fallbackQuotes;
 
   return (
     <section id="testimonials">
@@ -22,7 +19,7 @@ export default function Testimonials() {
         <ScrollReveal>
           <div className="sectionHead">
             <div>
-              <h2>{d.heading || "What Everyone's Saying"}</h2>
+              <h2>What Everyone's Saying</h2>
             </div>
           </div>
         </ScrollReveal>

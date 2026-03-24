@@ -31,7 +31,6 @@ const ConfirmSignUp = lazy(() => import('./pages/ConfirmSignUp'));
 const AdminLayout = lazy(() => import('./components/AdminLayout'));
 const Dashboard = lazy(() => import('./pages/admin/Dashboard'));
 const Users = lazy(() => import('./pages/admin/Users'));
-const Content = lazy(() => import('./pages/admin/Content'));
 const FAQAdmin = lazy(() => import('./pages/admin/FAQAdmin'));
 const Merch = lazy(() => import('./pages/admin/Merch'));
 const UserProfile = lazy(() => import('./pages/admin/UserProfile'));
@@ -213,7 +212,6 @@ export default function App() {
               <Route index element={<LazySection><Dashboard /></LazySection>} />
               <Route path="users" element={<LazySection><Users /></LazySection>} />
               <Route path="users/:username" element={<LazySection><UserProfile /></LazySection>} />
-              <Route path="content" element={<LazySection><Content /></LazySection>} />
               <Route path="faq" element={<LazySection><FAQAdmin /></LazySection>} />
               <Route path="audit" element={<LazySection><AuditLog /></LazySection>} />
               <Route path="equipment" element={<LazySection><EquipmentAdmin /></LazySection>} />

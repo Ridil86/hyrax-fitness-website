@@ -176,14 +176,7 @@ export default function Dashboard() {
               <p>Create, edit, and reorder frequently asked questions</p>
             </div>
           </Link>
-          <Link to="/admin/content" className="dashboard-link-card">
-            <span className="dashboard-link-icon">&#9998;</span>
-            <div>
-              <strong>Content CMS</strong>
-              <p>Edit site content, text, and images for all sections</p>
-            </div>
-          </Link>
-          <Link to="/admin/equipment" className="dashboard-link-card">
+<Link to="/admin/equipment" className="dashboard-link-card">
             <span className="dashboard-link-icon">&#9874;</span>
             <div>
               <strong>Equipment</strong>

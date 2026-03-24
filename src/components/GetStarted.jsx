@@ -1,14 +1,11 @@
 import { Link } from 'react-router-dom';
 import ScrollReveal from './ScrollReveal';
 import LazyImage from './LazyImage';
-import { useContent } from '../hooks/useContent';
 import { useAuth } from '../context/AuthContext';
 import './GetStarted.css';
 
 export default function GetStarted() {
-  const { data } = useContent('getstarted');
   const { isAuthenticated } = useAuth();
-  const d = data || {};
 
   return (
     <section id="get-started">
@@ -17,21 +14,21 @@ export default function GetStarted() {
           <div className="ctaBand">
             <div className="inner">
               <div>
-                <span className="pill">{d.pill || 'Start here'}</span>
-                <h2 style={{ margin: '12px 0 10px' }}>{d.heading || 'Ready to train smarter?'}</h2>
+                <span className="pill">Start here</span>
+                <h2 style={{ margin: '12px 0 10px' }}>Ready to train smarter?</h2>
                 <p className="muted" style={{ margin: '0 0 6px' }}>
-                  {d.body || 'Create your free account in under a minute. Start with the full workout library and community access, then upgrade when you are ready for AI-powered personalization, custom nutrition plans, and real-time coaching.'}
+                  Create your free account in under a minute. Start with the full workout library and community access, then upgrade when you are ready for AI-powered personalization, custom nutrition plans, and real-time coaching.
                 </p>
                 {isAuthenticated ? (
                   <Link className="btn primary" to="/portal">Go to Dashboard</Link>
                 ) : (
-                  <Link className="btn primary" to="/get-started">{d.ctaText || 'Create Free Account'}</Link>
+                  <Link className="btn primary" to="/get-started">Create Free Account</Link>
                 )}
               </div>
 
               <LazyImage
-                src={d.ctaImage || '/img/cta-sunset-training-1200x900.jpg'}
-                alt={d.ctaImageAlt || 'Training at sunset near rocks'}
+                src="/img/cta-sunset-training-1200x900.jpg"
+                alt="Training at sunset near rocks"
                 className="cta-image"
                 style={{ borderRadius: 22 }}
               />
