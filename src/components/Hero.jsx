@@ -20,7 +20,7 @@ const fallback = {
   leadSub: 'Train anywhere. Beginner to elite. No long grindy cardio.',
   ctaText: 'Start Free',
   stats: [
-    { value: '4 Levels', label: 'Beginner to Elite' },
+    { value: 'For Everyone', label: 'Beginner to Elite' },
     { value: 'Fully Custom', label: 'Workouts, Nutrition, Coaching' },
     { value: 'Free to Start', label: 'No credit card required' },
   ],
