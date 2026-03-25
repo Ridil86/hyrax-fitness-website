@@ -201,12 +201,12 @@ export async function updateProfile(
 
   try {
     const body = JSON.parse(event.body || '{}');
-    const { givenName, familyName } = body;
+    const { givenName, familyName, notificationPreferences } = body;
 
     const now = new Date().toISOString();
 
     const expressionParts: string[] = [];
-    const expressionValues: Record<string, string> = {};
+    const expressionValues: Record<string, unknown> = {};
     const expressionNames: Record<string, string> = {};
 
     if (givenName !== undefined) {
@@ -219,6 +219,22 @@ export async function updateProfile(
       expressionParts.push('#fn = :fn');
       expressionValues[':fn'] = familyName;
       expressionNames['#fn'] = 'familyName';
+    }
+
+    if (notificationPreferences !== undefined) {
+      // Validate shape: { subscription?: boolean, support?: boolean, trial?: boolean }
+      const valid =
+        typeof notificationPreferences === 'object' &&
+        notificationPreferences !== null &&
+        Object.keys(notificationPreferences).every(
+          (k) => ['subscription', 'support', 'trial'].includes(k) && typeof notificationPreferences[k] === 'boolean'
+        );
+      if (!valid) {
+        return badRequest('Invalid notificationPreferences format');
+      }
+      expressionParts.push('#np = :np');
+      expressionValues[':np'] = notificationPreferences;
+      expressionNames['#np'] = 'notificationPreferences';
     }
 
     if (expressionParts.length === 0) {

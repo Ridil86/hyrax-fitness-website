@@ -46,6 +46,7 @@ import {
 import {
   createMealLog, createMealPlanLog, listMealLogs, getMealLogStats, deleteMealLog,
 } from './routes/meal-log';
+import { getEmailPreview, sendTestEmail } from './routes/email-preview';
 import { notFound, serverError } from './utils/response';
 
 export const handler = async (
@@ -338,6 +339,12 @@ export const handler = async (
 
     if (path === '/api/admin/billing/payments' && method === 'GET') {
       return listPayments(event);
+    }
+
+    // ── Admin Email Preview Routes ──
+    if (path === '/api/admin/email-preview') {
+      if (method === 'GET') return getEmailPreview(event);
+      if (method === 'POST') return sendTestEmail(event);
     }
 
     // ── Community Routes ──

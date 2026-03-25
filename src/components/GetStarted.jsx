@@ -84,7 +84,7 @@ export default function GetStarted() {
                 <span className="tier-card-badge" style={{ background: 'var(--earth)' }}>$20/mo</span>
                 <strong>The Full System</strong>
                 <p className="muted" style={{ margin: '8px 0 0' }}>
-                  Custom nutrition plans, digital coaching, priority support, and everything in lower tiers.
+                  Custom nutrition plans, digital coaching, priority support, and everything else.
                 </p>
               </div>
             </Link>

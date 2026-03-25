@@ -111,3 +111,24 @@
 .portal-toggle-switch input:focus-visible + .portal-toggle-slider {
   box-shadow: var(--ring);
 }
+
+/* ── Save message ── */
+.portal-settings-save-msg {
+  margin-top: 16px;
+  padding: 10px 14px;
+  border-radius: 10px;
+  font-size: .85rem;
+  font-weight: 500;
+}
+
+.portal-settings-save-msg.success {
+  background: #f0fdf4;
+  color: #166534;
+  border: 1px solid #bbf7d0;
+}
+
+.portal-settings-save-msg.error {
+  background: #fef2f2;
+  color: #991b1b;
+  border: 1px solid #fecaca;
+}

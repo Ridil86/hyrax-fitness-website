@@ -1,10 +1,11 @@
 /**
- * Branded HTML email templates for Hyrax Fitness Cognito emails.
+ * Branded HTML email templates for Hyrax Fitness.
  *
- * Cognito placeholders:
+ * Cognito placeholders (auth emails only):
  *   {####}      -- verification / temporary-password code
  *   {username}  -- the user's username (email)
  *
+ * Transactional templates accept parameters directly.
  * All templates use inline CSS for maximum email-client compatibility.
  */
 
@@ -133,5 +134,201 @@ export function forgotPasswordEmail(): string {
     <p style="margin:0 0 4px;">We received a request to reset your Hyrax Fitness password. Enter the code below on the password-reset screen to choose a new password.</p>
     ${codeBlock('{####}')}
     <p style="margin:0;font-size:13px;color:${EARTH};">This code expires in 1 hour. If you did not request a password reset, you can safely ignore this email.</p>
+  `);
+}
+
+// ═══════════════════════════════════════════════════════════════
+//  Transactional Email Templates (sent via SES, not Cognito)
+// ═══════════════════════════════════════════════════════════════
+
+// ── Template: Subscription Confirmation ──
+
+export function subscriptionConfirmationEmail(
+  tierName: string,
+  amount: string
+): string {
+  return wrap(`
+    <h2 style="margin:0 0 8px;font-size:20px;color:${INK};">Your subscription is active!</h2>
+    <p style="margin:0 0 16px;">Welcome to the <strong>${tierName}</strong> plan. Your subscription has been confirmed and you now have access to all ${tierName} features.</p>
+
+    <div style="margin:20px 0;padding:16px 20px;background:${PAPER};border-radius:12px;border:1px solid ${SAND};text-align:center;">
+      <p style="margin:0 0 4px;font-size:13px;color:${EARTH};">Monthly plan</p>
+      <p style="margin:0;font-size:28px;font-weight:700;color:${INK};">${amount}/mo</p>
+      <p style="margin:8px 0 0;font-size:13px;color:${EARTH};">${tierName} Tier</p>
+    </div>
+
+    <p style="margin:0 0 16px;text-align:center;">
+      <a href="${SITE_URL}/portal" style="display:inline-block;padding:12px 28px;background:${SUNSET};color:#ffffff;text-decoration:none;border-radius:10px;font-weight:600;font-size:15px;">Go to Your Portal</a>
+    </p>
+
+    <p style="margin:0;font-size:13px;color:${EARTH};">You can manage your subscription anytime from the Subscription page in your portal.</p>
+  `);
+}
+
+// ── Template: Subscription Change (upgrade/downgrade) ──
+
+export function subscriptionChangeEmail(
+  oldTier: string,
+  newTier: string,
+  effectiveDate: string
+): string {
+  return wrap(`
+    <h2 style="margin:0 0 8px;font-size:20px;color:${INK};">Your plan has been updated</h2>
+    <p style="margin:0 0 16px;">Your subscription has been changed from <strong>${oldTier}</strong> to <strong>${newTier}</strong>.</p>
+
+    <div style="margin:20px 0;padding:16px 20px;background:${PAPER};border-radius:12px;border:1px solid ${SAND};">
+      <table role="presentation" cellpadding="0" cellspacing="0" width="100%" style="font-size:14px;color:${INK};">
+        <tr>
+          <td style="padding:8px 0;color:${EARTH};">Previous plan:</td>
+          <td style="padding:8px 0;text-align:right;font-weight:600;">${oldTier}</td>
+        </tr>
+        <tr>
+          <td style="padding:8px 0;border-top:1px solid ${SAND};color:${EARTH};">New plan:</td>
+          <td style="padding:8px 0;border-top:1px solid ${SAND};text-align:right;font-weight:600;">${newTier}</td>
+        </tr>
+        <tr>
+          <td style="padding:8px 0;border-top:1px solid ${SAND};color:${EARTH};">Effective:</td>
+          <td style="padding:8px 0;border-top:1px solid ${SAND};text-align:right;font-weight:600;">${effectiveDate}</td>
+        </tr>
+      </table>
+    </div>
+
+    <p style="margin:0 0 16px;text-align:center;">
+      <a href="${SITE_URL}/portal/subscription" style="display:inline-block;padding:12px 28px;background:${SUNSET};color:#ffffff;text-decoration:none;border-radius:10px;font-weight:600;font-size:15px;">View Subscription</a>
+    </p>
+
+    <p style="margin:0;font-size:13px;color:${EARTH};">If you did not make this change, please contact support immediately.</p>
+  `);
+}
+
+// ── Template: Subscription Cancelled ──
+
+export function subscriptionCancelledEmail(
+  tierName: string,
+  accessUntil: string
+): string {
+  return wrap(`
+    <h2 style="margin:0 0 8px;font-size:20px;color:${INK};">Your subscription has been cancelled</h2>
+    <p style="margin:0 0 16px;">Your <strong>${tierName}</strong> subscription has been cancelled. We're sorry to see you go!</p>
+
+    <div style="margin:20px 0;padding:16px 20px;background:${PAPER};border-radius:12px;border:1px solid ${SAND};text-align:center;">
+      <p style="margin:0 0 4px;font-size:13px;color:${EARTH};">You'll retain ${tierName} access until</p>
+      <p style="margin:0;font-size:20px;font-weight:700;color:${INK};">${accessUntil}</p>
+    </div>
+
+    <p style="margin:0 0 16px;">After that, your account will revert to the free <strong>Pup</strong> tier. You can resubscribe at any time to regain access to premium features.</p>
+
+    <p style="margin:0 0 16px;text-align:center;">
+      <a href="${SITE_URL}/portal/subscription" style="display:inline-block;padding:12px 28px;background:${SUNSET};color:#ffffff;text-decoration:none;border-radius:10px;font-weight:600;font-size:15px;">Resubscribe</a>
+    </p>
+
+    <p style="margin:0;font-size:13px;color:${EARTH};">You'll continue to have access to all free features on the Pup tier.</p>
+  `);
+}
+
+// ── Template: Payment Failed ──
+
+export function paymentFailedEmail(
+  amount: string,
+  updateUrl: string
+): string {
+  return wrap(`
+    <h2 style="margin:0 0 8px;font-size:20px;color:${INK};">Payment failed</h2>
+    <p style="margin:0 0 16px;">We were unable to process your payment of <strong>${amount}</strong>. Please update your payment method to keep your subscription active.</p>
+
+    <div style="margin:20px 0;padding:16px 20px;background:#FFF5F5;border-radius:12px;border:1px solid #E8CCCC;text-align:center;">
+      <p style="margin:0;font-size:14px;color:#8B0000;font-weight:600;">Action required: Update your payment method</p>
+      <p style="margin:8px 0 0;font-size:13px;color:${EARTH};">Your subscription may be cancelled if payment is not resolved.</p>
+    </div>
+
+    <p style="margin:16px 0;text-align:center;">
+      <a href="${updateUrl}" style="display:inline-block;padding:12px 28px;background:${SUNSET};color:#ffffff;text-decoration:none;border-radius:10px;font-weight:600;font-size:15px;">Update Payment Method</a>
+    </p>
+
+    <p style="margin:0;font-size:13px;color:${EARTH};">If you believe this is an error, please contact your bank or reach out to our support team.</p>
+  `);
+}
+
+// ── Template: Support Ticket Reply ──
+
+export function supportReplyEmail(
+  ticketTitle: string,
+  replyPreview: string
+): string {
+  return wrap(`
+    <h2 style="margin:0 0 8px;font-size:20px;color:${INK};">New reply on your support ticket</h2>
+    <p style="margin:0 0 16px;">Your support ticket has received a reply from the Hyrax Fitness team.</p>
+
+    <div style="margin:20px 0;padding:16px 20px;background:${PAPER};border-radius:12px;border:1px solid ${SAND};">
+      <p style="margin:0 0 8px;font-size:13px;color:${EARTH};">Ticket:</p>
+      <p style="margin:0 0 12px;font-weight:600;color:${INK};">${ticketTitle}</p>
+      <p style="margin:0 0 8px;font-size:13px;color:${EARTH};">Reply:</p>
+      <p style="margin:0;color:${INK};font-style:italic;">"${replyPreview}${replyPreview.length >= 200 ? '...' : ''}"</p>
+    </div>
+
+    <p style="margin:16px 0;text-align:center;">
+      <a href="${SITE_URL}/portal/support" style="display:inline-block;padding:12px 28px;background:${SUNSET};color:#ffffff;text-decoration:none;border-radius:10px;font-weight:600;font-size:15px;">View Full Reply</a>
+    </p>
+
+    <p style="margin:0;font-size:13px;color:${EARTH};">You can reply directly from your support portal.</p>
+  `);
+}
+
+// ── Template: Trial Expiring Soon ──
+
+export function trialExpiringEmail(
+  daysLeft: number,
+  userName: string
+): string {
+  return wrap(`
+    <h2 style="margin:0 0 8px;font-size:20px;color:${INK};">Your free trial ends in ${daysLeft} day${daysLeft === 1 ? '' : 's'}</h2>
+    <p style="margin:0 0 16px;">Hi ${userName}! Your Hyrax Fitness free trial is almost over. Don't lose access to your personalized workouts, nutrition plans, and coaching.</p>
+
+    <div style="margin:20px 0;padding:16px 20px;background:${PAPER};border-radius:12px;border:1px solid ${SAND};">
+      <p style="margin:0 0 10px;font-weight:600;font-size:14px;color:${INK};">What you'll keep with a subscription:</p>
+      <table role="presentation" cellpadding="0" cellspacing="0" style="font-size:13px;color:${EARTH};line-height:1.8;">
+        <tr><td style="padding-right:8px;">&#9670;</td><td><strong>Custom Routines</strong> tailored to your fitness level</td></tr>
+        <tr><td style="padding-right:8px;">&#9670;</td><td><strong>Personalized Nutrition Plans</strong> for your goals</td></tr>
+        <tr><td style="padding-right:8px;">&#9670;</td><td><strong>Personal Coach</strong> for guidance and motivation</td></tr>
+        <tr><td style="padding-right:8px;">&#9670;</td><td><strong>Progress Tracking</strong> and benchmarks</td></tr>
+      </table>
+    </div>
+
+    <p style="margin:0 0 16px;text-align:center;">
+      <a href="${SITE_URL}/portal/subscription" style="display:inline-block;padding:14px 32px;background:${SUNSET};color:#ffffff;text-decoration:none;border-radius:10px;font-weight:600;font-size:16px;">Choose a Plan</a>
+    </p>
+
+    <p style="margin:0;font-size:13px;color:${EARTH};">Plans start at just $5/month. You can also continue with the free Pup tier after your trial ends.</p>
+  `);
+}
+
+// ── Template: Trial Expired ──
+
+export function trialExpiredEmail(userName: string): string {
+  return wrap(`
+    <h2 style="margin:0 0 8px;font-size:20px;color:${INK};">Your free trial has ended</h2>
+    <p style="margin:0 0 16px;">Hi ${userName}, your 7-day Hyrax Fitness free trial has come to an end. Your account has been moved to the free <strong>Pup</strong> tier.</p>
+
+    <div style="margin:20px 0;padding:16px 20px;background:${PAPER};border-radius:12px;border:1px solid ${SAND};">
+      <p style="margin:0 0 10px;font-weight:600;font-size:14px;color:${INK};">You still have access to:</p>
+      <table role="presentation" cellpadding="0" cellspacing="0" style="font-size:13px;color:${EARTH};line-height:1.8;">
+        <tr><td style="padding-right:8px;">&#9670;</td><td>Signature Workouts and Training Modules</td></tr>
+        <tr><td style="padding-right:8px;">&#9670;</td><td>Free Workout Videos</td></tr>
+        <tr><td style="padding-right:8px;">&#9670;</td><td>Community Forum</td></tr>
+      </table>
+      <br>
+      <p style="margin:0 0 10px;font-weight:600;font-size:14px;color:${INK};">Subscribe to regain access to:</p>
+      <table role="presentation" cellpadding="0" cellspacing="0" style="font-size:13px;color:${EARTH};line-height:1.8;">
+        <tr><td style="padding-right:8px;">&#9670;</td><td>Custom Routines and Nutrition Plans</td></tr>
+        <tr><td style="padding-right:8px;">&#9670;</td><td>Personal Coach</td></tr>
+        <tr><td style="padding-right:8px;">&#9670;</td><td>Progress Tracking and Benchmarks</td></tr>
+      </table>
+    </div>
+
+    <p style="margin:0 0 16px;text-align:center;">
+      <a href="${SITE_URL}/portal/subscription" style="display:inline-block;padding:14px 32px;background:${SUNSET};color:#ffffff;text-decoration:none;border-radius:10px;font-weight:600;font-size:16px;">Subscribe Now</a>
+    </p>
+
+    <p style="margin:0;font-size:13px;color:${EARTH};">Plans start at just $5/month. Upgrade anytime from your portal.</p>
   `);
 }

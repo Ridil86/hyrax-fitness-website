@@ -10,6 +10,7 @@ import '../pages/admin/workout-admin.css';
 import '../pages/admin/community-admin.css';
 import '../pages/admin/support-admin.css';
 import '../pages/admin/analytics.css';
+import '../pages/admin/email-preview.css';
 
 const navItems = [
   { to: '/admin', label: 'Dashboard', icon: '\u2302' },       // house
@@ -19,12 +20,13 @@ const navItems = [
   { to: '/admin/exercises', label: 'Exercises', icon: '\u26A1' },
   { to: '/admin/workouts', label: 'Workouts', icon: '\u270A' },
   { to: '/admin/videos', label: 'Videos', icon: '\u25B6' },
-  { to: '/admin/community', label: 'Community', icon: '\u2709' },
+  { to: '/admin/community', label: 'Community', icon: '\u{1F465}' },
   { to: '/admin/support', label: 'Support', icon: '\u2753' },
   { to: '/admin/analytics', label: 'Analytics', icon: '\u{1F4CA}' },
   { to: '/admin/routine-debug', label: 'System Debug', icon: '\u{1F916}' },
   { to: '/admin/billing', label: 'Billing', icon: '$' },
   { to: '/admin/tiers', label: 'Tiers', icon: '\u2261' },
+  { to: '/admin/email-preview', label: 'Emails', icon: '\u2709' },
   { to: '/admin/merch', label: 'Merch', icon: '\u2605' },      // star
   { to: '/admin/audit', label: 'Audit Log', icon: '\u2691' },  // flag
 ];

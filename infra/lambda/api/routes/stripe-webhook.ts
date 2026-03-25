@@ -9,9 +9,17 @@ import {
 import Stripe from 'stripe';
 import type { APIGatewayProxyEvent, APIGatewayProxyResult } from 'aws-lambda';
 import { randomUUID } from 'crypto';
+import { sendNotification } from '../utils/email';
+import {
+  subscriptionConfirmationEmail,
+  subscriptionChangeEmail,
+  subscriptionCancelledEmail,
+  paymentFailedEmail,
+} from '../../../custom-message/templates';
 
 const client = DynamoDBDocumentClient.from(new DynamoDBClient({}));
 const TABLE_NAME = process.env.TABLE_NAME!;
+const SITE_URL = 'https://hyraxfitness.com';
 
 const CORS_HEADERS = {
   'Access-Control-Allow-Origin': '*',
@@ -231,6 +239,21 @@ async function handleCheckoutCompleted(session: Stripe.Checkout.Session) {
   );
 
   console.log(`User ${cognitoSub} subscribed to ${tierName} (${tierId})`);
+
+  // Send subscription confirmation email
+  try {
+    const amount = session.amount_total
+      ? `$${(session.amount_total / 100).toFixed(2)}`
+      : '$0.00';
+    await sendNotification(
+      cognitoSub,
+      'subscription',
+      'Your subscription is active!',
+      subscriptionConfirmationEmail(tierName, amount)
+    );
+  } catch (err) {
+    console.warn('Failed to send subscription confirmation email:', err);
+  }
 }
 
 async function handleSubscriptionUpdated(subscription: Stripe.Subscription) {
@@ -305,6 +328,43 @@ async function handleSubscriptionUpdated(subscription: Stripe.Subscription) {
   }
 
   console.log(`Subscription updated for ${cognitoSub}: ${status}, tier=${tierName}`);
+
+  // Send subscription change notifications
+  try {
+    if (cancelAtPeriodEnd) {
+      // Pending cancellation
+      const accessUntil = subscription.current_period_end
+        ? new Date(subscription.current_period_end * 1000).toLocaleDateString('en-US', {
+            month: 'long', day: 'numeric', year: 'numeric',
+          })
+        : 'end of billing period';
+      await sendNotification(
+        cognitoSub,
+        'subscription',
+        'Your subscription has been cancelled',
+        subscriptionCancelledEmail(tierName || 'your plan', accessUntil)
+      );
+    } else if (tierName && status === 'active') {
+      // Plan change (upgrade/downgrade) - get previous tier from profile
+      const profileResult = await client.send(
+        new GetCommand({
+          TableName: TABLE_NAME,
+          Key: { pk: `USER#${cognitoSub}`, sk: 'PROFILE' },
+        })
+      );
+      const previousTier = profileResult.Item?.tier || 'Pup';
+      if (previousTier !== tierName) {
+        await sendNotification(
+          cognitoSub,
+          'subscription',
+          'Your plan has been updated',
+          subscriptionChangeEmail(previousTier, tierName, 'Immediately')
+        );
+      }
+    }
+  } catch (err) {
+    console.warn('Failed to send subscription update email:', err);
+  }
 }
 
 async function handleSubscriptionDeleted(subscription: Stripe.Subscription) {
@@ -352,6 +412,18 @@ async function handleSubscriptionDeleted(subscription: Stripe.Subscription) {
   );
 
   console.log(`Subscription deleted for ${cognitoSub}, reverted to Pup`);
+
+  // Send cancellation confirmation email
+  try {
+    await sendNotification(
+      cognitoSub,
+      'subscription',
+      'Your subscription has been cancelled',
+      subscriptionCancelledEmail('your plan', 'now')
+    );
+  } catch (err) {
+    console.warn('Failed to send cancellation email:', err);
+  }
 }
 
 async function handlePaymentSucceeded(invoice: Stripe.Invoice) {
@@ -430,4 +502,17 @@ async function handlePaymentFailed(invoice: Stripe.Invoice) {
   );
 
   console.log(`Payment FAILED for ${cognitoSub}: $${(invoice.amount_due / 100).toFixed(2)}`);
+
+  // Send payment failure notification email
+  try {
+    const amount = `$${(invoice.amount_due / 100).toFixed(2)}`;
+    await sendNotification(
+      cognitoSub,
+      'subscription',
+      'Payment failed',
+      paymentFailedEmail(amount, `${SITE_URL}/portal/subscription`)
+    );
+  } catch (err) {
+    console.warn('Failed to send payment failure email:', err);
+  }
 }

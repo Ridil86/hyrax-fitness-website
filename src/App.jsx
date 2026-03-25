@@ -43,6 +43,7 @@ const Billing = lazy(() => import('./pages/admin/Billing'));
 const TierAdmin = lazy(() => import('./pages/admin/TierAdmin'));
 const Analytics = lazy(() => import('./pages/admin/Analytics'));
 const RoutineDebug = lazy(() => import('./pages/admin/RoutineDebug'));
+const EmailPreview = lazy(() => import('./pages/admin/EmailPreview'));
 
 // Workout library pages
 const WorkoutLibrary = lazy(() => import('./pages/WorkoutLibrary'));
@@ -225,6 +226,7 @@ export default function App() {
               <Route path="community" element={<LazySection><CommunityAdmin /></LazySection>} />
               <Route path="support" element={<LazySection><SupportAdmin /></LazySection>} />
               <Route path="merch" element={<LazySection><Merch /></LazySection>} />
+              <Route path="email-preview" element={<LazySection><EmailPreview /></LazySection>} />
             </Route>
           </Routes>
         </main>

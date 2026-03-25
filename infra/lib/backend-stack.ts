@@ -88,6 +88,7 @@ export class BackendStack extends cdk.Stack {
         STRIPE_WEBHOOK_SECRET: process.env.STRIPE_WEBHOOK_SECRET || 'whsec_placeholder',
         STRIPE_PUBLISHABLE_KEY: process.env.STRIPE_PUBLISHABLE_KEY || 'pk_test_placeholder',
         SELF_FUNCTION_NAME: 'hyrax-api',
+        SES_FROM_EMAIL: 'noreply@hyraxfitness.com',
       },
       bundling: {
         minify: true,
@@ -145,6 +146,14 @@ export class BackendStack extends cdk.Stack {
           'aws-marketplace:ViewSubscriptions',
           'aws-marketplace:Subscribe',
         ],
+        resources: ['*'],
+      })
+    );
+
+    // SES permissions for transactional emails
+    apiFn.addToRolePolicy(
+      new iam.PolicyStatement({
+        actions: ['ses:SendEmail', 'ses:SendRawEmail'],
         resources: ['*'],
       })
     );
@@ -911,6 +920,51 @@ export class BackendStack extends cdk.Stack {
       authorizer,
       authorizationType: apigateway.AuthorizationType.COGNITO,
     });
+
+    // Admin email preview routes
+    const emailPreviewResource = adminResource.addResource('email-preview');
+    emailPreviewResource.addMethod('GET', lambdaIntegration, {
+      authorizer,
+      authorizationType: apigateway.AuthorizationType.COGNITO,
+    });
+    emailPreviewResource.addMethod('POST', lambdaIntegration, {
+      authorizer,
+      authorizationType: apigateway.AuthorizationType.COGNITO,
+    });
+
+    // ── Trial Reminder Scheduled Lambda ──
+    const trialReminderFn = new NodejsFunction(this, 'HyraxTrialReminderFn', {
+      functionName: 'hyrax-trial-reminder',
+      runtime: Runtime.NODEJS_20_X,
+      entry: path.join(__dirname, '..', 'lambda', 'trial-reminder', 'index.ts'),
+      handler: 'handler',
+      timeout: cdk.Duration.seconds(120),
+      memorySize: 256,
+      environment: {
+        TABLE_NAME: table.tableName,
+        SES_FROM_EMAIL: 'noreply@hyraxfitness.com',
+      },
+      bundling: {
+        minify: true,
+        sourceMap: false,
+        forceDockerBundling: false,
+      },
+    });
+
+    table.grantReadData(trialReminderFn);
+    trialReminderFn.addToRolePolicy(
+      new iam.PolicyStatement({
+        actions: ['ses:SendEmail', 'ses:SendRawEmail'],
+        resources: ['*'],
+      })
+    );
+
+    // Run daily at 2 PM UTC (~9 AM ET)
+    const trialReminderRule = new events.Rule(this, 'TrialReminderSchedule', {
+      schedule: events.Schedule.cron({ minute: '0', hour: '14' }),
+      description: 'Trigger trial expiration reminder emails daily',
+    });
+    trialReminderRule.addTarget(new targets.LambdaFunction(trialReminderFn));
 
     // ── Stack Outputs ──
     new cdk.CfnOutput(this, 'ApiUrl', {

@@ -37,6 +37,11 @@ export class CognitoStack extends cdk.Stack {
         requireSymbols: false,
       },
       accountRecovery: cognito.AccountRecovery.EMAIL_ONLY,
+      email: cognito.UserPoolEmail.withSES({
+        fromEmail: 'noreply@hyraxfitness.com',
+        fromName: 'Hyrax Fitness',
+        sesRegion: 'us-east-1',
+      }),
       removalPolicy: cdk.RemovalPolicy.RETAIN,
     });
 

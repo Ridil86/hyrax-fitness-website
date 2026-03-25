@@ -1,0 +1,167 @@
+/* ── Admin Email Preview Page ── */
+
+.email-preview-controls {
+  display: flex;
+  gap: 12px;
+  align-items: flex-end;
+  flex-wrap: wrap;
+  margin-bottom: 24px;
+  padding: 20px;
+  background: #ffffff;
+  border-radius: 18px;
+  border: 1px solid var(--sand);
+}
+
+.email-preview-field {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.email-preview-field label {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--earth);
+}
+
+.email-preview-field select,
+.email-preview-field input {
+  padding: 10px 14px;
+  border: 1px solid var(--sand);
+  border-radius: 10px;
+  font-size: 14px;
+  color: var(--ink);
+  background: var(--paper);
+  min-width: 200px;
+}
+
+.email-preview-field select:focus,
+.email-preview-field input:focus {
+  outline: none;
+  border-color: var(--sunset);
+  box-shadow: 0 0 0 3px rgba(242, 133, 1, 0.1);
+}
+
+.email-preview-actions {
+  display: flex;
+  gap: 8px;
+  align-items: flex-end;
+  margin-left: auto;
+}
+
+.email-preview-send-btn {
+  padding: 10px 20px;
+  background: var(--sunset);
+  color: #ffffff;
+  border: none;
+  border-radius: 10px;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: opacity 0.2s;
+  white-space: nowrap;
+}
+
+.email-preview-send-btn:hover {
+  opacity: 0.9;
+}
+
+.email-preview-send-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.email-preview-copy-btn {
+  padding: 10px 16px;
+  background: var(--paper);
+  color: var(--ink);
+  border: 1px solid var(--sand);
+  border-radius: 10px;
+  font-size: 14px;
+  cursor: pointer;
+  transition: background 0.2s;
+  white-space: nowrap;
+}
+
+.email-preview-copy-btn:hover {
+  background: var(--sand);
+}
+
+.email-preview-subject {
+  margin-bottom: 12px;
+  padding: 12px 16px;
+  background: #ffffff;
+  border: 1px solid var(--sand);
+  border-radius: 12px;
+  font-size: 14px;
+}
+
+.email-preview-subject strong {
+  color: var(--earth);
+  margin-right: 8px;
+}
+
+.email-preview-iframe-container {
+  border: 1px solid var(--sand);
+  border-radius: 18px;
+  overflow: hidden;
+  background: #ffffff;
+  box-shadow: 0 4px 12px rgba(27, 18, 10, 0.06);
+}
+
+.email-preview-iframe {
+  width: 100%;
+  height: 700px;
+  border: none;
+  display: block;
+}
+
+.email-preview-status {
+  margin-top: 12px;
+  padding: 12px 16px;
+  border-radius: 10px;
+  font-size: 14px;
+  font-weight: 500;
+}
+
+.email-preview-status.success {
+  background: #f0fdf4;
+  color: #166534;
+  border: 1px solid #bbf7d0;
+}
+
+.email-preview-status.error {
+  background: #fef2f2;
+  color: #991b1b;
+  border: 1px solid #fecaca;
+}
+
+.email-preview-loading {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 400px;
+  color: var(--earth);
+  font-size: 15px;
+}
+
+@media (max-width: 768px) {
+  .email-preview-controls {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .email-preview-field select,
+  .email-preview-field input {
+    min-width: unset;
+    width: 100%;
+  }
+
+  .email-preview-actions {
+    margin-left: 0;
+  }
+
+  .email-preview-iframe {
+    height: 500px;
+  }
+}

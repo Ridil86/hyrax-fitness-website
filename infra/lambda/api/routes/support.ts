@@ -10,6 +10,8 @@ import type { APIGatewayProxyEvent, APIGatewayProxyResult } from 'aws-lambda';
 import { success, created, badRequest, notFound, serverError } from '../utils/response';
 import { isAdmin, extractClaims } from '../utils/auth';
 import { randomUUID } from 'crypto';
+import { sendNotification } from '../utils/email';
+import { supportReplyEmail } from '../../../custom-message/templates';
 
 const client = DynamoDBDocumentClient.from(new DynamoDBClient({}));
 const TABLE_NAME = process.env.TABLE_NAME!;
@@ -409,6 +411,24 @@ export async function addMessage(
         ExpressionAttributeValues: updateValues,
       })
     );
+
+    // Send email notification when admin replies (non-internal messages only)
+    if (admin && !body.internal && ticketResult.Item.userId) {
+      try {
+        const preview = body.content.slice(0, 200);
+        await sendNotification(
+          ticketResult.Item.userId,
+          'support',
+          `Re: ${ticketResult.Item.title || 'Your support ticket'}`,
+          supportReplyEmail(
+            ticketResult.Item.title || 'Your support ticket',
+            preview
+          )
+        );
+      } catch (emailErr) {
+        console.warn('Support reply notification email failed:', emailErr);
+      }
+    }
 
     return created(message);
   } catch (error) {
