@@ -248,7 +248,7 @@ export default function PortalDashboard() {
             <div style={{ flex: 1 }}>
               <strong style={{ display: 'block', fontSize: '.96rem', marginBottom: 4 }}>Set Up Your Fitness Profile</strong>
               <span style={{ fontSize: '.86rem', color: 'var(--rock)' }}>
-                Complete a quick questionnaire to unlock AI-generated personalized daily workouts.
+                Complete a quick questionnaire to unlock personalized daily workouts.
               </span>
             </div>
             <Link to="/portal/questionnaire" className="btn primary small">Get Started</Link>
@@ -337,7 +337,7 @@ export default function PortalDashboard() {
           ) : (
             <>
               <p style={{ margin: '0 0 12px', fontSize: '.88rem', color: 'var(--rock)' }}>
-                No workout generated yet today. Let your AI training assistant create one for you.
+                No workout generated yet today. Let your digital training assistant create one for you.
               </p>
               <Link to="/portal/routine" className="dashboard-view-more">
                 Generate Workout &rarr;
@@ -347,7 +347,7 @@ export default function PortalDashboard() {
         ) : (
           <div className="dashboard-locked-msg">
             <span>{'\u{1F512}'}</span>
-            <span>AI-powered routines are available with Rock Runner and above.</span>
+            <span>Personalized routines are available with Rock Runner and above.</span>
             <Link to="/portal/subscription">Upgrade &rarr;</Link>
           </div>
         )}
@@ -434,7 +434,7 @@ export default function PortalDashboard() {
           ) : (
             <>
               <p style={{ margin: '0 0 12px', fontSize: '.88rem', color: 'var(--rock)' }}>
-                No meal plan generated yet today. Let your AI nutrition assistant create one for you.
+                No meal plan generated yet today. Let your digital nutrition assistant create one for you.
               </p>
               <Link to="/portal/nutrition" className="dashboard-view-more">
                 Generate Meal Plan &rarr;
@@ -444,7 +444,7 @@ export default function PortalDashboard() {
         ) : (
           <div className="dashboard-locked-msg">
             <span>{'\u{1F512}'}</span>
-            <span>AI-powered nutrition plans are available with Iron Dassie.</span>
+            <span>Personalized nutrition plans are available with Iron Dassie.</span>
             <Link to="/portal/subscription">Upgrade &rarr;</Link>
           </div>
         )}

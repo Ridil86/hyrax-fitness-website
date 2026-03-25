@@ -18,11 +18,11 @@ const fallback = {
   headline: 'Fitness That Adapts to You',
   leadStrong: 'Custom workouts, personalized nutrition, and a digital coach that knows your goals. Built around a nature-inspired method designed for real results in 30-45 minutes.',
   leadSub: 'Train anywhere. Beginner to elite. No long grindy cardio.',
-  ctaText: 'Start Free',
+  ctaText: 'Start Your Free Trial',
   stats: [
     { value: 'For Everyone', label: 'Beginner to Elite' },
     { value: 'Fully Custom', label: 'Workouts, Nutrition, Coaching' },
-    { value: 'Free to Start', label: 'No credit card required' },
+    { value: '7-Day Free Trial', label: 'Full access, no credit card' },
   ],
 };
 

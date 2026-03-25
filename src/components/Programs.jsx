@@ -156,6 +156,16 @@ export default function Programs() {
           </div>
         </ScrollReveal>
 
+        {!isAuthenticated && (
+          <ScrollReveal>
+            <div className="programs-trial-banner">
+              <strong>Start with a 7-day free trial</strong>
+              <p>Every new account gets full access to all Iron Dassie features for 7 days. No credit card required.</p>
+              <Link className="btn primary programs-trial-cta" to="/get-started">Start Free Trial</Link>
+            </div>
+          </ScrollReveal>
+        )}
+
         <div className="tiers" ref={ref} aria-label="Program tiers">
           {tiers.map((tier, i) => (
             <motion.article

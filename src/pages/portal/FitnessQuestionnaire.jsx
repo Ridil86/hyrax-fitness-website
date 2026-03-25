@@ -112,7 +112,7 @@ const INTENSITIES = [
 const REST_PREFERENCES = [
   { value: 'every_other', label: 'Every Other Day', desc: 'Train, rest, train, rest' },
   { value: 'two_on_one_off', label: '2 On, 1 Off', desc: 'Two training days, one rest' },
-  { value: 'flexible', label: 'Flexible', desc: 'Let the AI decide based on recovery' },
+  { value: 'flexible', label: 'Flexible', desc: 'Let the system decide based on recovery' },
 ];
 
 const FOCUS_AREAS = [

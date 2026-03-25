@@ -22,7 +22,7 @@ const navItems = [
   { to: '/admin/community', label: 'Community', icon: '\u2709' },
   { to: '/admin/support', label: 'Support', icon: '\u2753' },
   { to: '/admin/analytics', label: 'Analytics', icon: '\u{1F4CA}' },
-  { to: '/admin/routine-debug', label: 'AI Debug', icon: '\u{1F916}' },
+  { to: '/admin/routine-debug', label: 'System Debug', icon: '\u{1F916}' },
   { to: '/admin/billing', label: 'Billing', icon: '$' },
   { to: '/admin/tiers', label: 'Tiers', icon: '\u2261' },
   { to: '/admin/merch', label: 'Merch', icon: '\u2605' },      // star

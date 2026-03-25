@@ -54,7 +54,7 @@ export default function NutritionHistory() {
       <div className="admin-page-header">
         <Link to="/portal/nutrition" style={{ fontSize: '.88rem', color: 'var(--rock)' }}>&larr; Back to My Nutrition</Link>
         <h1>Nutrition History</h1>
-        <p>Your past AI-generated daily nutrition plans</p>
+        <p>Your past personalized daily nutrition plans</p>
       </div>
 
       {plans.length === 0 ? (

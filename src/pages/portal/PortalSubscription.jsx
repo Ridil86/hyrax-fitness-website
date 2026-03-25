@@ -337,7 +337,7 @@ export default function PortalSubscription() {
             </div>
             {userTier === 'Pup' && (
               <div style={{ marginTop: 12, padding: '10px 14px', background: 'var(--paper)', borderRadius: 'calc(var(--radius) - 4px)', fontSize: '.88rem', color: 'var(--earth)' }}>
-                <strong>When your trial ends:</strong> You'll revert to the free Pup plan and lose access to AI Routines, Nutrition Plans, AI Coach, Benchmarks, and Progress Tracking.
+                <strong>When your trial ends:</strong> You'll revert to the free Pup plan and lose access to Custom Routines, Nutrition Plans, Personal Coach, Benchmarks, and Progress Tracking.
               </div>
             )}
           </div>

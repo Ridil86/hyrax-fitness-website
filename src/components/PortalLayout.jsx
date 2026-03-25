@@ -6,7 +6,7 @@ const navItems = [
   { to: '/portal', label: 'Dashboard', icon: '\u2302' },
   { to: '/portal/routine', label: 'My Routine', icon: '\u{1F4CB}' },
   { to: '/portal/nutrition', label: 'My Nutrition', icon: '\u{1F957}' },
-  { to: '/portal/chat', label: 'AI Coach', icon: '\u{1F916}' },
+  { to: '/portal/chat', label: 'Personal Coach', icon: '\u{1F916}' },
   { to: '/portal/workouts', label: 'Workouts', icon: '\u270A' },
   { to: '/portal/videos', label: 'Videos', icon: '\u25B6' },
   { to: '/portal/progress', label: 'Progress', icon: '\u{1F4C8}' },

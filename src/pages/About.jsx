@@ -35,10 +35,10 @@ export default function About() {
         <div className="about-hero-content">
           <ScrollReveal>
             <h1>About Hyrax Fitness</h1>
-            <p className="about-hero-sub">Where nature's most underestimated athlete meets cutting-edge AI</p>
+            <p className="about-hero-sub">Where nature's most underestimated athlete meets cutting-edge personalization</p>
             <div className="about-hero-mission">
               <p>
-                Hyrax Fitness exists to make elite-level training accessible to everyone. By combining a training philosophy rooted in nature with AI-powered personalization, we deliver programs that adapt to each individual - their goals, their equipment, their schedule, and their body. Whether you are training in a fully equipped gym, your living room, or a park, the Hyrax Method meets you where you are and grows with you as you progress.
+                Hyrax Fitness exists to make elite-level training accessible to everyone. By combining a training philosophy rooted in nature with digital personalization, we deliver programs that adapt to each individual - their goals, their equipment, their schedule, and their body. Whether you are training in a fully equipped gym, your living room, or a park, the Hyrax Method meets you where you are and grows with you as you progress.
               </p>
               <p>
                 No gatekeeping. No gimmicks. Just smart, effective training designed by experts and delivered by technology that learns what works for you.

@@ -76,7 +76,7 @@ export default function TrainingChat() {
     return (
       <div className="chat-loading">
         <div className="section-spinner" />
-        <p>Loading AI Coach...</p>
+        <p>Loading Personal Coach...</p>
       </div>
     );
   }
@@ -85,13 +85,13 @@ export default function TrainingChat() {
     return (
       <div>
         <div className="admin-page-header">
-          <h1>AI Coach</h1>
+          <h1>Personal Coach</h1>
           <p>Your personal training assistant</p>
         </div>
         <div className="chat-gate">
           <div className="chat-gate-icon">&#x1F916;</div>
           <h2>Iron Dassie Exclusive</h2>
-          <p>The AI Coach chat is available exclusively for Iron Dassie members. Get personalized advice on form, modifications, nutrition timing, and recovery.</p>
+          <p>The Personal Coach chat is available exclusively for Iron Dassie members. Get personalized advice on form, modifications, nutrition timing, and recovery.</p>
           <Link to="/portal/subscription" className="btn primary">View Plans</Link>
         </div>
       </div>
@@ -101,16 +101,16 @@ export default function TrainingChat() {
   return (
     <div className="chat-container">
       <div className="admin-page-header">
-        <h1>AI Coach</h1>
+        <h1>Personal Coach</h1>
         <p>Ask about training, form, nutrition, or recovery</p>
       </div>
 
-      <TrialBanner compact featureName="AI Coach" />
+      <TrialBanner compact featureName="Personal Coach" />
 
       <div className="chat-messages">
         {messages.length === 0 && !sending && (
           <div className="chat-empty">
-            <p>&#x1F44B; Hi! I&rsquo;m your Hyrax Fitness AI Coach. Ask me anything about your training, form tips, modifications, nutrition timing, or recovery.</p>
+            <p>&#x1F44B; Hi! I&rsquo;m your Hyrax Fitness Personal Coach. Ask me anything about your training, form tips, modifications, nutrition timing, or recovery.</p>
           </div>
         )}
         {messages.map((msg, idx) => (
@@ -133,7 +133,7 @@ export default function TrainingChat() {
           value={input}
           onChange={(e) => setInput(e.target.value)}
           onKeyDown={handleKeyDown}
-          placeholder="Ask your AI Coach..."
+          placeholder="Ask your Personal Coach..."
           className="chat-input"
           rows={1}
           maxLength={2000}

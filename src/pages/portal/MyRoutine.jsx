@@ -164,7 +164,7 @@ export default function MyRoutine() {
           notes: ex.notes || undefined,
         })),
         workoutId: today,
-        workoutTitle: workout?.title || 'AI Routine',
+        workoutTitle: workout?.title || 'Daily Routine',
         source: 'ai-routine',
         sourceId: today,
         rating: workoutRating || undefined,
@@ -222,12 +222,12 @@ export default function MyRoutine() {
       <div>
         <div className="admin-page-header">
           <h1>My Routine</h1>
-          <p>AI-powered personalized daily workouts</p>
+          <p>Personalized daily workouts</p>
         </div>
         <div className="routine-gate">
           <div className="routine-gate-icon">&#x1F512;</div>
           <h2>Upgrade to Unlock</h2>
-          <p>Personalized AI-generated workout routines are available for Rock Runner and Iron Dassie members.</p>
+          <p>Personalized workout routines are available for Rock Runner and Iron Dassie members.</p>
           <Link to="/portal/subscription" className="btn primary">View Plans</Link>
         </div>
       </div>
@@ -240,9 +240,9 @@ export default function MyRoutine() {
       <div>
         <div className="admin-page-header">
           <h1>My Routine</h1>
-          <p>AI-powered personalized daily workouts</p>
+          <p>Personalized daily workouts</p>
         </div>
-        <TrialBanner compact featureName="AI Routines" />
+        <TrialBanner compact featureName="Custom Routines" />
         <div className="routine-gate">
           <div className="routine-gate-icon">&#x1F4CB;</div>
           <h2>Complete Your Fitness Profile</h2>
@@ -259,13 +259,13 @@ export default function MyRoutine() {
       <div>
         <div className="admin-page-header">
           <h1>My Routine</h1>
-          <p>AI-powered personalized daily workouts</p>
+          <p>Personalized daily workouts</p>
         </div>
-        <TrialBanner compact featureName="AI Routines" />
+        <TrialBanner compact featureName="Custom Routines" />
         <div className="routine-generate-cta">
           <div className="routine-gate-icon">&#x1F3CB;</div>
           <h2>Ready for Today&rsquo;s Workout?</h2>
-          <p>Your AI training assistant will create a personalized workout based on your profile, recent activity, and recovery needs.</p>
+          <p>Your digital training assistant will create a personalized workout based on your profile, recent activity, and recovery needs.</p>
           {error && <div className="routine-error">{error}</div>}
           <button
             className="btn primary"
@@ -292,10 +292,10 @@ export default function MyRoutine() {
     <div>
       <div className="admin-page-header">
         <h1>My Routine</h1>
-        <p>AI-powered personalized daily workouts</p>
+        <p>Personalized daily workouts</p>
       </div>
 
-      <TrialBanner compact featureName="AI Routines" />
+      <TrialBanner compact featureName="Custom Routines" />
 
       {/* Workout header card */}
       <div className="routine-card routine-header-card">

@@ -8,7 +8,7 @@ import './admin.css';
 const TABS = [
   { key: 'routine', label: 'Routines' },
   { key: 'nutrition', label: 'Nutrition' },
-  { key: 'chat', label: 'AI Coach' },
+  { key: 'chat', label: 'Personal Coach' },
 ];
 
 // Haiku 4.5 pricing ($ per million tokens)
@@ -188,8 +188,8 @@ export default function RoutineDebug() {
   return (
     <div>
       <div className="admin-page-header">
-        <h1>AI Debug Tool</h1>
-        <p>Preview prompts, test generation, and analyze token costs across all AI systems</p>
+        <h1>System Debug Tool</h1>
+        <p>Preview prompts, test generation, and analyze token costs across all generation systems</p>
       </div>
 
       {/* Tab Bar */}

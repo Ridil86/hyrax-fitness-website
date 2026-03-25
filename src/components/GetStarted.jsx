@@ -6,9 +6,9 @@ import { useAuth } from '../context/AuthContext';
 import './GetStarted.css';
 
 const howSteps = [
-  { num: '1', title: 'Sign up free', desc: 'Create your account in under a minute. No credit card required.' },
+  { num: '1', title: 'Start your free trial', desc: 'Create your account in under a minute. No credit card required. Get 7 days of full access.' },
   { num: '2', title: 'Build your profile', desc: 'Tell us your goals, equipment, and schedule. We handle the rest.' },
-  { num: '3', title: 'Start training', desc: 'Get your first custom workout and nutrition plan today.' },
+  { num: '3', title: 'Train with full access', desc: 'Enjoy personalized workouts, nutrition plans, coaching, and more for 7 days. Subscribe anytime to keep access.' },
 ];
 
 export default function GetStarted() {
@@ -45,6 +45,17 @@ export default function GetStarted() {
             </motion.div>
           ))}
         </div>
+
+        {/* Trial Callout */}
+        <ScrollReveal>
+          <div className="trial-callout">
+            <span className="trial-callout-icon">&#9733;</span>
+            <div>
+              <strong>7-day free trial on every account</strong>
+              <p>Try personalized workouts, custom nutrition plans, digital coaching, and more. No credit card needed. No commitment.</p>
+            </div>
+          </div>
+        </ScrollReveal>
 
         {/* 3. Choose Your Plan */}
         <ScrollReveal>
@@ -90,11 +101,11 @@ export default function GetStarted() {
         <ScrollReveal>
           <div className="closing-cta">
             <h2>Ready to train smarter?</h2>
-            <p className="muted">Create your free account in under a minute. Upgrade anytime.</p>
+            <p className="muted">Start your 7-day free trial. Full access to every feature, no credit card required.</p>
             {isAuthenticated ? (
               <Link className="btn primary" to="/portal">Go to Dashboard</Link>
             ) : (
-              <Link className="btn primary" to="/get-started">Create Free Account</Link>
+              <Link className="btn primary" to="/get-started">Start Free Trial</Link>
             )}
           </div>
         </ScrollReveal>

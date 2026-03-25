@@ -91,6 +91,41 @@
   width: 100%;
 }
 
+/* Programs Trial Banner */
+.programs-trial-banner {
+  text-align: center;
+  max-width: 640px;
+  margin: 0 auto 2rem;
+  padding: 28px 32px;
+  border-radius: var(--radius);
+  background: linear-gradient(135deg, var(--sunset) 0%, var(--sunrise) 100%);
+  color: #fff;
+}
+
+.programs-trial-banner strong {
+  display: block;
+  font-size: 1.15rem;
+  margin-bottom: 6px;
+}
+
+.programs-trial-banner p {
+  margin: 0 0 16px;
+  font-size: 0.93rem;
+  line-height: 1.5;
+  opacity: 0.95;
+}
+
+.programs-trial-cta {
+  background: #fff !important;
+  color: var(--sunset) !important;
+  font-weight: 700;
+}
+
+.programs-trial-cta:hover {
+  box-shadow: var(--shadow-soft);
+  transform: translateY(-1px);
+}
+
 .tier-trial-label {
   display: block;
   text-align: center;

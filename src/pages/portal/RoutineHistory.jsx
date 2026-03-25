@@ -54,7 +54,7 @@ export default function RoutineHistory() {
       <div className="admin-page-header">
         <Link to="/portal/routine" style={{ fontSize: '.88rem', color: 'var(--rock)' }}>&larr; Back to My Routine</Link>
         <h1>Routine History</h1>
-        <p>Your past AI-generated daily workouts</p>
+        <p>Your past personalized daily workouts</p>
       </div>
 
       {workouts.length === 0 ? (

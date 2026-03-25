@@ -303,7 +303,7 @@ export default function UserProfile() {
 
         {routines.length > 0 && (
           <div className="profile-groups-section">
-            <h3>AI Routines ({routines.length})</h3>
+            <h3>Custom Routines ({routines.length})</h3>
             <table className="profile-routines-table" style={{ width: '100%', borderCollapse: 'collapse', fontSize: '.84rem' }}>
               <thead>
                 <tr style={{ borderBottom: '1px solid rgba(27,18,10,.1)', textAlign: 'left' }}>

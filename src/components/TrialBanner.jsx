@@ -8,7 +8,7 @@ import './trial-banner.css';
  *
  * @param {Object} props
  * @param {boolean} [props.compact] - Use compact variant for feature pages
- * @param {string} [props.featureName] - Name of the feature being used (e.g. "AI Routines")
+ * @param {string} [props.featureName] - Name of the feature being used (e.g. "Custom Routines")
  */
 export default function TrialBanner({ compact = false, featureName }) {
   const { trialActive, trialEndsAt } = useAuth();

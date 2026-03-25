@@ -103,7 +103,7 @@ function AIRoutineSection({ stats, tierDistribution }) {
   return (
     <>
       <div className="analytics-chart-card">
-        <h2 className="analytics-chart-title">AI Routine Generation</h2>
+        <h2 className="analytics-chart-title">Routine Generation</h2>
 
         {/* Row 1: Key Metrics */}
         <div className="admin-stats ai-stats-grid">
@@ -166,7 +166,7 @@ function AIRoutineSection({ stats, tierDistribution }) {
               <span className="ai-revenue-detail">{rockRunners} Rock Runner + {ironDassies} Iron Dassie</span>
             </div>
             <div className="ai-revenue-item">
-              <span className="ai-revenue-label">Est. AI Cost</span>
+              <span className="ai-revenue-label">Est. Generation Cost</span>
               <span className="ai-revenue-value">{fmtCost(bc.estimatedCostTotal)}</span>
             </div>
             <div className="ai-revenue-item">
@@ -431,7 +431,7 @@ export default function Analytics() {
       {(overview?.routineStats || overview?.nutritionStats || overview?.chatStats) && (
         <div className="analytics-collapsible">
           <button className="analytics-collapsible-header" onClick={() => setAiExpanded(!aiExpanded)}>
-            <h2>AI Usage &amp; Costs</h2>
+            <h2>Generation Usage &amp; Costs</h2>
             <span className="collapsible-summary">
               {overview.combinedBilling ? fmtCost(overview.combinedBilling.totalCost) + ' total' : ''} | {
                 (overview.routineStats?.thisMonthTotal || 0) +
@@ -458,12 +458,12 @@ export default function Analytics() {
                     <div className="stat-sub">{overview.nutritionStats?.billingCycle?.generations || 0} plans</div>
                   </div>
                   <div className="admin-stat-card">
-                    <div className="stat-label">AI Coach</div>
+                    <div className="stat-label">Coach Chat</div>
                     <div className="stat-value">{fmtCost(overview.combinedBilling.chatCost)}</div>
                     <div className="stat-sub">{overview.chatStats?.billingCycle?.messages || 0} messages</div>
                   </div>
                   <div className="admin-stat-card" style={{ borderLeft: '3px solid var(--sunset)' }}>
-                    <div className="stat-label">Total AI Cost</div>
+                    <div className="stat-label">Total Generation Cost</div>
                     <div className="stat-value" style={{ color: 'var(--sunset)' }}>{fmtCost(overview.combinedBilling.totalCost)}</div>
                     <div className="stat-sub">{fmtTokens(overview.combinedBilling.totalInputTokens + overview.combinedBilling.totalOutputTokens)} tokens</div>
                   </div>
@@ -474,7 +474,7 @@ export default function Analytics() {
               <div className="ai-tab-bar">
                 <button className={`ai-tab-btn ${aiTab === 'routines' ? 'active' : ''}`} onClick={() => setAiTab('routines')}>Routines</button>
                 <button className={`ai-tab-btn ${aiTab === 'nutrition' ? 'active' : ''}`} onClick={() => setAiTab('nutrition')}>Nutrition</button>
-                <button className={`ai-tab-btn ${aiTab === 'chat' ? 'active' : ''}`} onClick={() => setAiTab('chat')}>AI Coach</button>
+                <button className={`ai-tab-btn ${aiTab === 'chat' ? 'active' : ''}`} onClick={() => setAiTab('chat')}>Coach Chat</button>
               </div>
 
               {/* Routines tab */}

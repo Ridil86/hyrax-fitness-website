@@ -95,6 +95,37 @@
   margin-inline: auto;
 }
 
+/* Trial Callout */
+.trial-callout {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  max-width: 640px;
+  margin: 0 auto 2rem;
+  padding: 20px 28px;
+  border-radius: var(--radius);
+  background: linear-gradient(135deg, var(--sunset) 0%, var(--sunrise) 100%);
+  color: #fff;
+}
+
+.trial-callout-icon {
+  font-size: 1.6rem;
+  flex-shrink: 0;
+}
+
+.trial-callout strong {
+  display: block;
+  font-size: 1.05rem;
+  margin-bottom: 4px;
+}
+
+.trial-callout p {
+  margin: 0;
+  font-size: 0.9rem;
+  line-height: 1.5;
+  opacity: 0.95;
+}
+
 /* Closing CTA */
 .closing-cta {
   text-align: center;
@@ -127,5 +158,11 @@
   .how-steps {
     grid-template-columns: 1fr;
     gap: 1.5rem;
+  }
+
+  .trial-callout {
+    flex-direction: column;
+    text-align: center;
+    padding: 18px 20px;
   }
 }

@@ -248,12 +248,12 @@ export default function MyNutrition() {
       <div className="nutrition-page">
         <div className="admin-page-header">
           <h1>My Nutrition</h1>
-          <p>AI-powered personalized daily nutrition plans</p>
+          <p>Personalized daily nutrition plans</p>
         </div>
         <div className="nutrition-gate">
           <div className="nutrition-gate-icon">&#x1F512;</div>
           <h2>Upgrade to Unlock</h2>
-          <p>Personalized AI-generated nutrition plans are available exclusively for Iron Dassie members.</p>
+          <p>Personalized nutrition plans are available exclusively for Iron Dassie members.</p>
           <Link to="/portal/subscription" className="btn primary">View Plans</Link>
         </div>
       </div>
@@ -266,9 +266,9 @@ export default function MyNutrition() {
       <div className="nutrition-page">
         <div className="admin-page-header">
           <h1>My Nutrition</h1>
-          <p>AI-powered personalized daily nutrition plans</p>
+          <p>Personalized daily nutrition plans</p>
         </div>
-        <TrialBanner compact featureName="AI Nutrition" />
+        <TrialBanner compact featureName="Custom Nutrition" />
         <div className="nutrition-gate">
           <div className="nutrition-gate-icon">&#x1F4CB;</div>
           <h2>Complete Your Fitness Profile</h2>
@@ -296,12 +296,12 @@ export default function MyNutrition() {
       <div className="nutrition-page">
         <div className="admin-page-header">
           <h1>My Nutrition</h1>
-          <p>AI-powered personalized daily nutrition plans</p>
+          <p>Personalized daily nutrition plans</p>
         </div>
         <div className="nutrition-generating">
           <div className="nutrition-generating-spinner" />
           <h2>Generating your personalized nutrition plan...</h2>
-          <p>Our AI is crafting a plan tailored to your profile, goals, and today&rsquo;s activity level.</p>
+          <p>Your personalized plan is being crafted tailored to your profile, goals, and today&rsquo;s activity level.</p>
         </div>
       </div>
     );
@@ -313,12 +313,12 @@ export default function MyNutrition() {
       <div className="nutrition-page">
         <div className="admin-page-header">
           <h1>My Nutrition</h1>
-          <p>AI-powered personalized daily nutrition plans</p>
+          <p>Personalized daily nutrition plans</p>
         </div>
         <div className="nutrition-generate-cta">
           <div className="nutrition-gate-icon">&#x1F372;</div>
           <h2>Ready for Today&rsquo;s Nutrition Plan?</h2>
-          <p>Your AI nutrition assistant will create a personalized meal plan based on your profile, dietary preferences, and today&rsquo;s training schedule.</p>
+          <p>Your digital nutrition assistant will create a personalized meal plan based on your profile, dietary preferences, and today&rsquo;s training schedule.</p>
           {error && <div className="nutrition-error">{error}</div>}
           <button
             className="btn primary"
@@ -346,7 +346,7 @@ export default function MyNutrition() {
       <div className="nutrition-page">
         <div className="admin-page-header">
           <h1>My Nutrition</h1>
-          <p>AI-powered personalized daily nutrition plans</p>
+          <p>Personalized daily nutrition plans</p>
         </div>
         <div className="nutrition-generate-cta">
           <div className="nutrition-gate-icon">&#x26A0;</div>
@@ -378,10 +378,10 @@ export default function MyNutrition() {
     <div className="nutrition-page">
       <div className="admin-page-header">
         <h1>My Nutrition</h1>
-        <p>AI-powered personalized daily nutrition plans</p>
+        <p>Personalized daily nutrition plans</p>
       </div>
 
-      <TrialBanner compact featureName="AI Nutrition" />
+      <TrialBanner compact featureName="Custom Nutrition" />
 
       {/* Header Card */}
       <div className="nutrition-card nutrition-header-card">
