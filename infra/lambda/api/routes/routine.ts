@@ -11,6 +11,7 @@ import type { APIGatewayProxyEvent, APIGatewayProxyResult } from 'aws-lambda';
 import { success, badRequest, forbidden, notFound, serverError } from '../utils/response';
 import { extractClaims, isAdmin } from '../utils/auth';
 import { invokeClaude } from '../utils/bedrock';
+import { getEffectiveTier } from '../utils/trial';
 
 const client = DynamoDBDocumentClient.from(new DynamoDBClient({}));
 const lambdaClient = new LambdaClient({});
@@ -456,7 +457,7 @@ export async function generateDailyWorkout(
     if (!profile) return serverError('User profile not found');
 
     // 2. Tier gate
-    if (!hasTierAccess(profile.tier || 'Pup', 'Rock Runner')) {
+    if (!hasTierAccess(getEffectiveTier(profile), 'Rock Runner')) {
       return forbidden('Personalized routines require Rock Runner or Iron Dassie tier');
     }
 
@@ -481,7 +482,7 @@ export async function generateDailyWorkout(
       if (existingResult.Item.status === 'error') {
         // Fall through to regenerate
       } else {
-        const isIronDassie = hasTierAccess(profile.tier || 'Pup', 'Iron Dassie');
+        const isIronDassie = hasTierAccess(getEffectiveTier(profile), 'Iron Dassie');
         const genCount = existingResult.Item.generationCount || 1;
         if (!isIronDassie || genCount >= 3) {
           return success(existingResult.Item);
@@ -731,7 +732,7 @@ export async function swapDailyWorkout(
     );
     const profile = profileResult.Item;
     if (!profile) return serverError('User profile not found');
-    if (!hasTierAccess(profile.tier || 'Pup', 'Rock Runner')) {
+    if (!hasTierAccess(getEffectiveTier(profile), 'Rock Runner')) {
       return forbidden('Swap requires Rock Runner or Iron Dassie tier');
     }
     if (!profile.fitnessProfile) return badRequest('Complete your fitness questionnaire first');
@@ -745,7 +746,7 @@ export async function swapDailyWorkout(
     if (existing.status === 'generating') return badRequest('Workout is still generating. Please wait.');
 
     const currentSwapCount = existing.swapCount || 0;
-    const isIronDassie = hasTierAccess(profile.tier || 'Pup', 'Iron Dassie');
+    const isIronDassie = hasTierAccess(getEffectiveTier(profile), 'Iron Dassie');
     if (!isIronDassie && currentSwapCount >= 1) {
       return badRequest('Rock Runner tier allows 1 swap per day. Upgrade to Iron Dassie for unlimited swaps.');
     }

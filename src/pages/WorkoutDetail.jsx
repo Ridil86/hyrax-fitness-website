@@ -23,7 +23,7 @@ const DIFFICULTY_STARS = {
 
 export default function WorkoutDetail() {
   const { id } = useParams();
-  const { getIdToken, userTier, isAdmin } = useAuth();
+  const { getIdToken, effectiveTier, isAdmin } = useAuth();
   const [workout, setWorkout] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -179,7 +179,7 @@ export default function WorkoutDetail() {
   }
 
   const stars = DIFFICULTY_STARS[activeDifficulty] || 1;
-  const locked = !isAdmin && !hasTierAccess(userTier, workout.requiredTier);
+  const locked = !isAdmin && !hasTierAccess(effectiveTier, workout.requiredTier);
   const requiredInfo = locked ? getRequiredTierInfo(workout.requiredTier) : null;
 
   // Show legacy equipment or derived equipment
@@ -442,7 +442,7 @@ export default function WorkoutDetail() {
                     activeDifficulty,
                     exerciseOverrides,
                     userProfile,
-                    userTier,
+                    effectiveTier,
                     workoutStats,
                   })}
                 >

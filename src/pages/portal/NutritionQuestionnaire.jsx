@@ -246,7 +246,7 @@ export default function NutritionQuestionnaire() {
     );
   }
 
-  const currentStep = STEPS[step];
+  const _currentStep = STEPS[step];
 
   return (
     <div className="nq-container">

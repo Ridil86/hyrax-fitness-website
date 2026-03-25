@@ -7,6 +7,7 @@ import { createWorkoutLog, fetchUserLogs } from '../../api/completionLog';
 import { hasTierAccess } from '../../utils/tiers';
 import { downloadRoutinePdf } from '../../utils/routinePdf';
 import { fetchProfile } from '../../api/profile';
+import TrialBanner from '../../components/TrialBanner';
 import './my-routine.css';
 
 function formatFocus(tags) {
@@ -19,12 +20,12 @@ function sanitize(text) {
   if (!text) return '';
   return text
     .replace(/[\u2014\u2013\u2012]/g, '-')
-    .replace(/[\u{1F600}-\u{1F9FF}\u{2600}-\u{26FF}\u{2700}-\u{27BF}\u{1F300}-\u{1F5FF}\u{1F680}-\u{1F6FF}\u{1FA00}-\u{1FAFF}\u{FE00}-\u{FE0F}\u{200D}]/gu, '')
+    .replace(/[\p{Emoji_Presentation}\p{Extended_Pictographic}\u{FE00}-\u{FE0F}\u{200D}]/gu, '')
     .trim();
 }
 
 export default function MyRoutine() {
-  const { getIdToken, userTier } = useAuth();
+  const { getIdToken, effectiveTier } = useAuth();
   const [fitnessProfile, setFitnessProfile] = useState(null);
   const [workout, setWorkout] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -40,7 +41,7 @@ export default function MyRoutine() {
   const [swapping, setSwapping] = useState(false);
   const [userProfile, setUserProfile] = useState(null);
 
-  const hasAccess = hasTierAccess(userTier, 'Rock Runner');
+  const hasAccess = hasTierAccess(effectiveTier, 'Rock Runner');
 
   // Poll for workout when generation is in progress
   const pollForWorkout = useCallback(async (token) => {
@@ -98,7 +99,7 @@ export default function MyRoutine() {
     if (hasAccess) load();
     else setLoading(false);
     return () => { cancelled = true; };
-  }, [getIdToken, hasAccess]);
+  }, [getIdToken, hasAccess, pollForWorkout]);
 
   const handleGenerate = useCallback(async () => {
     setGenerating(true);
@@ -241,6 +242,7 @@ export default function MyRoutine() {
           <h1>My Routine</h1>
           <p>AI-powered personalized daily workouts</p>
         </div>
+        <TrialBanner compact featureName="AI Routines" />
         <div className="routine-gate">
           <div className="routine-gate-icon">&#x1F4CB;</div>
           <h2>Complete Your Fitness Profile</h2>
@@ -259,6 +261,7 @@ export default function MyRoutine() {
           <h1>My Routine</h1>
           <p>AI-powered personalized daily workouts</p>
         </div>
+        <TrialBanner compact featureName="AI Routines" />
         <div className="routine-generate-cta">
           <div className="routine-gate-icon">&#x1F3CB;</div>
           <h2>Ready for Today&rsquo;s Workout?</h2>
@@ -292,6 +295,8 @@ export default function MyRoutine() {
         <p>AI-powered personalized daily workouts</p>
       </div>
 
+      <TrialBanner compact featureName="AI Routines" />
+
       {/* Workout header card */}
       <div className="routine-card routine-header-card">
         <div className="routine-header-top">
@@ -315,7 +320,7 @@ export default function MyRoutine() {
           <button
             type="button"
             className="btn small routine-pdf-btn"
-            onClick={() => downloadRoutinePdf(workout, { userProfile, userTier })}
+            onClick={() => downloadRoutinePdf(workout, { userProfile, userTier: effectiveTier })}
           >
             Download Print-Ready PDF
           </button>

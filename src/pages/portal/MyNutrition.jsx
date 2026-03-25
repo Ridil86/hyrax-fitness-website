@@ -6,6 +6,7 @@ import { generateDailyNutrition, fetchTodayNutrition } from '../../api/nutrition
 import { fetchProfile } from '../../api/profile';
 import { hasTierAccess } from '../../utils/tiers';
 import { createMealLog, fetchMealLogs } from '../../api/mealLog';
+import TrialBanner from '../../components/TrialBanner';
 import './my-nutrition.css';
 
 /** Strip em-dashes and emojis from AI output */
@@ -13,12 +14,12 @@ function sanitize(text) {
   if (!text) return '';
   return text
     .replace(/[\u2014\u2013\u2012]/g, '-')
-    .replace(/[\u{1F600}-\u{1F9FF}\u{2600}-\u{26FF}\u{2700}-\u{27BF}\u{1F300}-\u{1F5FF}\u{1F680}-\u{1F6FF}\u{1FA00}-\u{1FAFF}\u{FE00}-\u{FE0F}\u{200D}]/gu, '')
+    .replace(/[\p{Emoji_Presentation}\p{Extended_Pictographic}\u{FE00}-\u{FE0F}\u{200D}]/gu, '')
     .trim();
 }
 
 export default function MyNutrition() {
-  const { getIdToken, userTier } = useAuth();
+  const { getIdToken, effectiveTier } = useAuth();
   const [fitnessProfile, setFitnessProfile] = useState(null);
   const [nutritionProfile, setNutritionProfile] = useState(null);
   const [plan, setPlan] = useState(null);
@@ -36,7 +37,7 @@ export default function MyNutrition() {
   const [adhocForm, setAdhocForm] = useState({ name: '', items: [{ food: '', amount: '', calories: '' }], notes: '' });
 
   const navigate = useNavigate();
-  const hasAccess = hasTierAccess(userTier, 'Iron Dassie');
+  const hasAccess = hasTierAccess(effectiveTier, 'Iron Dassie');
 
   useEffect(() => {
     let cancelled = false;
@@ -163,7 +164,7 @@ export default function MyNutrition() {
       setCompletedMeals((prev) => new Set([...prev, mealIdx]));
       setLoggingMeal(null);
       setMealLogForm({ modifications: '', rating: 0, notes: '' });
-    } catch (err) {
+    } catch {
       setError('Failed to log meal. Please try again.');
     } finally {
       setLogSubmitting(false);
@@ -267,6 +268,7 @@ export default function MyNutrition() {
           <h1>My Nutrition</h1>
           <p>AI-powered personalized daily nutrition plans</p>
         </div>
+        <TrialBanner compact featureName="AI Nutrition" />
         <div className="nutrition-gate">
           <div className="nutrition-gate-icon">&#x1F4CB;</div>
           <h2>Complete Your Fitness Profile</h2>
@@ -378,6 +380,8 @@ export default function MyNutrition() {
         <h1>My Nutrition</h1>
         <p>AI-powered personalized daily nutrition plans</p>
       </div>
+
+      <TrialBanner compact featureName="AI Nutrition" />
 
       {/* Header Card */}
       <div className="nutrition-card nutrition-header-card">

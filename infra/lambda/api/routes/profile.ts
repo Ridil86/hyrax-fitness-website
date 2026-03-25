@@ -3,6 +3,7 @@ import { DynamoDBDocumentClient, GetCommand, PutCommand, UpdateCommand } from '@
 import type { APIGatewayProxyEvent, APIGatewayProxyResult } from 'aws-lambda';
 import { success, created, badRequest, forbidden, notFound, serverError } from '../utils/response';
 import { extractClaims, isAdmin } from '../utils/auth';
+import { isTrialActive, getEffectiveTier, buildTrialFields } from '../utils/trial';
 import { randomUUID } from 'crypto';
 
 const client = DynamoDBDocumentClient.from(new DynamoDBClient({}));
@@ -31,7 +32,11 @@ export async function getProfile(
     );
 
     if (result.Item) {
-      return success(result.Item);
+      return success({
+        ...result.Item,
+        isTrialActive: isTrialActive(result.Item),
+        effectiveTier: getEffectiveTier(result.Item),
+      });
     }
 
     // Auto-create profile from Cognito claims for pre-existing accounts
@@ -111,6 +116,7 @@ export async function createProfile(
     const familyName = claims.family_name || claims['custom:family_name'] || '';
 
     const now = new Date().toISOString();
+    const trialFields = buildTrialFields();
 
     // Create profile
     await client.send(
@@ -123,6 +129,7 @@ export async function createProfile(
           givenName,
           familyName,
           tier: 'Pup',
+          ...trialFields,
           source: 'google',
           termsAcceptedAt: now,
           privacyAcceptedAt: now,

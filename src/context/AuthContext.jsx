@@ -17,6 +17,9 @@ export function AuthProvider({ children }) {
   const [user, setUser] = useState(null);
   const [groups, setGroups] = useState([]);
   const [userTier, setUserTier] = useState('Pup');
+  const [trialEndsAt, setTrialEndsAt] = useState(null);
+  const [trialActive, setTrialActive] = useState(false);
+  const [effectiveTier, setEffectiveTier] = useState('Pup');
   const [loading, setLoading] = useState(true);
 
   const isAuthenticated = !!user;
@@ -47,6 +50,9 @@ export function AuthProvider({ children }) {
         if (token) {
           const profile = await fetchProfile(token);
           setUserTier(profile.tier || 'Pup');
+          setTrialEndsAt(profile.trialEndsAt || null);
+          setTrialActive(profile.isTrialActive || false);
+          setEffectiveTier(profile.effectiveTier || profile.tier || 'Pup');
         }
       } catch {
         // Profile fetch failed - keep default tier
@@ -55,6 +61,9 @@ export function AuthProvider({ children }) {
       setUser(null);
       setGroups([]);
       setUserTier('Pup');
+      setTrialEndsAt(null);
+      setTrialActive(false);
+      setEffectiveTier('Pup');
     }
   }, [extractGroups]);
 
@@ -124,6 +133,9 @@ export function AuthProvider({ children }) {
     setUser(null);
     setGroups([]);
     setUserTier('Pup');
+    setTrialEndsAt(null);
+    setTrialActive(false);
+    setEffectiveTier('Pup');
   };
 
   // Sign in with Google via Cognito Hosted UI redirect
@@ -148,6 +160,9 @@ export function AuthProvider({ children }) {
       if (token) {
         const profile = await fetchProfile(token);
         setUserTier(profile.tier || 'Pup');
+        setTrialEndsAt(profile.trialEndsAt || null);
+        setTrialActive(profile.isTrialActive || false);
+        setEffectiveTier(profile.effectiveTier || profile.tier || 'Pup');
       }
     } catch {
       // Profile fetch failed - keep current tier
@@ -160,6 +175,9 @@ export function AuthProvider({ children }) {
     isAuthenticated,
     isAdmin,
     userTier,
+    trialEndsAt,
+    trialActive,
+    effectiveTier,
     loading,
     signIn,
     signUp,

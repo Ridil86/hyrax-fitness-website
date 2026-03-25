@@ -9,6 +9,7 @@ import type { APIGatewayProxyEvent, APIGatewayProxyResult } from 'aws-lambda';
 import { success, badRequest, forbidden, serverError } from '../utils/response';
 import { extractClaims, isAdmin } from '../utils/auth';
 import { invokeClaude } from '../utils/bedrock';
+import { getEffectiveTier } from '../utils/trial';
 import {
   loadExercises, loadWorkouts, loadEquipment,
   loadUserCompletionLogs, loadUserMealLogs,
@@ -151,7 +152,7 @@ export async function sendChatMessage(
     );
     const profile = profileResult.Item;
     if (!profile) return serverError('Profile not found');
-    if (!hasTierAccess(profile.tier || 'Pup', 'Iron Dassie')) {
+    if (!hasTierAccess(getEffectiveTier(profile), 'Iron Dassie')) {
       return forbidden('Personal Coach chat is available for Iron Dassie members only');
     }
 

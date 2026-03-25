@@ -3,10 +3,11 @@ import { Link } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import { sendChatMessage, fetchChatHistory } from '../../api/chat';
 import { hasTierAccess } from '../../utils/tiers';
+import TrialBanner from '../../components/TrialBanner';
 import './training-chat.css';
 
 export default function TrainingChat() {
-  const { getIdToken, userTier } = useAuth();
+  const { getIdToken, effectiveTier } = useAuth();
   const [messages, setMessages] = useState([]);
   const [input, setInput] = useState('');
   const [sending, setSending] = useState(false);
@@ -14,7 +15,7 @@ export default function TrainingChat() {
   const [error, setError] = useState(null);
   const messagesEndRef = useRef(null);
 
-  const hasAccess = hasTierAccess(userTier, 'Iron Dassie');
+  const hasAccess = hasTierAccess(effectiveTier, 'Iron Dassie');
 
   useEffect(() => {
     let cancelled = false;
@@ -103,6 +104,8 @@ export default function TrainingChat() {
         <h1>AI Coach</h1>
         <p>Ask about training, form, nutrition, or recovery</p>
       </div>
+
+      <TrialBanner compact featureName="AI Coach" />
 
       <div className="chat-messages">
         {messages.length === 0 && !sending && (

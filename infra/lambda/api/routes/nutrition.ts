@@ -11,6 +11,7 @@ import type { APIGatewayProxyEvent, APIGatewayProxyResult } from 'aws-lambda';
 import { success, badRequest, forbidden, notFound, serverError } from '../utils/response';
 import { extractClaims, isAdmin } from '../utils/auth';
 import { invokeClaude } from '../utils/bedrock';
+import { getEffectiveTier } from '../utils/trial';
 
 const client = DynamoDBDocumentClient.from(new DynamoDBClient({}));
 const lambdaClient = new LambdaClient({});
@@ -382,7 +383,7 @@ export async function generateDailyNutrition(
     if (!profile) return serverError('User profile not found');
 
     // 2. Tier gate: Iron Dassie only
-    if (!hasTierAccess(profile.tier || 'Pup', 'Iron Dassie')) {
+    if (!hasTierAccess(getEffectiveTier(profile), 'Iron Dassie')) {
       return forbidden('Personalized nutrition plans require Iron Dassie tier');
     }
 

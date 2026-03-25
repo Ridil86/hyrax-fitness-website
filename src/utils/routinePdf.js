@@ -354,7 +354,7 @@ export async function downloadRoutinePdf(workout, options = {}) {
       const exEndPage = doc.getCurrentPageInfo().pageNumber;
       if (i % 2 === 0 && exStartPage === exEndPage) {
         const actualHeight = (y - 2) - exStartY;
-        const currentPage = doc.getCurrentPageInfo().pageNumber;
+        // const currentPage = doc.getCurrentPageInfo().pageNumber;
         // Save current graphics state, draw the background, then re-draw content on top
         // jsPDF doesn't support z-ordering, so we use a white rect first then the stripe
         doc.setFillColor(250, 248, 242);

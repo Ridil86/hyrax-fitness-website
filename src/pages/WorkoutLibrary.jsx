@@ -21,7 +21,7 @@ const CATEGORY_LABELS = {
 };
 
 export default function WorkoutLibrary() {
-  const { getIdToken, userTier, isAdmin } = useAuth();
+  const { getIdToken, effectiveTier, isAdmin } = useAuth();
   const { workouts, loading, error } = useWorkouts(getIdToken);
   const [category, setCategory] = useState('all');
   const [search, setSearch] = useState('');
@@ -136,7 +136,7 @@ export default function WorkoutLibrary() {
             }}
           >
             {filtered.map((workout) => {
-              const locked = !isAdmin && !hasTierAccess(userTier, workout.requiredTier);
+              const locked = !isAdmin && !hasTierAccess(effectiveTier, workout.requiredTier);
               return (
                 <motion.div
                   key={workout.id}

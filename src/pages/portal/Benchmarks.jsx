@@ -4,6 +4,7 @@ import { useAuth } from '../../context/AuthContext';
 import { createExerciseLog } from '../../api/completionLog';
 import { hasTierAccess } from '../../utils/tiers';
 import { apiGet } from '../../api/client';
+import TrialBanner from '../../components/TrialBanner';
 import './benchmarks.css';
 
 const STANDARD_BENCHMARKS = [
@@ -15,7 +16,7 @@ const STANDARD_BENCHMARKS = [
 ];
 
 export default function Benchmarks() {
-  const { getIdToken, userTier } = useAuth();
+  const { getIdToken, effectiveTier } = useAuth();
   const [benchmarks, setBenchmarks] = useState([]);
   const [loading, setLoading] = useState(true);
   const [showForm, setShowForm] = useState(false);
@@ -23,7 +24,7 @@ export default function Benchmarks() {
   const [saving, setSaving] = useState(false);
   const [message, setMessage] = useState(null);
 
-  const hasAccess = hasTierAccess(userTier, 'Rock Runner');
+  const hasAccess = hasTierAccess(effectiveTier, 'Rock Runner');
 
   const loadBenchmarks = useCallback(async () => {
     try {
@@ -111,6 +112,8 @@ export default function Benchmarks() {
         <h1>Benchmarks</h1>
         <p>Track your fitness milestones and personal records</p>
       </div>
+
+      <TrialBanner compact featureName="Benchmarks" />
 
       {message && (
         <div className={`bench-msg ${message.type}`}>{message.text}</div>

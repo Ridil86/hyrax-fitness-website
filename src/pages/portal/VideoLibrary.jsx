@@ -14,7 +14,7 @@ const CATEGORY_LABELS = {
 };
 
 export default function VideoLibrary() {
-  const { getIdToken, userTier, isAdmin } = useAuth();
+  const { getIdToken, effectiveTier, isAdmin } = useAuth();
   const { videos, loading, error } = useVideos(getIdToken);
   const [category, setCategory] = useState('all');
   const [search, setSearch] = useState('');
@@ -128,7 +128,7 @@ export default function VideoLibrary() {
             }}
           >
             {filtered.map((video) => {
-              const locked = !isAdmin && !hasTierAccess(userTier, video.requiredTier);
+              const locked = !isAdmin && !hasTierAccess(effectiveTier, video.requiredTier);
               return (
                 <motion.div
                   key={video.id}

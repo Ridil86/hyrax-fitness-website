@@ -8,7 +8,8 @@ import { fetchTodayWorkout } from '../../api/routine';
 import { fetchTodayNutrition } from '../../api/nutrition';
 import { fetchNutritionProfile } from '../../api/nutritionProfile';
 import { createMealLog, fetchMealLogs } from '../../api/mealLog';
-import { hasTierAccess } from '../../utils/tiers';
+import { hasTierAccess, getEffectiveTier } from '../../utils/tiers';
+import TrialBanner from '../../components/TrialBanner';
 import './portal-dashboard.css';
 
 function timeAgo(dateStr) {
@@ -109,7 +110,7 @@ export default function PortalDashboard() {
   // Load activity/progress data for tier II+ users
   useEffect(() => {
     if (loading || !profile) return;
-    if (!hasTierAccess(profile.tier, 'Rock Runner')) return;
+    if (!hasTierAccess(getEffectiveTier(profile), 'Rock Runner')) return;
 
     let cancelled = false;
     const now = new Date();
@@ -124,7 +125,7 @@ export default function PortalDashboard() {
           fetchTodayWorkout(token).catch(() => null),
         ];
         // Iron Dassie: also fetch nutrition data
-        const isIronDassie = hasTierAccess(profile.tier, 'Iron Dassie');
+        const isIronDassie = hasTierAccess(getEffectiveTier(profile), 'Iron Dassie');
         if (isIronDassie) {
           fetches.push(
             fetchTodayNutrition(token).catch(() => null),
@@ -186,7 +187,7 @@ export default function PortalDashboard() {
   const fullName = [givenName, familyName].filter(Boolean).join(' ') || 'Member';
   const initial = (givenName || fullName || '?')[0].toUpperCase();
   const email = profile?.email || user?.signInDetails?.loginId || '';
-  const tier = profile?.tier || 'Pup';
+  const tier = getEffectiveTier(profile);
   const memberSince = profile?.createdAt;
 
   const hasActivityAccess = hasTierAccess(tier, 'Rock Runner');
@@ -236,6 +237,8 @@ export default function PortalDashboard() {
         <h1>Welcome back, {givenName || 'there'}!</h1>
         <p>Your Hyrax Fitness dashboard</p>
       </div>
+
+      <TrialBanner />
 
       {/* Onboarding: Fitness Profile Prompt */}
       {hasActivityAccess && profile && !profile.fitnessProfile && (
@@ -353,7 +356,7 @@ export default function PortalDashboard() {
       {/* Today's Meal Plan — Iron Dassie only */}
       <div className="portal-card">
         <h3>{'\u{1F957}'} Today&rsquo;s Meal Plan</h3>
-        {hasTierAccess(profile?.tier, 'Iron Dassie') ? (
+        {hasTierAccess(getEffectiveTier(profile), 'Iron Dassie') ? (
           !hasNutritionProfile ? (
             <>
               <p style={{ margin: '0 0 12px', fontSize: '.88rem', color: 'var(--rock)' }}>

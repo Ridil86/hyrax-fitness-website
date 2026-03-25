@@ -3,7 +3,7 @@ import { Link } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import { fetchUserLogs, fetchLogStats, deleteLogApi } from '../../api/completionLog';
 import { fetchProfile } from '../../api/profile';
-import { hasTierAccess } from '../../utils/tiers';
+import { hasTierAccess, getEffectiveTier } from '../../utils/tiers';
 import './activity-log.css';
 import './portal-dashboard.css';
 
@@ -79,7 +79,7 @@ export default function ActivityLog() {
     return () => { cancelled = true; };
   }, [getIdToken]);
 
-  const locked = !profileLoading && !hasTierAccess(profile?.tier, 'Rock Runner');
+  const locked = !profileLoading && !hasTierAccess(getEffectiveTier(profile), 'Rock Runner');
 
   const loadData = useCallback(async () => {
     setLoading(true);

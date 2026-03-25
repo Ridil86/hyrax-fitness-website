@@ -10,6 +10,7 @@ import {
 } from '../../api/subscription';
 import { motion } from 'framer-motion';
 import { trackSubscriptionUpgrade } from '../../utils/analytics';
+import { trialDaysRemaining } from '../../utils/tiers';
 import './portal-subscription.css';
 
 function tierClass(name) {
@@ -34,7 +35,7 @@ function formatDate(iso) {
 }
 
 export default function PortalSubscription() {
-  const { getIdToken, userTier, refreshTier } = useAuth();
+  const { getIdToken, userTier, trialActive, trialEndsAt, refreshTier } = useAuth();
   const { tiers, loading: tiersLoading } = useTiers();
   const [subscription, setSubscription] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -309,6 +310,39 @@ export default function PortalSubscription() {
           </div>
         )}
       </div>
+
+      {/* Trial Info */}
+      {trialActive && (() => {
+        const daysLeft = trialDaysRemaining({ trialEndsAt });
+        const endDate = trialEndsAt
+          ? new Date(trialEndsAt).toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })
+          : '';
+        const isUrgent = daysLeft <= 2;
+        return (
+          <div className={`portal-card sub-trial-card${isUrgent ? ' sub-trial-urgent' : ''}`}>
+            <div className="sub-trial-header">
+              <span style={{ fontSize: '1.4rem' }}>{isUrgent ? '\u23F3' : '\u2B50'}</span>
+              <div>
+                <h3 style={{ margin: 0 }}>
+                  Free Trial {' \u2014 '}
+                  {daysLeft === 0 ? 'Last day!' : daysLeft === 1 ? '1 day remaining' : `${daysLeft} days remaining`}
+                </h3>
+                <p style={{ margin: '4px 0 0', fontSize: '.9rem', color: 'var(--rock)' }}>
+                  You have full access to all Iron Dassie features until {endDate}.
+                  {userTier === 'Pup'
+                    ? ' Subscribe to a plan below to keep access after your trial ends.'
+                    : ` You're subscribed to ${userTier}, but your trial gives you Iron Dassie access until it expires.`}
+                </p>
+              </div>
+            </div>
+            {userTier === 'Pup' && (
+              <div style={{ marginTop: 12, padding: '10px 14px', background: 'var(--paper)', borderRadius: 'calc(var(--radius) - 4px)', fontSize: '.88rem', color: 'var(--earth)' }}>
+                <strong>When your trial ends:</strong> You'll revert to the free Pup plan and lose access to AI Routines, Nutrition Plans, AI Coach, Benchmarks, and Progress Tracking.
+              </div>
+            )}
+          </div>
+        );
+      })()}
 
       {/* Available Plans */}
       <div className="portal-card">

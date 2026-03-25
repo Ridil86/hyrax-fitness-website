@@ -20,3 +20,24 @@ export function hasTierAccess(userTier, requiredTier) {
 export function getRequiredTierInfo(requiredTier) {
   return TIERS.find((t) => t.value === requiredTier) || TIERS[0];
 }
+
+const TRIAL_TIER = 'Iron Dassie';
+
+/** Check if user's free trial is still active */
+export function isTrialActive(profile) {
+  if (!profile?.trialEndsAt) return false;
+  return new Date(profile.trialEndsAt).getTime() > Date.now();
+}
+
+/** Get effective tier considering active trial. During trial, always Iron Dassie. */
+export function getEffectiveTier(profile) {
+  if (isTrialActive(profile)) return TRIAL_TIER;
+  return profile?.tier || 'Pup';
+}
+
+/** Get remaining trial days (0 if expired or no trial) */
+export function trialDaysRemaining(profile) {
+  if (!profile?.trialEndsAt) return 0;
+  const ms = new Date(profile.trialEndsAt).getTime() - Date.now();
+  return Math.max(0, Math.ceil(ms / (24 * 60 * 60 * 1000)));
+}

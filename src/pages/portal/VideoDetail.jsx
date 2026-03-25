@@ -19,7 +19,7 @@ const CATEGORY_LABELS = {
 
 export default function VideoDetail() {
   const { id } = useParams();
-  const { getIdToken, userTier, isAdmin } = useAuth();
+  const { getIdToken, effectiveTier, isAdmin } = useAuth();
   const [video, setVideo] = useState(null);
   const [related, setRelated] = useState([]);
   const [exerciseData, setExerciseData] = useState({});
@@ -128,7 +128,7 @@ export default function VideoDetail() {
   }, [video, handlePlay, handleTimeUpdate, handleEnded]);
 
   // HLS.js adaptive streaming setup
-  const locked = !isAdmin && !hasTierAccess(userTier, video?.requiredTier);
+  const locked = !isAdmin && !hasTierAccess(effectiveTier, video?.requiredTier);
   useEffect(() => {
     if (locked || !video) return;
 
@@ -451,7 +451,7 @@ export default function VideoDetail() {
                 <h3>Related Videos</h3>
                 <div className="video-related-grid">
                   {related.map((rv) => {
-                    const rvLocked = !isAdmin && !hasTierAccess(userTier, rv.requiredTier);
+                    const rvLocked = !isAdmin && !hasTierAccess(effectiveTier, rv.requiredTier);
                     return (
                       <Link
                         key={rv.id}

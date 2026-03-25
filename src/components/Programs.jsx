@@ -59,8 +59,11 @@ function CellIcon({ value }) {
 }
 
 /** Returns the CTA element for a tier card or comparison footer */
-function TierCta({ tierLevel, tierId, isPaid, isAuthenticated, userTierLevel }) {
+function TierCta({ tierLevel, tierId, isPaid, isAuthenticated, userTierLevel, trialActive }) {
   if (isAuthenticated) {
+    if (trialActive && tierLevel === userTierLevel) {
+      return <span className="tier-trial-label">Free Trial Active</span>;
+    }
     if (tierLevel === userTierLevel) {
       return <span className="tier-current-label">Current Subscription</span>;
     }
@@ -92,7 +95,7 @@ export default function Programs() {
   const { ref: chartRef, inView: chartInView } = useInView({ triggerOnce: true, threshold: 0.05 });
   const { data } = useContent('programs');
   const { tiers: apiTiers, comparisonFeatures: apiComparison } = useTiers();
-  const { isAuthenticated, userTier } = useAuth();
+  const { isAuthenticated, userTier, trialActive } = useAuth();
   const d = data || {};
 
   // Merge API tier data with display metadata; fall back to content/hardcoded tiers
@@ -180,11 +183,11 @@ export default function Programs() {
                 <div className="actions">
                   <TierCta
                     tierLevel={tier.tierLevel}
-
                     tierId={tier.id}
                     isPaid={tier.isPaid}
                     isAuthenticated={isAuthenticated}
                     userTierLevel={userTierLevel}
+                    trialActive={trialActive}
                   />
                 </div>
               </div>
@@ -232,11 +235,11 @@ export default function Programs() {
                     <td key={t.id || i} className={`compare-plan-col ${i === 1 ? 'featured' : ''}`}>
                       <TierCta
                         tierLevel={t.level}
-
                         tierId={t.id}
                         isPaid={t.isPaid}
                         isAuthenticated={isAuthenticated}
                         userTierLevel={userTierLevel}
+                        trialActive={trialActive}
                       />
                     </td>
                   ))}

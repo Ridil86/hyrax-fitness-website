@@ -3,7 +3,7 @@ import { Link } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import { fetchLogStats, fetchUserLogs, fetchExerciseHistory, fetchCalendarData } from '../../api/completionLog';
 import { fetchProfile } from '../../api/profile';
-import { hasTierAccess } from '../../utils/tiers';
+import { hasTierAccess, getEffectiveTier } from '../../utils/tiers';
 import { Line, Bar } from 'react-chartjs-2';
 import { Chart as ChartJS, CategoryScale, LinearScale, PointElement, LineElement, BarElement, Title, Tooltip, Legend, Filler } from 'chart.js';
 import './progress-dashboard.css';
@@ -116,7 +116,7 @@ export default function ProgressDashboard() {
     return () => { cancelled = true; };
   }, [getIdToken]);
 
-  const locked = !profileLoading && !hasTierAccess(profile?.tier, 'Rock Runner');
+  const locked = !profileLoading && !hasTierAccess(getEffectiveTier(profile), 'Rock Runner');
 
   // Load stats + all logs on mount
   const loadInitialData = useCallback(async () => {

@@ -8,6 +8,7 @@ import { DynamoDBClient } from '@aws-sdk/client-dynamodb';
 import { DynamoDBDocumentClient, PutCommand } from '@aws-sdk/lib-dynamodb';
 import type { APIGatewayProxyEvent, APIGatewayProxyResult } from 'aws-lambda';
 import { created, badRequest, serverError } from '../utils/response';
+import { buildTrialFields } from '../utils/trial';
 import { randomUUID } from 'crypto';
 
 const cognito = new CognitoIdentityProviderClient({});
@@ -119,6 +120,7 @@ export async function createAccount(
     );
 
     const now = new Date().toISOString();
+    const trialFields = buildTrialFields();
 
     // Write user profile to DynamoDB
     await ddb.send(
@@ -131,6 +133,7 @@ export async function createAccount(
           givenName,
           familyName,
           tier: 'Pup',
+          ...trialFields,
           termsAcceptedAt: now,
           privacyAcceptedAt: now,
           createdAt: now,
