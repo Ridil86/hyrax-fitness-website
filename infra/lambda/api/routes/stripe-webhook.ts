@@ -15,7 +15,7 @@ import {
   subscriptionChangeEmail,
   subscriptionCancelledEmail,
   paymentFailedEmail,
-} from '../../../custom-message/templates';
+} from '../../custom-message/templates';
 
 const client = DynamoDBDocumentClient.from(new DynamoDBClient({}));
 const TABLE_NAME = process.env.TABLE_NAME!;

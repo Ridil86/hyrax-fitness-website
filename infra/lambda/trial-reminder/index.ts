@@ -14,7 +14,7 @@ import { SESClient, SendEmailCommand } from '@aws-sdk/client-ses';
 import {
   trialExpiringEmail,
   trialExpiredEmail,
-} from '../../custom-message/templates';
+} from '../custom-message/templates';
 
 const ddb = DynamoDBDocumentClient.from(new DynamoDBClient({}));
 const ses = new SESClient({});

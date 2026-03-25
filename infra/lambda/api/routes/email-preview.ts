@@ -21,7 +21,7 @@ import {
   supportReplyEmail,
   trialExpiringEmail,
   trialExpiredEmail,
-} from '../../../custom-message/templates';
+} from '../../custom-message/templates';
 
 const SITE_URL = 'https://hyraxfitness.com';
 

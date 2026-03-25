@@ -11,7 +11,7 @@ import { success, created, badRequest, notFound, serverError } from '../utils/re
 import { isAdmin, extractClaims } from '../utils/auth';
 import { randomUUID } from 'crypto';
 import { sendNotification } from '../utils/email';
-import { supportReplyEmail } from '../../../custom-message/templates';
+import { supportReplyEmail } from '../../custom-message/templates';
 
 const client = DynamoDBDocumentClient.from(new DynamoDBClient({}));
 const TABLE_NAME = process.env.TABLE_NAME!;
