@@ -15,7 +15,7 @@ export default function CookiePolicy() {
   return (
     <div className="legal-page">
       <h1 className="legal-heading">Cookie Policy</h1>
-      <p className="legal-last-updated">Last updated: March 16, 2026</p>
+      <p className="legal-last-updated">Last updated: March 25, 2026</p>
 
       <nav className="legal-toc">
         <h3>Table of Contents</h3>
@@ -125,10 +125,26 @@ export default function CookiePolicy() {
       <section className="legal-section" id="cookie-5">
         <h2 className="legal-subheading">5. Third-Party Cookies</h2>
         <p>
-          Currently, Hyrax Fitness does not use any third-party cookies. If we
-          introduce analytics or advertising cookies in the future, this policy will be
-          updated accordingly, and you will be informed through the cookie consent
-          banner.
+          The following third-party services may set cookies or use browser storage
+          when you interact with specific features of the platform:
+        </p>
+        <ul>
+          <li>
+            <strong>Stripe:</strong> When payment forms are loaded during the
+            subscription checkout process, Stripe may set cookies or use browser
+            storage for fraud detection and payment processing security. These are
+            essential for completing transactions securely.
+          </li>
+          <li>
+            <strong>Google Sign-In:</strong> If you use Google to sign in to your
+            account, Google may set cookies during the OAuth authentication flow.
+            These are necessary for the sign-in process to function.
+          </li>
+        </ul>
+        <p>
+          We do not use any third-party analytics or advertising cookies. If we
+          introduce such cookies in the future, this policy will be updated
+          accordingly, and you will be informed through the cookie consent banner.
         </p>
       </section>
 
