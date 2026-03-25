@@ -64,7 +64,7 @@ const platformFeatures = [
     title: 'Digital Training Coach',
     tier: 'Free Trial',
     img: '/img/features-coach.jpg',
-    desc: 'Ask about form, recovery, or nutrition. Your coach knows your full history.',
+    desc: 'Ask about form, recovery, or nutrition. Your coach knows your full history and is there for you 24/7.',
   },
 ];
 
