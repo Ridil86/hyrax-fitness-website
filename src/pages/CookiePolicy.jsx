@@ -15,7 +15,7 @@ export default function CookiePolicy() {
   return (
     <div className="legal-page">
       <h1 className="legal-heading">Cookie Policy</h1>
-      <p className="legal-last-updated">Last updated: March 25, 2026</p>
+      <p className="legal-last-updated">Last updated: March 26, 2026</p>
 
       <nav className="legal-toc">
         <h3>Table of Contents</h3>
@@ -75,6 +75,10 @@ export default function CookiePolicy() {
             <strong>Authentication tokens:</strong> Managed by AWS Cognito to maintain
             your signed-in session. These are stored in your browser's localStorage
             and are required for account access.
+          </li>
+          <li>
+            <strong>Shopping cart:</strong> Your merchandise shopping cart contents are
+            stored in localStorage to persist your selections as you browse the store.
           </li>
         </ul>
 
@@ -139,6 +143,12 @@ export default function CookiePolicy() {
             <strong>Google Sign-In:</strong> If you use Google to sign in to your
             account, Google may set cookies during the OAuth authentication flow.
             These are necessary for the sign-in process to function.
+          </li>
+          <li>
+            <strong>Fourthwall:</strong> When you proceed to checkout for merchandise
+            purchases, you are redirected to Fourthwall's hosted checkout page, where
+            Fourthwall may set cookies on their domain for payment processing and
+            fraud prevention.
           </li>
         </ul>
         <p>

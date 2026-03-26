@@ -21,7 +21,7 @@ export default function PrivacyPolicy() {
   return (
     <div className="legal-page">
       <h1 className="legal-heading">Privacy Policy</h1>
-      <p className="legal-last-updated">Last updated: March 25, 2026</p>
+      <p className="legal-last-updated">Last updated: March 26, 2026</p>
 
       <nav className="legal-toc">
         <h3>Table of Contents</h3>
@@ -95,6 +95,12 @@ export default function PrivacyPolicy() {
             are stored securely and delivered through a content delivery network.
           </li>
           <li>
+            <strong>Merchandise order data:</strong> When you purchase merchandise
+            through our store, we receive order confirmation details from Fourthwall
+            including your email address, items ordered, and order status, for the
+            purpose of sending you order and shipping notification emails.
+          </li>
+          <li>
             <strong>Usage data:</strong> Information about how you interact with our
             platform, including pages visited, features used, and the date and time of
             your visits.
@@ -122,6 +128,7 @@ export default function PrivacyPolicy() {
           <li>To track your fitness progress and provide benchmark comparisons</li>
           <li>To communicate with you about your account, programs, and updates</li>
           <li>To send transactional email notifications about your account, subscription status, payment issues, support tickets, and trial reminders</li>
+          <li>To send order confirmation and shipping notification emails when you purchase merchandise</li>
           <li>To process payments and manage subscriptions</li>
           <li>To moderate community content and maintain a safe forum environment</li>
           <li>To comply with legal obligations and maintain compliance records, including terms and privacy acceptance logs</li>
@@ -174,12 +181,21 @@ export default function PrivacyPolicy() {
           <li>Encryption at rest for all stored data</li>
           <li>Encryption in transit using HTTPS/TLS for all data transfers</li>
           <li>Role-based access controls limiting data access to authorized personnel only</li>
+          <li>API request rate limiting to prevent abuse</li>
+          <li>Content sanitization to protect against cross-site scripting</li>
+          <li>Strict cross-origin request policies (CORS)</li>
+          <li>Security headers on all content delivery (HSTS, X-Frame-Options, X-Content-Type-Options)</li>
           <li>Regular security reviews and monitoring</li>
         </ul>
         <p>
           Uploaded media is stored in encrypted cloud storage and delivered through a
           secure content delivery network (CloudFront). Video content is processed
           through a transcoding pipeline to ensure optimal playback quality.
+        </p>
+        <p>
+          IP addresses may be temporarily stored for rate limiting and abuse
+          prevention purposes. These records are automatically deleted after a short
+          retention period.
         </p>
         <p>
           While we strive to protect your personal data, no method of electronic
@@ -234,6 +250,15 @@ export default function PrivacyPolicy() {
             OAuth protocol. See{' '}
             <a href="https://policies.google.com/privacy" target="_blank" rel="noopener noreferrer">
               Google's Privacy Policy
+            </a>.
+          </li>
+          <li>
+            <strong>Fourthwall:</strong> Powers our merchandise store. When you
+            purchase merchandise, you are redirected to Fourthwall's hosted checkout
+            where they process your payment and shipping details directly. Hyrax
+            receives order status updates via webhooks for email notifications. See{' '}
+            <a href="https://fourthwall.com/pages/privacy-policy" target="_blank" rel="noopener noreferrer">
+              Fourthwall's Privacy Policy
             </a>.
           </li>
           <li>
@@ -300,6 +325,10 @@ export default function PrivacyPolicy() {
           <li>
             <strong>Trial reminders:</strong> Notifications about your free trial
             status and expiration.
+          </li>
+          <li>
+            <strong>Merchandise emails:</strong> Order confirmations and shipping
+            notifications when you purchase merchandise through our store.
           </li>
         </ul>
         <p>

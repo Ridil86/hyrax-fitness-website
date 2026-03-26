@@ -8,6 +8,7 @@ const sections = [
   'User Responsibilities',
   'Subscription Plans and Billing',
   'Free Trial',
+  'Merchandise Purchases',
   'Personalized Content and Digital Services',
   'Community Guidelines',
   'Email Communications',
@@ -24,7 +25,7 @@ export default function TermsOfUse() {
   return (
     <div className="legal-page">
       <h1 className="legal-heading">Terms of Use</h1>
-      <p className="legal-last-updated">Last updated: March 25, 2026</p>
+      <p className="legal-last-updated">Last updated: March 26, 2026</p>
 
       <nav className="legal-toc">
         <h3>Table of Contents</h3>
@@ -62,6 +63,7 @@ export default function TermsOfUse() {
           <li>Meal logging and nutritional tracking tools</li>
           <li>Online training content including exercise descriptions, workout formats, videos, and coaching guidance</li>
           <li>Account management, progress tracking, and benchmark features</li>
+          <li>A branded merchandise store where you can browse and purchase Hyrax Fitness gear and apparel</li>
           <li>Community forum and support ticket system</li>
           <li>Event information and resources</li>
         </ul>
@@ -122,7 +124,9 @@ export default function TermsOfUse() {
           <li>
             <strong>Acceptable use:</strong> You agree not to misuse the platform,
             share your account credentials, reverse-engineer our systems, or use the
-            platform for any unlawful purpose.
+            platform for any unlawful purpose. You agree not to use automated tools,
+            bots, or scripts to access the platform in a manner that exceeds
+            reasonable use. Excessive or abusive requests may be throttled or blocked.
           </li>
         </ul>
       </section>
@@ -170,7 +174,42 @@ export default function TermsOfUse() {
       </section>
 
       <section className="legal-section" id="terms-7">
-        <h2 className="legal-subheading">7. Personalized Content and Digital Services</h2>
+        <h2 className="legal-subheading">7. Merchandise Purchases</h2>
+        <p>
+          Hyrax Fitness offers branded merchandise through our Merch page. Merchandise
+          orders are fulfilled by Fourthwall, a third-party commerce platform.
+        </p>
+        <ul>
+          <li>
+            Payment for merchandise is processed directly by Fourthwall during
+            checkout. Hyrax Fitness does not handle or store your merch payment
+            details.
+          </li>
+          <li>
+            Merchandise orders are subject to Fourthwall's terms of service and
+            applicable policies.
+          </li>
+          <li>
+            Returns, exchanges, and refunds for merchandise are handled in accordance
+            with Fourthwall's return policy.
+          </li>
+          <li>
+            Hyrax Fitness sends order confirmation and shipping notification emails
+            based on order data received from Fourthwall.
+          </li>
+          <li>
+            Product availability, pricing, and shipping times are subject to change
+            without prior notice.
+          </li>
+        </ul>
+        <p>
+          Merchandise purchases are separate from subscription billing. Your
+          subscription tier and merch purchases are managed independently.
+        </p>
+      </section>
+
+      <section className="legal-section" id="terms-8">
+        <h2 className="legal-subheading">8. Personalized Content and Digital Services</h2>
         <p>
           Hyrax Fitness uses automated systems to generate personalized workout
           routines, nutrition plans, and coaching responses based on the information
@@ -207,8 +246,8 @@ export default function TermsOfUse() {
         </ul>
       </section>
 
-      <section className="legal-section" id="terms-8">
-        <h2 className="legal-subheading">8. Community Guidelines</h2>
+      <section className="legal-section" id="terms-9">
+        <h2 className="legal-subheading">9. Community Guidelines</h2>
         <p>
           Hyrax Fitness provides a community forum where users can share experiences,
           ask questions, and engage with other members. By posting content to the
@@ -223,8 +262,8 @@ export default function TermsOfUse() {
         </ul>
       </section>
 
-      <section className="legal-section" id="terms-9">
-        <h2 className="legal-subheading">9. Email Communications</h2>
+      <section className="legal-section" id="terms-10">
+        <h2 className="legal-subheading">10. Email Communications</h2>
         <p>
           By creating an account, you agree to receive the following types of email
           communications from Hyrax Fitness:
@@ -247,8 +286,8 @@ export default function TermsOfUse() {
         </p>
       </section>
 
-      <section className="legal-section" id="terms-10">
-        <h2 className="legal-subheading">10. Intellectual Property</h2>
+      <section className="legal-section" id="terms-11">
+        <h2 className="legal-subheading">11. Intellectual Property</h2>
         <p>
           All content on the Hyrax Fitness platform, including but not limited to text,
           graphics, logos, images, workout programs, training methodologies, and
@@ -263,8 +302,8 @@ export default function TermsOfUse() {
         </p>
       </section>
 
-      <section className="legal-section" id="terms-11">
-        <h2 className="legal-subheading">11. Limitation of Liability</h2>
+      <section className="legal-section" id="terms-12">
+        <h2 className="legal-subheading">12. Limitation of Liability</h2>
         <p>
           To the fullest extent permitted by law, Hyrax Fitness, its officers,
           directors, employees, and agents shall not be liable for any indirect,
@@ -280,8 +319,8 @@ export default function TermsOfUse() {
         </p>
       </section>
 
-      <section className="legal-section" id="terms-12">
-        <h2 className="legal-subheading">12. Disclaimer of Warranties</h2>
+      <section className="legal-section" id="terms-13">
+        <h2 className="legal-subheading">13. Disclaimer of Warranties</h2>
         <p>
           Our services are provided "as is" and "as available" without any warranties
           of any kind, either express or implied, including but not limited to implied
@@ -296,8 +335,8 @@ export default function TermsOfUse() {
         </p>
       </section>
 
-      <section className="legal-section" id="terms-13">
-        <h2 className="legal-subheading">13. Termination</h2>
+      <section className="legal-section" id="terms-14">
+        <h2 className="legal-subheading">14. Termination</h2>
         <p>
           We may terminate or suspend your account and access to our services at our
           sole discretion, without prior notice, for conduct that we determine violates
@@ -310,8 +349,8 @@ export default function TermsOfUse() {
         </p>
       </section>
 
-      <section className="legal-section" id="terms-14">
-        <h2 className="legal-subheading">14. Governing Law</h2>
+      <section className="legal-section" id="terms-15">
+        <h2 className="legal-subheading">15. Governing Law</h2>
         <p>
           These Terms of Use shall be governed by and construed in accordance with the
           laws of the jurisdiction in which Hyrax Fitness operates, without regard to
@@ -324,8 +363,8 @@ export default function TermsOfUse() {
         </p>
       </section>
 
-      <section className="legal-section" id="terms-15">
-        <h2 className="legal-subheading">15. Changes to These Terms</h2>
+      <section className="legal-section" id="terms-16">
+        <h2 className="legal-subheading">16. Changes to These Terms</h2>
         <p>
           We reserve the right to update or modify these Terms of Use at any time. We
           will notify users of material changes by posting the updated terms on this
@@ -334,8 +373,8 @@ export default function TermsOfUse() {
         </p>
       </section>
 
-      <section className="legal-section" id="terms-16">
-        <h2 className="legal-subheading">16. Contact Information</h2>
+      <section className="legal-section" id="terms-17">
+        <h2 className="legal-subheading">17. Contact Information</h2>
         <p>
           If you have any questions about these Terms of Use, please contact us at:
         </p>
