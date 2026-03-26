@@ -1,12 +1,12 @@
 import { useEffect } from 'react';
 import { Link } from 'react-router-dom';
-import { useCart } from '../hooks/useCart';
+import { useCart } from '../context/CartContext';
 import './cart-drawer.css';
 
 function formatPrice(unitPrice) {
   if (!unitPrice) return '';
   const { value, currency } = unitPrice;
-  return new Intl.NumberFormat('en-US', { style: 'currency', currency: currency || 'USD' }).format(value / 100);
+  return new Intl.NumberFormat('en-US', { style: 'currency', currency: currency || 'USD' }).format(value);
 }
 
 export default function CartDrawer({ open, onClose }) {
@@ -40,7 +40,7 @@ export default function CartDrawer({ open, onClose }) {
   const currency = items[0]?.variant?.unitPrice?.currency || 'USD';
 
   const formatSubtotal = () =>
-    new Intl.NumberFormat('en-US', { style: 'currency', currency }).format(subtotal / 100);
+    new Intl.NumberFormat('en-US', { style: 'currency', currency }).format(subtotal);
 
   return (
     <>

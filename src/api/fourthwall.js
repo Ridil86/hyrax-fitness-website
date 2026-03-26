@@ -41,8 +41,10 @@ export function fetchProduct(slug) {
   return fwGet(`/products/${encodeURIComponent(slug)}`, { currency: 'USD' });
 }
 
-export function createCart() {
-  return fwPost('/carts', { currency: 'USD' });
+export function createCartWithItem(variantId, quantity = 1) {
+  return fwPost('/carts', {
+    items: [{ variantId, quantity }],
+  }, { currency: 'USD' });
 }
 
 export function addToCart(cartId, variantId, quantity = 1) {

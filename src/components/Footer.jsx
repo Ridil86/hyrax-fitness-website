@@ -7,12 +7,11 @@ const footerLinks = {
     { to: '/about', label: 'About' },
     { to: '/events', label: 'Events' },
     { to: '/programs', label: 'Programs' },
-    { to: '/gallery', label: 'Gallery' },
-    { to: '/faq', label: 'FAQ' },
+    { to: '/merch', label: 'Merch' },
   ],
   Resources: [
     { to: '/get-started', label: 'Get Started' },
-    { to: '/#testimonials', label: 'Testimonials' },
+    { to: '/faq', label: 'FAQ' },
   ],
   Legal: [
     { to: '/terms', label: 'Terms of Use' },

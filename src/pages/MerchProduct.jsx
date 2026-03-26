@@ -1,13 +1,13 @@
 import { useState, useEffect, useMemo } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { fetchProduct } from '../api/fourthwall';
-import { useCart } from '../hooks/useCart';
+import { useCart } from '../context/CartContext';
 import './merch-product.css';
 
 function formatPrice(unitPrice) {
   if (!unitPrice) return '';
   const { value, currency } = unitPrice;
-  return new Intl.NumberFormat('en-US', { style: 'currency', currency: currency || 'USD' }).format(value / 100);
+  return new Intl.NumberFormat('en-US', { style: 'currency', currency: currency || 'USD' }).format(value);
 }
 
 export default function MerchProduct() {

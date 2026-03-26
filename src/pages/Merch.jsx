@@ -7,7 +7,7 @@ import './merch.css';
 function formatPrice(unitPrice) {
   if (!unitPrice) return '';
   const { value, currency } = unitPrice;
-  return new Intl.NumberFormat('en-US', { style: 'currency', currency: currency || 'USD' }).format(value / 100);
+  return new Intl.NumberFormat('en-US', { style: 'currency', currency: currency || 'USD' }).format(value);
 }
 
 function SkeletonCard() {

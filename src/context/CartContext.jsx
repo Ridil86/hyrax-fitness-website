@@ -1,5 +1,5 @@
 import { createContext, useContext, useState, useEffect, useCallback } from 'react';
-import { createCart, addToCart as apiAddToCart, getCart, updateCartQuantity, getCheckoutUrl } from '../api/fourthwall';
+import { createCartWithItem, addToCart as apiAddToCart, getCart, updateCartQuantity, getCheckoutUrl } from '../api/fourthwall';
 
 const CART_ID_KEY = 'hyrax_fw_cart_id';
 
@@ -29,25 +29,25 @@ export function CartProvider({ children }) {
     if (cartId) refreshCart(cartId);
   }, [cartId, refreshCart]);
 
-  const ensureCart = useCallback(async () => {
-    if (cartId) return cartId;
-    const data = await createCart();
-    const newId = data.id;
-    localStorage.setItem(CART_ID_KEY, newId);
-    setCartId(newId);
-    return newId;
-  }, [cartId]);
-
   const addItem = useCallback(async (variantId, quantity = 1) => {
     setLoading(true);
     try {
-      const id = await ensureCart();
-      const data = await apiAddToCart(id, variantId, quantity);
+      let data;
+      if (cartId) {
+        // Add to existing cart
+        data = await apiAddToCart(cartId, variantId, quantity);
+      } else {
+        // Create new cart with this item
+        data = await createCartWithItem(variantId, quantity);
+        const newId = data.id;
+        localStorage.setItem(CART_ID_KEY, newId);
+        setCartId(newId);
+      }
       setCart(data);
     } finally {
       setLoading(false);
     }
-  }, [ensureCart]);
+  }, [cartId]);
 
   const updateQuantity = useCallback(async (variantId, quantity) => {
     if (!cartId) return;
@@ -91,6 +91,7 @@ export function CartProvider({ children }) {
   );
 }
 
+// eslint-disable-next-line react-refresh/only-export-components
 export function useCart() {
   const ctx = useContext(CartContext);
   if (!ctx) throw new Error('useCart must be used within CartProvider');
