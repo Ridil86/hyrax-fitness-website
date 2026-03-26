@@ -1,7 +1,8 @@
-import { useState, useEffect, useMemo } from 'react';
+import { useState, useEffect, useMemo, useCallback } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { fetchProduct } from '../api/fourthwall';
 import { useCart } from '../context/CartContext';
+import CartDrawer from '../components/CartDrawer';
 import './merch-product.css';
 
 function formatPrice(unitPrice) {
@@ -12,7 +13,7 @@ function formatPrice(unitPrice) {
 
 export default function MerchProduct() {
   const { slug } = useParams();
-  const { addItem, loading: cartLoading } = useCart();
+  const { addItem, loading: cartLoading, checkout } = useCart();
 
   const [product, setProduct] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -22,7 +23,9 @@ export default function MerchProduct() {
   const [selectedColor, setSelectedColor] = useState(null);
   const [quantity, setQuantity] = useState(1);
   const [added, setAdded] = useState(false);
+  const [cartDrawerOpen, setCartDrawerOpen] = useState(false);
   const [openSections, setOpenSections] = useState({});
+  const closeCartDrawer = useCallback(() => setCartDrawerOpen(false), []);
 
   useEffect(() => {
     let cancelled = false;
@@ -86,7 +89,6 @@ export default function MerchProduct() {
     try {
       await addItem(selectedVariant.id, quantity);
       setAdded(true);
-      setTimeout(() => setAdded(false), 2500);
     } catch {
       // Could show error toast
     }
@@ -262,7 +264,23 @@ export default function MerchProduct() {
           )}
 
           {added && (
-            <div className="merch-added-toast">Added to cart!</div>
+            <div className="merch-post-add">
+              <p className="merch-added-msg">Added to cart!</p>
+              <div className="merch-post-add-actions">
+                <button
+                  className="merch-view-cart-btn"
+                  onClick={() => setCartDrawerOpen(true)}
+                >
+                  View Cart
+                </button>
+                <button
+                  className="merch-checkout-btn"
+                  onClick={checkout}
+                >
+                  Checkout
+                </button>
+              </div>
+            </div>
           )}
 
           {/* Additional info accordion */}
@@ -291,6 +309,7 @@ export default function MerchProduct() {
           )}
         </div>
       </div>
+      <CartDrawer open={cartDrawerOpen} onClose={closeCartDrawer} />
     </div>
   );
 }

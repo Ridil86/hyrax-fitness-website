@@ -18,6 +18,7 @@ import { listVideos, getVideo, createVideo, updateVideo, deleteVideo } from './r
 import { listTiers, updateTier, updateComparisonFeatures } from './routes/tiers';
 import { getStripeConfig, getSubscription, createCheckoutSession, createPortalSession, cancelSubscription } from './routes/stripe';
 import { handleWebhook } from './routes/stripe-webhook';
+import { handleFourthwallWebhook } from './routes/fourthwall-webhook';
 import { listSubscriptions, listPayments, getUserPayments, getBillingStats } from './routes/billing';
 import {
   listThreads, getThread, createThread, updateThread, deleteThread,
@@ -284,6 +285,11 @@ export const handler = async (
     if (tierMatch) {
       event.pathParameters = { ...event.pathParameters, id: tierMatch[1] };
       if (method === 'PUT') return updateTier(event);
+    }
+
+    // ── Fourthwall Webhook (public, HMAC-verified in handler) ──
+    if (path === '/api/fourthwall-webhook' && method === 'POST') {
+      return handleFourthwallWebhook(event);
     }
 
     // ── Stripe Routes ──

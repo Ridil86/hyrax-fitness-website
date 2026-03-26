@@ -87,6 +87,7 @@ export class BackendStack extends cdk.Stack {
         STRIPE_SECRET_KEY: process.env.STRIPE_SECRET_KEY || 'sk_test_placeholder',
         STRIPE_WEBHOOK_SECRET: process.env.STRIPE_WEBHOOK_SECRET || 'whsec_placeholder',
         STRIPE_PUBLISHABLE_KEY: process.env.STRIPE_PUBLISHABLE_KEY || 'pk_test_placeholder',
+        FOURTHWALL_WEBHOOK_SECRET: process.env.FOURTHWALL_WEBHOOK_SECRET || '',
         SELF_FUNCTION_NAME: 'hyrax-api',
         SES_FROM_EMAIL: 'noreply@hyraxfitness.com',
       },
@@ -841,6 +842,10 @@ export class BackendStack extends cdk.Stack {
     // Webhook (public - NO authorizer for Stripe signature verification)
     const stripeWebhook = stripeResource.addResource('webhook');
     stripeWebhook.addMethod('POST', lambdaIntegration); // Public
+
+    // ── Fourthwall Webhook (public - HMAC verified in Lambda) ──
+    const fourthwallWebhook = apiResource.addResource('fourthwall-webhook');
+    fourthwallWebhook.addMethod('POST', lambdaIntegration); // Public
 
     // Checkout session (authenticated)
     const stripeCheckout = stripeResource.addResource('create-checkout-session');

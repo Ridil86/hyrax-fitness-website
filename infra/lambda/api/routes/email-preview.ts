@@ -21,6 +21,8 @@ import {
   supportReplyEmail,
   trialExpiringEmail,
   trialExpiredEmail,
+  merchOrderConfirmationEmail,
+  merchShippingNotificationEmail,
 } from '../../custom-message/templates';
 
 const SITE_URL = 'https://hyraxfitness.com';
@@ -99,6 +101,23 @@ function getTemplates(): Record<string, TemplateEntry> {
     'trial-expired': {
       subject: 'Your free trial has ended',
       render: () => trialExpiredEmail('Demo User'),
+    },
+    'merch-order-confirmation': {
+      subject: 'Your Hyrax Fitness order is confirmed',
+      render: () =>
+        merchOrderConfirmationEmail('HF-12345', [
+          { name: 'Colony Circuit Tee', variant: 'Black / L', quantity: 1, price: '$35.00' },
+          { name: 'Hyrax Logo Cap', variant: 'Sand', quantity: 2, price: '$25.00' },
+        ], '$85.00'),
+    },
+    'merch-shipping-notification': {
+      subject: 'Your Hyrax Fitness order has shipped',
+      render: () =>
+        merchShippingNotificationEmail('HF-12345', '1Z999AA10123456784',
+          'https://www.ups.com/track?tracknum=1Z999AA10123456784', [
+          { name: 'Colony Circuit Tee', variant: 'Black / L', quantity: 1 },
+          { name: 'Hyrax Logo Cap', variant: 'Sand', quantity: 2 },
+        ]),
     },
   };
 }

@@ -16,6 +16,8 @@ const EMAIL_TYPES = [
   { value: 'support-reply', label: 'Support Ticket Reply' },
   { value: 'trial-expiring', label: 'Trial Expiring Soon' },
   { value: 'trial-expired', label: 'Trial Expired' },
+  { value: 'merch-order-confirmation', label: 'Merch Order Confirmation' },
+  { value: 'merch-shipping-notification', label: 'Merch Shipping Notification' },
 ];
 
 export default function EmailPreview() {

@@ -304,6 +304,92 @@ export function trialExpiringEmail(
 
 // ── Template: Trial Expired ──
 
+// ── Template: Merch Order Confirmation ──
+
+export interface MerchItem {
+  name: string;
+  variant?: string;
+  quantity: number;
+  price?: string;
+}
+
+export function merchOrderConfirmationEmail(
+  orderNumber: string,
+  items: MerchItem[],
+  totalAmount: string
+): string {
+  const itemRows = items.map(item => `
+    <tr>
+      <td style="padding:10px 0;border-bottom:1px solid ${SAND};color:${INK};font-size:14px;">
+        <strong>${item.name}</strong>${item.variant ? `<br><span style="font-size:12px;color:${EARTH};">${item.variant}</span>` : ''}
+      </td>
+      <td style="padding:10px 0;border-bottom:1px solid ${SAND};text-align:center;color:${INK};font-size:14px;">${item.quantity}</td>
+      <td style="padding:10px 0;border-bottom:1px solid ${SAND};text-align:right;color:${INK};font-size:14px;font-weight:600;">${item.price || ''}</td>
+    </tr>
+  `).join('');
+
+  return wrap(`
+    <h2 style="margin:0 0 8px;font-size:20px;color:${INK};">Order confirmed!</h2>
+    <p style="margin:0 0 16px;">Thanks for your purchase! Your order <strong>#${orderNumber}</strong> has been received and is being prepared.</p>
+
+    <div style="margin:20px 0;padding:16px 20px;background:${PAPER};border-radius:12px;border:1px solid ${SAND};">
+      <table role="presentation" cellpadding="0" cellspacing="0" width="100%" style="font-size:13px;">
+        <tr>
+          <td style="padding:0 0 8px;color:${EARTH};font-weight:600;font-size:12px;text-transform:uppercase;letter-spacing:0.05em;">Item</td>
+          <td style="padding:0 0 8px;text-align:center;color:${EARTH};font-weight:600;font-size:12px;text-transform:uppercase;letter-spacing:0.05em;">Qty</td>
+          <td style="padding:0 0 8px;text-align:right;color:${EARTH};font-weight:600;font-size:12px;text-transform:uppercase;letter-spacing:0.05em;">Price</td>
+        </tr>
+        ${itemRows}
+        <tr>
+          <td colspan="2" style="padding:12px 0 0;text-align:right;font-weight:700;font-size:15px;color:${INK};">Total:</td>
+          <td style="padding:12px 0 0;text-align:right;font-weight:700;font-size:15px;color:${INK};">${totalAmount}</td>
+        </tr>
+      </table>
+    </div>
+
+    <p style="margin:0 0 16px;text-align:center;">
+      <a href="${SITE_URL}/merch" style="display:inline-block;padding:12px 28px;background:${SUNSET};color:#ffffff;text-decoration:none;border-radius:10px;font-weight:600;font-size:15px;">Continue Shopping</a>
+    </p>
+
+    <p style="margin:0;font-size:13px;color:${EARTH};">You'll receive a shipping confirmation email with tracking info once your order is on its way.</p>
+  `);
+}
+
+// ── Template: Merch Shipping Notification ──
+
+export function merchShippingNotificationEmail(
+  orderNumber: string,
+  trackingNumber: string,
+  trackingUrl: string,
+  items: MerchItem[]
+): string {
+  const itemList = items.map(item => `
+    <tr><td style="padding:4px 8px 4px 0;font-size:13px;color:${INK};">&#9670; ${item.name}${item.variant ? ` (${item.variant})` : ''}</td><td style="padding:4px 0;font-size:13px;color:${EARTH};text-align:right;">x${item.quantity}</td></tr>
+  `).join('');
+
+  return wrap(`
+    <h2 style="margin:0 0 8px;font-size:20px;color:${INK};">Your order has shipped!</h2>
+    <p style="margin:0 0 16px;">Great news! Order <strong>#${orderNumber}</strong> is on its way to you.</p>
+
+    <div style="margin:20px 0;padding:16px 20px;background:${PAPER};border-radius:12px;border:1px solid ${SAND};text-align:center;">
+      <p style="margin:0 0 4px;font-size:12px;color:${EARTH};text-transform:uppercase;letter-spacing:0.05em;">Tracking Number</p>
+      <p style="margin:0 0 16px;font-size:16px;font-weight:700;color:${INK};font-family:'Courier New',monospace;">${trackingNumber}</p>
+      <a href="${trackingUrl}" style="display:inline-block;padding:12px 28px;background:${SUNSET};color:#ffffff;text-decoration:none;border-radius:10px;font-weight:600;font-size:15px;">Track Your Order</a>
+    </div>
+
+    <div style="margin:20px 0;">
+      <p style="margin:0 0 8px;font-size:13px;font-weight:600;color:${EARTH};">Items in this shipment:</p>
+      <table role="presentation" cellpadding="0" cellspacing="0" width="100%">
+        ${itemList}
+      </table>
+    </div>
+
+    <p style="margin:0;font-size:13px;color:${EARTH};">Delivery times vary by location. If you have questions about your shipment, you can track it using the link above.</p>
+  `);
+}
+
+// ── Template: Trial Expired ──
+
 export function trialExpiredEmail(userName: string): string {
   return wrap(`
     <h2 style="margin:0 0 8px;font-size:20px;color:${INK};">Your free trial has ended</h2>
