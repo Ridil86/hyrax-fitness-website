@@ -2,6 +2,7 @@ import { lazy, Suspense, useEffect } from 'react';
 import { BrowserRouter, Routes, Route, useLocation } from 'react-router-dom';
 import { AuthProvider } from './context/AuthContext';
 import { CookieConsentProvider } from './context/CookieConsentContext';
+import { CartProvider } from './hooks/useCart';
 import Header from './components/Header';
 import Hero from './components/Hero';
 import Footer from './components/Footer';
@@ -21,6 +22,8 @@ const Gallery = lazy(() => import('./components/Gallery'));
 const FAQ = lazy(() => import('./components/FAQ'));
 const About = lazy(() => import('./pages/About'));
 const Events = lazy(() => import('./pages/Events'));
+const MerchPage = lazy(() => import('./pages/Merch'));
+const MerchProduct = lazy(() => import('./pages/MerchProduct'));
 
 // Auth pages
 const Login = lazy(() => import('./pages/Login'));
@@ -147,6 +150,7 @@ export default function App() {
   return (
     <BrowserRouter>
       <AuthProvider>
+        <CartProvider>
         <CookieConsentProvider>
         <ScrollManager />
         <Header />
@@ -158,6 +162,8 @@ export default function App() {
             <Route path="/faq" element={<LazySection><FAQ /></LazySection>} />
             <Route path="/about" element={<LazySection><About /></LazySection>} />
             <Route path="/events" element={<LazySection><Events /></LazySection>} />
+            <Route path="/merch" element={<LazySection><MerchPage /></LazySection>} />
+            <Route path="/merch/:slug" element={<LazySection><MerchProduct /></LazySection>} />
             {/* Legal routes */}
             <Route path="/terms" element={<LazySection><TermsOfUse /></LazySection>} />
             <Route path="/privacy" element={<LazySection><PrivacyPolicy /></LazySection>} />
@@ -233,6 +239,7 @@ export default function App() {
         <Footer />
         <Suspense fallback={null}><CookieConsent /></Suspense>
         </CookieConsentProvider>
+        </CartProvider>
       </AuthProvider>
     </BrowserRouter>
   );

@@ -140,4 +140,41 @@
     width: 100%;
   }
   .menuPanel.mobile .cta .btn { width: 100%; justify-content: center; }
+  .menuPanel.mobile .cart-btn { align-self: center; }
+}
+
+/* Cart button */
+.cart-btn {
+  position: relative;
+  background: none;
+  border: none;
+  cursor: pointer;
+  color: var(--ink);
+  padding: 6px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: color 0.15s;
+}
+
+.cart-btn:hover {
+  color: var(--sunset);
+}
+
+.cart-badge {
+  position: absolute;
+  top: -2px;
+  right: -6px;
+  background: var(--sunset);
+  color: #fff;
+  font-size: 0.65rem;
+  font-weight: 700;
+  min-width: 18px;
+  height: 18px;
+  border-radius: 9px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  line-height: 1;
+  padding: 0 4px;
 }

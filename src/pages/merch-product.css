@@ -1,0 +1,359 @@
+/* Merch product detail page */
+.merch-product-page {
+  padding: 80px 0 60px;
+  min-height: 70vh;
+}
+
+.merch-product-back {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  color: var(--earth);
+  text-decoration: none;
+  font-size: 0.9rem;
+  font-weight: 500;
+  padding: 12px 24px;
+  max-width: var(--max);
+  margin: 0 auto;
+}
+
+.merch-product-back:hover {
+  color: var(--sunset);
+}
+
+.merch-product-layout {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 48px;
+  max-width: var(--max);
+  margin: 0 auto;
+  padding: 24px;
+}
+
+/* Gallery */
+.merch-gallery {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.merch-gallery-main {
+  aspect-ratio: 1 / 1;
+  border-radius: var(--radius);
+  overflow: hidden;
+  background: var(--sand);
+}
+
+.merch-gallery-main img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.merch-gallery-thumbs {
+  display: flex;
+  gap: 8px;
+  overflow-x: auto;
+}
+
+.merch-thumb {
+  width: 64px;
+  height: 64px;
+  border-radius: 8px;
+  overflow: hidden;
+  cursor: pointer;
+  border: 2px solid transparent;
+  flex-shrink: 0;
+  transition: border-color 0.15s;
+}
+
+.merch-thumb.active {
+  border-color: var(--sunset);
+}
+
+.merch-thumb img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+/* Details */
+.merch-details {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.merch-product-name {
+  font-size: clamp(1.5rem, 3vw, 2rem);
+  color: var(--ink);
+  margin: 0;
+  line-height: 1.2;
+}
+
+.merch-product-price {
+  font-size: 1.4rem;
+  color: var(--earth);
+  font-weight: 600;
+}
+
+.merch-product-description {
+  color: var(--ink);
+  line-height: 1.6;
+  font-size: 0.95rem;
+}
+
+.merch-product-description p {
+  margin: 0 0 12px;
+}
+
+/* Variant selectors */
+.merch-variant-group {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.merch-variant-label {
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: var(--ink);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.merch-size-options {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.merch-size-btn {
+  padding: 8px 16px;
+  border: 2px solid var(--sand);
+  border-radius: 8px;
+  background: #fff;
+  cursor: pointer;
+  font-size: 0.9rem;
+  font-weight: 500;
+  color: var(--ink);
+  transition: border-color 0.15s, background 0.15s;
+}
+
+.merch-size-btn:hover {
+  border-color: var(--rock);
+}
+
+.merch-size-btn.selected {
+  border-color: var(--sunset);
+  background: rgba(242, 133, 1, 0.08);
+  color: var(--sunset);
+}
+
+.merch-size-btn:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+.merch-color-options {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.merch-color-swatch {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  border: 3px solid transparent;
+  cursor: pointer;
+  transition: border-color 0.15s;
+  position: relative;
+}
+
+.merch-color-swatch:hover {
+  border-color: var(--rock);
+}
+
+.merch-color-swatch.selected {
+  border-color: var(--sunset);
+}
+
+.merch-color-swatch-inner {
+  width: 100%;
+  height: 100%;
+  border-radius: 50%;
+  border: 1px solid rgba(0, 0, 0, 0.1);
+}
+
+/* Quantity */
+.merch-quantity {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.merch-qty-btn {
+  width: 36px;
+  height: 36px;
+  border: 2px solid var(--sand);
+  border-radius: 8px;
+  background: #fff;
+  cursor: pointer;
+  font-size: 1.1rem;
+  font-weight: 600;
+  color: var(--ink);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: border-color 0.15s;
+}
+
+.merch-qty-btn:hover:not(:disabled) {
+  border-color: var(--rock);
+}
+
+.merch-qty-btn:disabled {
+  opacity: 0.3;
+  cursor: not-allowed;
+}
+
+.merch-qty-value {
+  font-size: 1.1rem;
+  font-weight: 600;
+  min-width: 24px;
+  text-align: center;
+}
+
+/* Stock status */
+.merch-stock {
+  font-size: 0.85rem;
+  font-weight: 500;
+}
+
+.merch-stock.in-stock {
+  color: #2e7d32;
+}
+
+.merch-stock.limited {
+  color: var(--sunset);
+}
+
+.merch-stock.sold-out {
+  color: #c62828;
+}
+
+/* Add to cart */
+.merch-add-btn {
+  padding: 14px 32px;
+  background: var(--sunset);
+  color: #fff;
+  border: none;
+  border-radius: var(--radius);
+  font-size: 1rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: background 0.2s, transform 0.1s;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.merch-add-btn:hover:not(:disabled) {
+  background: #d97400;
+  transform: translateY(-1px);
+}
+
+.merch-add-btn:disabled {
+  background: var(--sand);
+  color: var(--rock);
+  cursor: not-allowed;
+}
+
+.merch-added-toast {
+  padding: 10px 16px;
+  background: #2e7d32;
+  color: #fff;
+  border-radius: 8px;
+  font-size: 0.9rem;
+  font-weight: 500;
+  animation: toastIn 0.3s ease;
+}
+
+@keyframes toastIn {
+  from { opacity: 0; transform: translateY(8px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+/* Additional info accordion */
+.merch-info-sections {
+  display: flex;
+  flex-direction: column;
+  border-top: 1px solid var(--sand);
+  margin-top: 8px;
+}
+
+.merch-info-toggle {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 16px 0;
+  border: none;
+  border-bottom: 1px solid var(--sand);
+  background: none;
+  cursor: pointer;
+  font-size: 0.95rem;
+  font-weight: 600;
+  color: var(--ink);
+  text-align: left;
+  width: 100%;
+}
+
+.merch-info-toggle:hover {
+  color: var(--sunset);
+}
+
+.merch-info-arrow {
+  font-size: 0.8rem;
+  transition: transform 0.2s;
+}
+
+.merch-info-arrow.open {
+  transform: rotate(180deg);
+}
+
+.merch-info-content {
+  padding: 0 0 16px;
+  font-size: 0.9rem;
+  line-height: 1.6;
+  color: var(--earth);
+}
+
+.merch-info-content p {
+  margin: 0 0 8px;
+}
+
+/* Loading state */
+.merch-product-loading {
+  text-align: center;
+  padding: 120px 24px;
+  color: var(--earth);
+}
+
+.merch-product-error {
+  text-align: center;
+  padding: 120px 24px;
+  color: var(--earth);
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .merch-product-layout {
+    grid-template-columns: 1fr;
+    gap: 24px;
+    padding: 16px;
+  }
+
+  .merch-gallery-main {
+    aspect-ratio: 4 / 3;
+  }
+}
