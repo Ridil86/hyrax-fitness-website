@@ -51,20 +51,35 @@
 
 .merch-card-image-wrap {
   position: relative;
-  aspect-ratio: 1 / 1;
+  aspect-ratio: 3 / 4;
   background: var(--sand);
   overflow: hidden;
 }
 
-.merch-card-image-wrap img {
+.merch-card-img-primary,
+.merch-card-img-hover {
+  position: absolute;
+  inset: 0;
   width: 100%;
   height: 100%;
   object-fit: cover;
-  transition: transform 0.3s;
+  transition: opacity 0.4s ease;
 }
 
-.merch-card:hover .merch-card-image-wrap img {
-  transform: scale(1.04);
+.merch-card-img-primary {
+  opacity: 1;
+}
+
+.merch-card-img-hover {
+  opacity: 0;
+}
+
+.merch-card:hover .merch-card-img-primary {
+  opacity: 0;
+}
+
+.merch-card:hover .merch-card-img-hover {
+  opacity: 1;
 }
 
 .merch-sold-out-badge {

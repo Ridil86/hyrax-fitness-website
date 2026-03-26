@@ -43,8 +43,8 @@ export default function Merch() {
     return () => { cancelled = true; };
   }, []);
 
-  const getImage = (product) => {
-    const img = product.images?.[0];
+  const getImage = (product, index = 0) => {
+    const img = product.images?.[index];
     return img?.url || img?.transformedUrl || '';
   };
 
@@ -92,8 +92,17 @@ export default function Merch() {
                 <div className="merch-card-image-wrap">
                   {getImage(product) && (
                     <img
+                      className="merch-card-img-primary"
                       src={getImage(product)}
                       alt={product.name}
+                      loading="lazy"
+                    />
+                  )}
+                  {getImage(product, 1) && (
+                    <img
+                      className="merch-card-img-hover"
+                      src={getImage(product, 1)}
+                      alt={`${product.name} alternate view`}
                       loading="lazy"
                     />
                   )}
