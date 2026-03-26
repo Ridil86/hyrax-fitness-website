@@ -23,12 +23,22 @@ export class BackendStack extends cdk.Stack {
   constructor(scope: Construct, id: string, props: BackendStackProps) {
     super(scope, id, props);
 
+    // ── Validate required environment variables ──
+    const requiredEnvVars = ['STRIPE_SECRET_KEY', 'STRIPE_WEBHOOK_SECRET', 'STRIPE_PUBLISHABLE_KEY'];
+    for (const varName of requiredEnvVars) {
+      if (!process.env[varName]) {
+        throw new Error(`Missing required environment variable: ${varName}. Set it in .env.local.`);
+      }
+    }
+
     // ── DynamoDB Table (single-table design) ──
     const table = new dynamodb.Table(this, 'HyraxContentTable', {
       tableName: 'HyraxContent',
       partitionKey: { name: 'pk', type: dynamodb.AttributeType.STRING },
       sortKey: { name: 'sk', type: dynamodb.AttributeType.STRING },
       billingMode: dynamodb.BillingMode.PAY_PER_REQUEST,
+      pointInTimeRecovery: true,
+      deletionProtection: true,
       removalPolicy: cdk.RemovalPolicy.RETAIN,
     });
 
@@ -45,10 +55,11 @@ export class BackendStack extends cdk.Stack {
       bucketName: `hyrax-fitness-media-${this.account}`,
       blockPublicAccess: s3.BlockPublicAccess.BLOCK_ALL,
       encryption: s3.BucketEncryption.S3_MANAGED,
+      versioned: true,
       cors: [
         {
           allowedMethods: [s3.HttpMethods.PUT, s3.HttpMethods.GET],
-          allowedOrigins: ['*'],
+          allowedOrigins: ['https://hyraxfitness.com', 'https://www.hyraxfitness.com', 'http://localhost:5173'],
           allowedHeaders: ['*'],
           maxAge: 3600,
         },
@@ -62,11 +73,30 @@ export class BackendStack extends cdk.Stack {
     });
 
     // ── CloudFront Distribution for media assets ──
+    const securityHeaders = new cloudfront.ResponseHeadersPolicy(this, 'HyraxSecurityHeaders', {
+      responseHeadersPolicyName: 'HyraxMediaSecurityHeaders',
+      securityHeadersBehavior: {
+        contentTypeOptions: { override: true },
+        frameOptions: { frameOption: cloudfront.HeadersFrameOption.DENY, override: true },
+        xssProtection: { protection: true, modeBlock: true, override: true },
+        referrerPolicy: {
+          referrerPolicy: cloudfront.HeadersReferrerPolicy.STRICT_ORIGIN_WHEN_CROSS_ORIGIN,
+          override: true,
+        },
+        strictTransportSecurity: {
+          accessControlMaxAge: cdk.Duration.seconds(63072000),
+          includeSubdomains: true,
+          override: true,
+        },
+      },
+    });
+
     const mediaDistribution = new cloudfront.Distribution(this, 'HyraxMediaCdn', {
       defaultBehavior: {
         origin: origins.S3BucketOrigin.withOriginAccessControl(mediaBucket),
         viewerProtocolPolicy: cloudfront.ViewerProtocolPolicy.REDIRECT_TO_HTTPS,
         cachePolicy: cloudfront.CachePolicy.CACHING_OPTIMIZED,
+        responseHeadersPolicy: securityHeaders,
       },
       comment: 'Hyrax Fitness media CDN',
     });
@@ -84,9 +114,9 @@ export class BackendStack extends cdk.Stack {
         BUCKET_NAME: mediaBucket.bucketName,
         USER_POOL_ID: props.userPoolId,
         CDN_DOMAIN: mediaDistribution.distributionDomainName,
-        STRIPE_SECRET_KEY: process.env.STRIPE_SECRET_KEY || 'sk_test_placeholder',
-        STRIPE_WEBHOOK_SECRET: process.env.STRIPE_WEBHOOK_SECRET || 'whsec_placeholder',
-        STRIPE_PUBLISHABLE_KEY: process.env.STRIPE_PUBLISHABLE_KEY || 'pk_test_placeholder',
+        STRIPE_SECRET_KEY: process.env.STRIPE_SECRET_KEY!,
+        STRIPE_WEBHOOK_SECRET: process.env.STRIPE_WEBHOOK_SECRET!,
+        STRIPE_PUBLISHABLE_KEY: process.env.STRIPE_PUBLISHABLE_KEY!,
         FOURTHWALL_WEBHOOK_SECRET: process.env.FOURTHWALL_WEBHOOK_SECRET || '',
         SELF_FUNCTION_NAME: 'hyrax-api',
         SES_FROM_EMAIL: 'noreply@hyraxfitness.com',
@@ -129,33 +159,35 @@ export class BackendStack extends cdk.Stack {
       })
     );
 
-    // Bedrock permissions for AI workout generation
+    // Bedrock permissions - scoped to Claude Haiku in cross-region inference regions
     apiFn.addToRolePolicy(
       new iam.PolicyStatement({
         actions: ['bedrock:InvokeModel'],
         resources: [
-          'arn:aws:bedrock:*::foundation-model/anthropic.*',
-          'arn:aws:bedrock:*:*:inference-profile/us.anthropic.*',
+          'arn:aws:bedrock:us-east-1::foundation-model/anthropic.claude-haiku-4-5-*',
+          'arn:aws:bedrock:us-east-2::foundation-model/anthropic.claude-haiku-4-5-*',
+          'arn:aws:bedrock:us-west-2::foundation-model/anthropic.claude-haiku-4-5-*',
+          `arn:aws:bedrock:us-east-1:${this.account}:inference-profile/us.anthropic.claude-haiku-4-5-*`,
         ],
       })
     );
 
-    // AWS Marketplace permissions for Bedrock model subscriptions
+    // AWS Marketplace permissions for Bedrock model access
     apiFn.addToRolePolicy(
       new iam.PolicyStatement({
-        actions: [
-          'aws-marketplace:ViewSubscriptions',
-          'aws-marketplace:Subscribe',
-        ],
-        resources: ['*'],
+        actions: ['aws-marketplace:ViewSubscriptions'],
+        resources: ['*'], // ViewSubscriptions does not support resource-level permissions
       })
     );
 
-    // SES permissions for transactional emails
+    // SES permissions - scoped to verified identities
     apiFn.addToRolePolicy(
       new iam.PolicyStatement({
         actions: ['ses:SendEmail', 'ses:SendRawEmail'],
-        resources: ['*'],
+        resources: [
+          `arn:aws:ses:${this.region}:${this.account}:identity/noreply@hyraxfitness.com`,
+          `arn:aws:ses:${this.region}:${this.account}:identity/hyraxfitness.com`,
+        ],
       })
     );
 
@@ -201,7 +233,9 @@ export class BackendStack extends cdk.Stack {
           'mediaconvert:GetJob',
           'mediaconvert:DescribeEndpoints',
         ],
-        resources: ['*'],
+        resources: [
+          `arn:aws:mediaconvert:${this.region}:${this.account}:*`,
+        ],
       })
     );
     // MediaConvert needs PassRole to assume the MediaConvert role
@@ -237,7 +271,7 @@ export class BackendStack extends cdk.Stack {
       restApiName: 'hyrax-fitness-api',
       description: 'Hyrax Fitness backend API',
       defaultCorsPreflightOptions: {
-        allowOrigins: apigateway.Cors.ALL_ORIGINS,
+        allowOrigins: ['https://hyraxfitness.com', 'https://www.hyraxfitness.com', 'http://localhost:5173'],
         allowMethods: apigateway.Cors.ALL_METHODS,
         allowHeaders: [
           'Content-Type',
@@ -248,6 +282,10 @@ export class BackendStack extends cdk.Stack {
       },
       deployOptions: {
         stageName: 'prod',
+        metricsEnabled: true,
+        loggingLevel: apigateway.MethodLoggingLevel.ERROR,
+        throttlingRateLimit: 100,
+        throttlingBurstLimit: 200,
       },
     });
 
@@ -960,7 +998,10 @@ export class BackendStack extends cdk.Stack {
     trialReminderFn.addToRolePolicy(
       new iam.PolicyStatement({
         actions: ['ses:SendEmail', 'ses:SendRawEmail'],
-        resources: ['*'],
+        resources: [
+          `arn:aws:ses:${this.region}:${this.account}:identity/noreply@hyraxfitness.com`,
+          `arn:aws:ses:${this.region}:${this.account}:identity/hyraxfitness.com`,
+        ],
       })
     );
 

@@ -25,8 +25,8 @@ if (!process.env.GOOGLE_CLIENT_ID || !process.env.GOOGLE_CLIENT_SECRET) {
 const cognitoStack = new CognitoStack(app, 'HyraxFitnessCognito', {
   env,
   description: 'Hyrax Fitness - Cognito User Pool, Groups, and Lambda Triggers',
-  googleClientId: process.env.GOOGLE_CLIENT_ID || '1088784360564-ec6iseum863bqdn5dolfai63frs8nfbh.apps.googleusercontent.com',
-  googleClientSecret: process.env.GOOGLE_CLIENT_SECRET || '',
+  googleClientId: process.env.GOOGLE_CLIENT_ID!,
+  googleClientSecret: process.env.GOOGLE_CLIENT_SECRET!,
 });
 
 new BackendStack(app, 'HyraxFitnessBackend', {

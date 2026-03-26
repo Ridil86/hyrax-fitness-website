@@ -34,7 +34,7 @@ export class CognitoStack extends cdk.Stack {
         requireUppercase: true,
         requireLowercase: true,
         requireDigits: true,
-        requireSymbols: false,
+        requireSymbols: true,
       },
       accountRecovery: cognito.AccountRecovery.EMAIL_ONLY,
       email: cognito.UserPoolEmail.withSES({
@@ -197,6 +197,10 @@ export class CognitoStack extends cdk.Stack {
         cognito.UserPoolClientIdentityProvider.COGNITO,
         cognito.UserPoolClientIdentityProvider.GOOGLE,
       ],
+      accessTokenValidity: cdk.Duration.minutes(60),
+      idTokenValidity: cdk.Duration.minutes(60),
+      refreshTokenValidity: cdk.Duration.days(30),
+      enableTokenRevocation: true,
     });
     appClient.node.addDependency(googleProvider);
 

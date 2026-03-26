@@ -48,7 +48,7 @@ import {
   createMealLog, createMealPlanLog, listMealLogs, getMealLogStats, deleteMealLog,
 } from './routes/meal-log';
 import { getEmailPreview, sendTestEmail } from './routes/email-preview';
-import { notFound, serverError } from './utils/response';
+import { notFound, serverError, getCorsOrigin } from './utils/response';
 
 export const handler = async (
   event: any,
@@ -77,11 +77,12 @@ export const handler = async (
   console.log(`${method} ${path}`);
 
   // OPTIONS catch-all: return CORS headers for any preflight request
+  const requestOrigin = event.headers?.origin || event.headers?.Origin;
   if (method === 'OPTIONS') {
     return {
       statusCode: 200,
       headers: {
-        'Access-Control-Allow-Origin': '*',
+        'Access-Control-Allow-Origin': getCorsOrigin(requestOrigin),
         'Access-Control-Allow-Headers': 'Content-Type,Authorization,X-Amz-Date,X-Api-Key',
         'Access-Control-Allow-Methods': 'GET,POST,PUT,DELETE,OPTIONS',
       },

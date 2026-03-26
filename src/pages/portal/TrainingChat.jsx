@@ -15,7 +15,17 @@ export default function TrainingChat() {
   const [error, setError] = useState(null);
   const messagesEndRef = useRef(null);
 
+  const MAX_DAILY_MESSAGES = 20;
   const hasAccess = hasTierAccess(effectiveTier, 'Iron Dassie');
+
+  // Count today's user messages for rate limit display
+  const todayUserMessages = messages.filter((m) => {
+    if (m.role !== 'user') return false;
+    const msgDate = new Date(m.createdAt).toDateString();
+    return msgDate === new Date().toDateString();
+  }).length;
+  const messagesRemaining = Math.max(0, MAX_DAILY_MESSAGES - todayUserMessages);
+  const atLimit = messagesRemaining === 0;
 
   useEffect(() => {
     let cancelled = false;
@@ -128,21 +138,27 @@ export default function TrainingChat() {
 
       {error && <div className="chat-error">{error}</div>}
 
+      <div className="chat-rate-limit" style={{ textAlign: 'center', fontSize: '0.85rem', color: 'var(--rock)', padding: '4px 0' }}>
+        {atLimit
+          ? 'Daily message limit reached. Resets tomorrow.'
+          : `${messagesRemaining}/${MAX_DAILY_MESSAGES} messages remaining today`}
+      </div>
+
       <div className="chat-input-area">
         <textarea
           value={input}
           onChange={(e) => setInput(e.target.value)}
           onKeyDown={handleKeyDown}
-          placeholder="Ask your Personal Coach..."
+          placeholder={atLimit ? 'Daily limit reached' : 'Ask your Personal Coach...'}
           className="chat-input"
           rows={1}
           maxLength={2000}
-          disabled={sending}
+          disabled={sending || atLimit}
         />
         <button
           className="btn primary chat-send-btn"
           onClick={handleSend}
-          disabled={!input.trim() || sending}
+          disabled={!input.trim() || sending || atLimit}
         >
           {sending ? '...' : 'Send'}
         </button>

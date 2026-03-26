@@ -1,5 +1,6 @@
 import { useState, useEffect, useMemo, useCallback } from 'react';
 import { useParams, Link } from 'react-router-dom';
+import DOMPurify from 'dompurify';
 import { fetchProduct } from '../api/fourthwall';
 import { useCart } from '../context/CartContext';
 import CartDrawer from '../components/CartDrawer';
@@ -163,7 +164,7 @@ export default function MerchProduct() {
           {product.description && (
             <div
               className="merch-product-description"
-              dangerouslySetInnerHTML={{ __html: product.description }}
+              dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(product.description) }}
             />
           )}
 
@@ -300,7 +301,7 @@ export default function MerchProduct() {
                   {openSections[info.type] && (
                     <div
                       className="merch-info-content"
-                      dangerouslySetInnerHTML={{ __html: info.bodyHtml }}
+                      dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(info.bodyHtml || '') }}
                     />
                   )}
                 </div>

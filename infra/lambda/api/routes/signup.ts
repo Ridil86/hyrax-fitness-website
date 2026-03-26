@@ -5,7 +5,7 @@ import {
   ListUsersCommand,
 } from '@aws-sdk/client-cognito-identity-provider';
 import { DynamoDBClient } from '@aws-sdk/client-dynamodb';
-import { DynamoDBDocumentClient, PutCommand } from '@aws-sdk/lib-dynamodb';
+import { DynamoDBDocumentClient, PutCommand, GetCommand, UpdateCommand } from '@aws-sdk/lib-dynamodb';
 import type { APIGatewayProxyEvent, APIGatewayProxyResult } from 'aws-lambda';
 import { created, badRequest, serverError } from '../utils/response';
 import { buildTrialFields } from '../utils/trial';
@@ -15,6 +15,43 @@ const cognito = new CognitoIdentityProviderClient({});
 const ddb = DynamoDBDocumentClient.from(new DynamoDBClient({}));
 const TABLE_NAME = process.env.TABLE_NAME!;
 const USER_POOL_ID = process.env.USER_POOL_ID!;
+
+const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+const MAX_SIGNUPS_PER_HOUR = 5;
+
+/** IP-based rate limiting using DynamoDB with TTL */
+async function checkSignupRateLimit(ip: string): Promise<boolean> {
+  const key = { pk: 'RATE_LIMIT', sk: `SIGNUP#${ip}` };
+  const now = Math.floor(Date.now() / 1000);
+  const ttl = now + 3600; // 1 hour
+
+  try {
+    const result = await ddb.send(new GetCommand({ TableName: TABLE_NAME, Key: key }));
+    const item = result.Item;
+
+    if (item && item.expiresAt > now && item.count >= MAX_SIGNUPS_PER_HOUR) {
+      return false; // rate limited
+    }
+
+    if (item && item.expiresAt > now) {
+      await ddb.send(new UpdateCommand({
+        TableName: TABLE_NAME,
+        Key: key,
+        UpdateExpression: 'SET #c = #c + :one',
+        ExpressionAttributeNames: { '#c': 'count' },
+        ExpressionAttributeValues: { ':one': 1 },
+      }));
+    } else {
+      await ddb.send(new PutCommand({
+        TableName: TABLE_NAME,
+        Item: { ...key, count: 1, expiresAt: ttl },
+      }));
+    }
+    return true;
+  } catch {
+    return true; // fail open to avoid blocking legitimate signups
+  }
+}
 
 /**
  * Generate a URL-safe temporary password that satisfies the Cognito password
@@ -51,8 +88,19 @@ export async function createAccount(
       return badRequest('givenName, familyName, and email are required');
     }
 
+    if (!EMAIL_REGEX.test(email)) {
+      return badRequest('Invalid email address format');
+    }
+
     if (!termsAccepted || !privacyAccepted) {
       return badRequest('You must accept the Terms of Use and Privacy Policy');
+    }
+
+    // IP-based rate limiting
+    const sourceIp = event.requestContext?.identity?.sourceIp || 'unknown';
+    const allowed = await checkSignupRateLimit(sourceIp);
+    if (!allowed) {
+      return badRequest('Too many signup attempts. Please try again later.');
     }
 
     // Check if a user with this email already exists (e.g. Google-federated)
