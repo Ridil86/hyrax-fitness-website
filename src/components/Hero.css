@@ -1,8 +1,9 @@
 .hero {
   position: relative;
-  padding: 96px 0 80px;
+  padding: 40px 0 28px;
   overflow: hidden;
-  min-height: 100svh;
+  min-height: calc(100svh - 73px);
+  max-height: calc(100svh - 73px);
   display: flex;
   align-items: center;
 }
@@ -45,7 +46,7 @@
 .heroCard {
   border-radius: calc(var(--radius) + 6px);
   box-shadow: var(--shadow);
-  overflow: hidden;
+  overflow: visible;
   border: 1px solid rgba(27, 18, 10, .10);
   background:
     linear-gradient(180deg, rgba(251, 247, 230, .25), rgba(251, 247, 230, .25)),
@@ -55,51 +56,56 @@
   text-align: center;
 }
 .heroCard .inner {
-  padding: 34px;
+  padding: 20px;
+  padding-top: 0;
 }
 .heroLayout {
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 18px;
+  gap: 8px;
 }
 
 .heroLogo {
-  width: 70%;
+  width: 52%;
   height: auto;
-  max-width: 512px;
+  max-width: 364px;
   object-fit: contain;
+  margin-top: -24%;
+  filter: drop-shadow(0 8px 24px rgba(27, 18, 10, .18));
+  position: relative;
+  z-index: 3;
 }
 
 .heroTagline {
   display: block;
-  font-size: 0.95rem;
+  font-size: 0.82rem;
   letter-spacing: 0.12em;
   text-transform: uppercase;
   color: var(--sunrise);
   font-weight: 600;
-  margin-top: 10px;
+  margin-top: 2px;
 }
 
 .heroHeadline {
   max-width: 22ch;
-  margin: 16px 0 10px;
-  font-size: clamp(2.1rem, 4vw, 3.2rem);
-  line-height: 1.05;
+  margin: 4px 0 4px;
+  font-size: clamp(1.5rem, 2.6vw, 2.1rem);
+  line-height: 1.08;
   letter-spacing: -.02em;
 }
 
 .heroPanel {
   width: 100%;
   max-width: 560px;
-  padding: 16px 18px;
-  border-radius: 16px;
+  padding: 10px 14px;
+  border-radius: 14px;
   background: rgba(255, 255, 255, .62);
   border: 1px solid rgba(27, 18, 10, .12);
   box-shadow: var(--shadow-soft);
   display: flex;
   flex-direction: column;
-  gap: 14px;
+  gap: 8px;
 }
 .heroPanel .lead { margin: 0; max-width: none; }
 
@@ -117,20 +123,20 @@
 }
 
 .lead {
-  font-size: 1.08rem;
+  font-size: 0.95rem;
   color: rgba(27, 18, 10, .75);
-  margin: 12px 0 18px;
+  margin: 4px 0 8px;
   max-width: 56ch;
 }
 .lead span { display: block; }
 .leadStrong { font-weight: 650; color: rgba(27, 18, 10, .92); }
-.leadSub { color: rgba(27, 18, 10, .72); font-size: 1rem; }
+.leadSub { color: rgba(27, 18, 10, .72); font-size: 0.9rem; }
 
 .heroActions {
   display: flex;
   flex-wrap: wrap;
-  gap: 12px;
-  margin-top: 16px;
+  gap: 8px;
+  margin-top: 6px;
   justify-content: center;
   width: 100%;
 }
@@ -158,13 +164,13 @@
 .stats {
   display: grid;
   grid-template-columns: repeat(3, 1fr);
-  gap: 12px;
-  margin-top: 22px;
+  gap: 8px;
+  margin-top: 8px;
   width: 100%;
 }
 .stat {
-  padding: 14px;
-  border-radius: 16px;
+  padding: 8px;
+  border-radius: 12px;
   background: rgba(255, 255, 255, .55);
   border: 1px solid rgba(27, 18, 10, .10);
   transition: transform 0.2s ease, box-shadow 0.2s ease;
@@ -175,19 +181,20 @@
 }
 .stat strong {
   display: block;
-  font-size: 1.15rem;
+  font-size: 0.95rem;
   letter-spacing: -.01em;
 }
 .stat span {
   display: block;
   color: rgba(27, 18, 10, .70);
-  font-size: .92rem;
-  margin-top: 2px;
+  font-size: .82rem;
+  margin-top: 1px;
 }
 
 @media (max-width: 980px), (max-width: 1200px) and (orientation: portrait) {
   .hero {
     min-height: auto;
+    max-height: none;
     padding: 72px 0 36px;
   }
   .hero-bg { display: none; }
@@ -198,10 +205,13 @@
   .heroGrid { max-width: 100%; }
   .heroBackdrop { display: block; }
   .stats { grid-template-columns: 1fr; }
+  .heroLogo { margin-top: -14%; }
+  .leadStrong { display: none; }
 }
 
 @media (min-width: 981px) and (orientation: landscape) {
   .heroGrid {
     margin-left: 0;
+    margin-top: 15%;
   }
 }

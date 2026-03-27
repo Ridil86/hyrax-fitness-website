@@ -119,4 +119,8 @@
   .dassie-hero-content {
     padding: 24px 20px;
   }
+
+  .dassie-section .pill {
+    display: none;
+  }
 }

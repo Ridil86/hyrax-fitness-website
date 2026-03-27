@@ -34,7 +34,7 @@ export default function Hero() {
     <section className="hero" id="top">
       <div className="hero-bg">
         <img
-          src="/img/hero-hyrax-on-outcrop-1600x900.jpg"
+          src="/img/hero-hyrax-landing.jpg"
           alt=""
           className="hero-bg-img"
         />
@@ -90,7 +90,7 @@ export default function Hero() {
           </motion.div>
 
           <div className="heroBackdrop" aria-hidden="true">
-            <img src="/img/hero-hyrax-on-outcrop-1600x900.jpg" alt="" />
+            <img src="/img/hero-hyrax-landing.jpg" alt="" />
           </div>
         </motion.div>
       </div>

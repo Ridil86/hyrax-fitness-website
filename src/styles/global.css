@@ -81,6 +81,10 @@ a:focus-visible, button:focus-visible, input:focus-visible {
   color: rgba(27, 18, 10, .88);
 }
 
+@media (max-width: 768px) {
+  .pill { display: none; }
+}
+
 section { padding: 54px 0; }
 
 .sectionHead {

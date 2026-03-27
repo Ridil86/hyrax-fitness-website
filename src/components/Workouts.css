@@ -168,6 +168,11 @@
   .features-grid {
     grid-template-columns: 1fr 1fr;
   }
+
+  #workouts .pill,
+  .features-section .pill {
+    display: none;
+  }
 }
 
 @media (max-width: 600px) {
