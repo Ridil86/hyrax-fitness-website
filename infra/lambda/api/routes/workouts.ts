@@ -115,6 +115,17 @@ export async function createWorkout(
       return badRequest('Title is required');
     }
 
+    // Cap oversized arrays so a single workout doesn't blow the 400KB item limit.
+    if (Array.isArray(body.exercises) && body.exercises.length > 50) {
+      return badRequest('exercises cannot exceed 50 items');
+    }
+    if (Array.isArray(body.equipment) && body.equipment.length > 30) {
+      return badRequest('equipment cannot exceed 30 items');
+    }
+    if (Array.isArray(body.tags) && body.tags.length > 30) {
+      return badRequest('tags cannot exceed 30 items');
+    }
+
     const id = randomUUID().slice(0, 8);
     const claims = extractClaims(event);
     const now = new Date().toISOString();
@@ -167,6 +178,16 @@ export async function updateWorkout(
 
   try {
     const body = JSON.parse(event.body || '{}');
+
+    if (Array.isArray(body.exercises) && body.exercises.length > 50) {
+      return badRequest('exercises cannot exceed 50 items');
+    }
+    if (Array.isArray(body.equipment) && body.equipment.length > 30) {
+      return badRequest('equipment cannot exceed 30 items');
+    }
+    if (Array.isArray(body.tags) && body.tags.length > 30) {
+      return badRequest('tags cannot exceed 30 items');
+    }
 
     // Build dynamic update expression
     const updateFields: string[] = ['#updatedAt = :updatedAt'];

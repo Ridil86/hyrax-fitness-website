@@ -9,12 +9,31 @@ import {
 import type { APIGatewayProxyEvent, APIGatewayProxyResult } from 'aws-lambda';
 import { success, created, badRequest, notFound, serverError } from '../utils/response';
 import { isAdmin, extractClaims } from '../utils/auth';
+import {
+  limitString,
+  limitStringOptional,
+  limitEnum,
+  limitEnumOptional,
+  ValidationError,
+} from '../utils/validate';
+import { checkRateLimit } from '../utils/rateLimit';
 import { randomUUID } from 'crypto';
 import { sendNotification } from '../utils/email';
 import { supportReplyEmail } from '../../custom-message/templates';
 
 const client = DynamoDBDocumentClient.from(new DynamoDBClient({}));
 const TABLE_NAME = process.env.TABLE_NAME!;
+
+const TICKET_CATEGORIES = [
+  'general',
+  'billing',
+  'technical',
+  'account',
+  'feature',
+  'bug',
+] as const;
+const TICKET_STATUSES = ['open', 'in_progress', 'resolved', 'closed'] as const;
+const TICKET_PRIORITIES = ['low', 'medium', 'high'] as const;
 
 /* ── Helpers ── */
 
@@ -142,8 +161,17 @@ export async function createTicket(
   if (!claims) return badRequest('Authentication required');
 
   try {
+    if (!(await checkRateLimit(`SUPPORT_TICKET#${claims.sub}`, 5, 86400))) {
+      return badRequest('Rate limit exceeded: 5 support tickets per day');
+    }
+
     const body = JSON.parse(event.body || '{}');
-    if (!body.title || !body.description) return badRequest('Title and description are required');
+    const title = limitString(body.title, 200, 'title');
+    const description = limitString(body.description, 10000, 'description');
+    const category = body.category
+      ? limitEnum(body.category, TICKET_CATEGORIES, 'category')
+      : 'general';
+    const attachmentUrl = limitStringOptional(body.attachmentUrl, 500, 'attachmentUrl');
 
     const id = randomUUID().slice(0, 8);
     const now = new Date().toISOString();
@@ -158,9 +186,9 @@ export async function createTicket(
       gsi1sk: now,
       id,
       refNumber,
-      title: body.title,
-      description: body.description,
-      category: body.category || 'general',
+      title,
+      description,
+      category,
       status: 'open',
       priority,
       userId: claims.sub,
@@ -171,7 +199,7 @@ export async function createTicket(
       assignedName: '',
       messageCount: 0,
       lastMessageAt: now,
-      attachmentUrl: body.attachmentUrl || '',
+      attachmentUrl: attachmentUrl || '',
       createdAt: now,
       updatedAt: now,
       resolvedAt: '',
@@ -180,6 +208,7 @@ export async function createTicket(
     await client.send(new PutCommand({ TableName: TABLE_NAME, Item: item }));
     return created(item);
   } catch (error) {
+    if (error instanceof ValidationError) return badRequest(error.message);
     console.error('createTicket error:', error);
     return serverError('Failed to create ticket');
   }
@@ -272,33 +301,43 @@ export async function updateTicket(
     const exprNames: Record<string, string> = { '#updatedAt': 'updatedAt' };
     const exprValues: Record<string, unknown> = { ':updatedAt': new Date().toISOString() };
 
-    // Fields users can update
-    const userFields = ['status']; // users can only reopen (open) or close (closed)
-
-    // Fields only admin can update
-    const adminFields = ['status', 'priority', 'category', 'assignedTo', 'assignedName'];
-
-    const allowedFields = admin ? adminFields : userFields;
-
-    // Validate user status transitions
-    if (!admin && body.status) {
-      const current = existing.Item.status;
-      const allowed =
-        (current === 'resolved' && body.status === 'open') ||
-        (current === 'open' && body.status === 'closed') ||
-        (current === 'in_progress' && body.status === 'closed') ||
-        (current === 'resolved' && body.status === 'closed');
-      if (!allowed) {
-        return badRequest(`Cannot change status from ${current} to ${body.status}`);
+    const validated: Record<string, unknown> = {};
+    if (body.status !== undefined) {
+      validated.status = limitEnum(body.status, TICKET_STATUSES, 'status');
+    }
+    if (admin) {
+      if (body.priority !== undefined) {
+        validated.priority = limitEnum(body.priority, TICKET_PRIORITIES, 'priority');
+      }
+      if (body.category !== undefined) {
+        validated.category = limitEnum(body.category, TICKET_CATEGORIES, 'category');
+      }
+      if (body.assignedTo !== undefined) {
+        validated.assignedTo = limitStringOptional(body.assignedTo, 100, 'assignedTo') || '';
+      }
+      if (body.assignedName !== undefined) {
+        validated.assignedName = limitStringOptional(body.assignedName, 100, 'assignedName') || '';
       }
     }
 
-    for (const field of allowedFields) {
-      if (body[field] !== undefined) {
-        updateFields.push(`#${field} = :${field}`);
-        exprNames[`#${field}`] = field;
-        exprValues[`:${field}`] = body[field];
+    // Validate user status transitions
+    if (!admin && validated.status) {
+      const current = existing.Item.status;
+      const next = validated.status;
+      const allowed =
+        (current === 'resolved' && next === 'open') ||
+        (current === 'open' && next === 'closed') ||
+        (current === 'in_progress' && next === 'closed') ||
+        (current === 'resolved' && next === 'closed');
+      if (!allowed) {
+        return badRequest(`Cannot change status from ${current} to ${next}`);
       }
+    }
+
+    for (const field of Object.keys(validated)) {
+      updateFields.push(`#${field} = :${field}`);
+      exprNames[`#${field}`] = field;
+      exprValues[`:${field}`] = validated[field];
     }
 
     // Track resolvedAt
@@ -325,6 +364,7 @@ export async function updateTicket(
 
     return success(result.Attributes);
   } catch (error: any) {
+    if (error instanceof ValidationError) return badRequest(error.message);
     if (error.name === 'ConditionalCheckFailedException') return notFound('Ticket not found');
     console.error('updateTicket error:', error);
     return serverError('Failed to update ticket');
@@ -360,8 +400,13 @@ export async function addMessage(
       return notFound('Ticket not found');
     }
 
+    if (!admin && !(await checkRateLimit(`SUPPORT_MSG#${claims.sub}`, 30, 3600))) {
+      return badRequest('Rate limit exceeded: 30 ticket messages per hour');
+    }
+
     const body = JSON.parse(event.body || '{}');
-    if (!body.content) return badRequest('Content is required');
+    const content = limitString(body.content, 10000, 'content');
+    const attachmentUrl = limitStringOptional(body.attachmentUrl, 500, 'attachmentUrl');
 
     const msgId = randomUUID().slice(0, 8);
     const now = new Date().toISOString();
@@ -375,12 +420,12 @@ export async function addMessage(
       sk: `MESSAGE#${now}#${msgId}`,
       id: msgId,
       ticketId,
-      content: body.content,
+      content,
       authorId: claims.sub,
       authorName,
       authorType: admin ? 'admin' : 'user',
       internal: admin ? !!body.internal : false,
-      attachmentUrl: body.attachmentUrl || '',
+      attachmentUrl: attachmentUrl || '',
       createdAt: now,
     };
 
@@ -415,7 +460,7 @@ export async function addMessage(
     // Send email notification when admin replies (non-internal messages only)
     if (admin && !body.internal && ticketResult.Item.userId) {
       try {
-        const preview = body.content.slice(0, 200);
+        const preview = content.slice(0, 200);
         await sendNotification(
           ticketResult.Item.userId,
           'support',
@@ -432,6 +477,7 @@ export async function addMessage(
 
     return created(message);
   } catch (error) {
+    if (error instanceof ValidationError) return badRequest(error.message);
     console.error('addMessage error:', error);
     return serverError('Failed to add message');
   }
@@ -455,6 +501,8 @@ export async function assignTicket(
 
   try {
     const body = JSON.parse(event.body || '{}');
+    const assignedTo = limitStringOptional(body.assignedTo, 100, 'assignedTo');
+    const assignedName = limitStringOptional(body.assignedName, 100, 'assignedName');
 
     const result = await client.send(
       new UpdateCommand({
@@ -463,8 +511,8 @@ export async function assignTicket(
         UpdateExpression: 'SET assignedTo = :assignedTo, assignedName = :assignedName, #updatedAt = :now',
         ExpressionAttributeNames: { '#updatedAt': 'updatedAt' },
         ExpressionAttributeValues: {
-          ':assignedTo': body.assignedTo || '',
-          ':assignedName': body.assignedName || '',
+          ':assignedTo': assignedTo || '',
+          ':assignedName': assignedName || '',
           ':now': new Date().toISOString(),
         },
         ConditionExpression: 'attribute_exists(pk)',
@@ -474,6 +522,7 @@ export async function assignTicket(
 
     return success(result.Attributes);
   } catch (error: any) {
+    if (error instanceof ValidationError) return badRequest(error.message);
     if (error.name === 'ConditionalCheckFailedException') return notFound('Ticket not found');
     console.error('assignTicket error:', error);
     return serverError('Failed to assign ticket');

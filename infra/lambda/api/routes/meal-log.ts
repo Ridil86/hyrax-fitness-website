@@ -9,6 +9,15 @@ import {
 import type { APIGatewayProxyEvent, APIGatewayProxyResult } from 'aws-lambda';
 import { success, created, badRequest, forbidden, notFound, serverError } from '../utils/response';
 import { extractClaims } from '../utils/auth';
+import {
+  limitString,
+  limitStringOptional,
+  limitArray,
+  limitNumber,
+  limitIntOptional,
+  ValidationError,
+} from '../utils/validate';
+import { checkRateLimit } from '../utils/rateLimit';
 import { randomUUID } from 'crypto';
 
 const client = DynamoDBDocumentClient.from(new DynamoDBClient({}));
@@ -57,43 +66,63 @@ export async function createMealLog(
   const claims = extractClaims(event);
   if (!claims?.sub) return forbidden('Authentication required');
 
+  if (!(await checkRateLimit(`MEAL_LOG#${claims.sub}`, 100, 86400))) {
+    return badRequest('Rate limit exceeded: 100 meal logs per day');
+  }
+
   let body: any;
   try { body = JSON.parse(event.body || '{}'); } catch { return badRequest('Invalid JSON'); }
 
-  const mealName = body.mealName || body.name || 'Meal';
-  const now = new Date().toISOString();
-  const id = randomUUID().slice(0, 12);
-
-  const item: any = {
-    pk: `USER#${claims.sub}`,
-    sk: `MEAL_LOG#${now}#${id}`,
-    gsi1pk: 'MEAL_LOG',
-    gsi1sk: `${now}#${claims.sub}`,
-    id,
-    userSub: claims.sub,
-    userEmail: claims.email || '',
-    completedAt: now,
-    source: body.source || 'plan',
-    planDate: body.planDate || null,
-    mealNumber: body.mealNumber ?? null,
-    mealName,
-    items: body.items || [],
-    calories: body.calories || 0,
-    macros: body.macros || null,
-    modifications: body.modifications || null,
-    skipped: body.skipped || false,
-    notes: body.notes || '',
-    rating: body.rating ?? null,
-  };
-
   try {
+    const item = buildMealLogItem(claims.sub, claims.email || '', body);
     await client.send(new PutCommand({ TableName: TABLE_NAME, Item: item }));
     await updateMealAggregates(item, 1);
     return created(item);
   } catch (error) {
+    if (error instanceof ValidationError) return badRequest(error.message);
     console.error('createMealLog error:', error);
     return serverError('Failed to create meal log');
   }
+}
+
+function buildMealLogItem(sub: string, email: string, raw: any) {
+  const mealName = limitString(raw.mealName || raw.name || 'Meal', 200, 'mealName');
+  const items = limitArray(raw.items || [], 30, 'items');
+  const notes = limitStringOptional(raw.notes, 1000, 'notes') || '';
+  const calories = raw.calories !== undefined
+    ? limitNumber(raw.calories, 0, 20000, 'calories')
+    : 0;
+  const mealNumber = raw.mealNumber !== undefined && raw.mealNumber !== null
+    ? limitIntOptional(raw.mealNumber, 0, 20, 'mealNumber')
+    : null;
+  const rating = raw.rating !== undefined && raw.rating !== null
+    ? limitIntOptional(raw.rating, 1, 5, 'rating')
+    : null;
+
+  const now = new Date().toISOString();
+  const id = randomUUID().slice(0, 12);
+
+  return {
+    pk: `USER#${sub}`,
+    sk: `MEAL_LOG#${now}#${id}`,
+    gsi1pk: 'MEAL_LOG',
+    gsi1sk: `${now}#${sub}`,
+    id,
+    userSub: sub,
+    userEmail: email,
+    completedAt: now,
+    source: raw.source === 'manual' ? 'manual' : 'plan',
+    planDate: raw.planDate || null,
+    mealNumber,
+    mealName,
+    items,
+    calories,
+    macros: raw.macros || null,
+    modifications: raw.modifications || null,
+    skipped: !!raw.skipped,
+    notes,
+    rating,
+  };
 }
 
 /* ── POST /api/meal-logs/plan ── Batch log multiple meals from a plan */
@@ -107,40 +136,24 @@ export async function createMealPlanLog(
   let body: any;
   try { body = JSON.parse(event.body || '{}'); } catch { return badRequest('Invalid JSON'); }
 
-  const meals = body.meals;
-  if (!Array.isArray(meals) || meals.length === 0) {
-    return badRequest('meals array is required');
+  if (!(await checkRateLimit(`MEAL_LOG#${claims.sub}`, 100, 86400))) {
+    return badRequest('Rate limit exceeded: 100 meal logs per day');
   }
 
-  const now = new Date().toISOString();
+  let meals: any[];
+  try {
+    meals = limitArray(body.meals, 20, 'meals');
+  } catch (err) {
+    return badRequest(err instanceof ValidationError ? err.message : 'Invalid meals');
+  }
+  if (meals.length === 0) return badRequest('meals array is required');
+
   const results: any[] = [];
 
   try {
     for (const meal of meals) {
-      const id = randomUUID().slice(0, 12);
-      const mealName = meal.mealName || meal.name || `Meal ${meal.mealNumber || ''}`.trim();
-      const item: any = {
-        pk: `USER#${claims.sub}`,
-        sk: `MEAL_LOG#${now}#${id}`,
-        gsi1pk: 'MEAL_LOG',
-        gsi1sk: `${now}#${claims.sub}`,
-        id,
-        userSub: claims.sub,
-        userEmail: claims.email || '',
-        completedAt: now,
-        source: meal.source || 'plan',
-        planDate: meal.planDate || body.planDate || null,
-        mealNumber: meal.mealNumber ?? null,
-        mealName,
-        items: meal.items || [],
-        calories: meal.calories || 0,
-        macros: meal.macros || null,
-        modifications: meal.modifications || null,
-        skipped: meal.skipped || false,
-        notes: meal.notes || '',
-        rating: meal.rating ?? null,
-      };
-
+      const mealWithFallbackDate = { ...meal, planDate: meal.planDate || body.planDate || null };
+      const item = buildMealLogItem(claims.sub, claims.email || '', mealWithFallbackDate);
       await client.send(new PutCommand({ TableName: TABLE_NAME, Item: item }));
       await updateMealAggregates(item, 1);
       results.push(item);
@@ -148,6 +161,7 @@ export async function createMealPlanLog(
 
     return created({ logged: results.length, meals: results });
   } catch (error) {
+    if (error instanceof ValidationError) return badRequest(error.message);
     console.error('createMealPlanLog error:', error);
     return serverError('Failed to batch log meals');
   }

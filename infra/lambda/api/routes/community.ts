@@ -10,10 +10,31 @@ import {
 import type { APIGatewayProxyEvent, APIGatewayProxyResult } from 'aws-lambda';
 import { success, created, badRequest, notFound, serverError } from '../utils/response';
 import { isAdmin, extractClaims } from '../utils/auth';
+import {
+  limitString,
+  limitStringOptional,
+  limitEnum,
+  limitEnumOptional,
+  ValidationError,
+} from '../utils/validate';
+import { checkRateLimit } from '../utils/rateLimit';
 import { randomUUID } from 'crypto';
 
 const client = DynamoDBDocumentClient.from(new DynamoDBClient({}));
 const TABLE_NAME = process.env.TABLE_NAME!;
+
+const CATEGORIES = ['general', 'workouts', 'exercises', 'events', 'progress', 'tips'] as const;
+const REACTION_TYPES = ['like', 'helpful'] as const;
+const REACTION_TARGETS = ['thread', 'reply'] as const;
+const REPORT_REASONS = [
+  'Spam',
+  'Harassment or bullying',
+  'Inappropriate content',
+  'Misinformation',
+  'Other',
+] as const;
+const THREAD_STATUSES = ['approved', 'hidden', 'rejected'] as const;
+const REPORT_STATUSES = ['resolved', 'dismissed'] as const;
 
 /* ── Helper: look up user profile to get authorName, tier, memberSince ── */
 async function getAuthorInfo(sub: string) {
@@ -43,7 +64,11 @@ function maskAnonymous(item: Record<string, unknown>, viewerIsAdmin: boolean) {
 }
 
 /* ── Helper: compute reaction counts for a target ── */
-async function getReactionCounts(targetType: string, targetId: string) {
+async function getReactionCounts(
+  targetType: string,
+  targetId: string,
+  userSub?: string
+) {
   const result = await client.send(
     new QueryCommand({
       TableName: TABLE_NAME,
@@ -52,9 +77,21 @@ async function getReactionCounts(targetType: string, targetId: string) {
     })
   );
   const items = result.Items || [];
-  const likes = items.filter((i) => i.type === 'like').length;
+  const like = items.filter((i) => i.type === 'like').length;
   const helpful = items.filter((i) => i.type === 'helpful').length;
-  return { likes, helpful, total: items.length };
+  const likeByUser =
+    !!userSub && items.some((i) => i.userId === userSub && i.type === 'like');
+  const helpfulByUser =
+    !!userSub &&
+    items.some((i) => i.userId === userSub && i.type === 'helpful');
+  return {
+    like,
+    helpful,
+    likes: like, // legacy alias
+    total: items.length,
+    likeByUser,
+    helpfulByUser,
+  };
 }
 
 // ─────────────────────────────────────────────────
@@ -174,29 +211,14 @@ export async function getThread(
     }
     replies = replies.map((r) => maskAnonymous(r, admin));
 
-    // Get reaction counts for thread
-    const threadReactions = await getReactionCounts('THREAD', id);
-
-    // Check if current user reacted
-    let userReaction: string | null = null;
-    if (claims?.sub) {
-      const userReactResult = await client.send(
-        new GetCommand({
-          TableName: TABLE_NAME,
-          Key: { pk: `REACTIONS#THREAD#${id}`, sk: `USER#${claims.sub}` },
-        })
-      );
-      if (userReactResult.Item) {
-        userReaction = userReactResult.Item.type as string;
-      }
-    }
+    // Get reaction counts for thread (with byUser flags for the current caller)
+    const threadReactions = await getReactionCounts('thread', id, claims?.sub);
 
     const thread = maskAnonymous(threadResult.Item as Record<string, unknown>, admin);
 
     return success({
       ...thread,
       reactions: threadReactions,
-      userReaction,
       replies,
     });
   } catch (error) {
@@ -216,8 +238,17 @@ export async function createThread(
   if (!claims) return badRequest('Authentication required');
 
   try {
+    if (!(await checkRateLimit(`COMMUNITY_THREAD#${claims.sub}`, 10, 3600))) {
+      return badRequest('Rate limit exceeded: 10 threads per hour');
+    }
+
     const body = JSON.parse(event.body || '{}');
-    if (!body.title || !body.content) return badRequest('Title and content are required');
+    const title = limitString(body.title, 200, 'title');
+    const content = limitString(body.content, 10000, 'content');
+    const category = body.category
+      ? limitEnum(body.category, CATEGORIES, 'category')
+      : 'general';
+    const imageUrl = limitStringOptional(body.imageUrl, 500, 'imageUrl');
 
     const id = randomUUID().slice(0, 8);
     const now = new Date().toISOString();
@@ -226,12 +257,12 @@ export async function createThread(
     const item = {
       pk: 'COMMUNITY',
       sk: `THREAD#${id}`,
-      gsi1pk: `CATEGORY#${body.category || 'general'}`,
+      gsi1pk: `CATEGORY#${category}`,
       gsi1sk: now,
       id,
-      title: body.title,
-      content: body.content,
-      category: body.category || 'general',
+      title,
+      content,
+      category,
       authorId: claims.sub,
       authorName: body.anonymous ? 'Anonymous' : authorInfo.authorName,
       authorTier: authorInfo.authorTier,
@@ -241,7 +272,7 @@ export async function createThread(
       pinned: false,
       replyCount: 0,
       lastReplyAt: now,
-      imageUrl: body.imageUrl || '',
+      imageUrl: imageUrl || '',
       createdAt: now,
       updatedAt: now,
     };
@@ -249,6 +280,7 @@ export async function createThread(
     await client.send(new PutCommand({ TableName: TABLE_NAME, Item: item }));
     return created(item);
   } catch (error) {
+    if (error instanceof ValidationError) return badRequest(error.message);
     console.error('createThread error:', error);
     return serverError('Failed to create thread');
   }
@@ -282,18 +314,20 @@ export async function updateThread(
     const exprNames: Record<string, string> = { '#updatedAt': 'updatedAt' };
     const exprValues: Record<string, unknown> = { ':updatedAt': new Date().toISOString() };
 
-    const allowedFields = ['title', 'content', 'category', 'imageUrl'];
-    // Admin can also update status and pinned
+    const validated: Record<string, unknown> = {};
+    if (body.title !== undefined) validated.title = limitString(body.title, 200, 'title');
+    if (body.content !== undefined) validated.content = limitString(body.content, 10000, 'content');
+    if (body.category !== undefined) validated.category = limitEnum(body.category, CATEGORIES, 'category');
+    if (body.imageUrl !== undefined) validated.imageUrl = limitStringOptional(body.imageUrl, 500, 'imageUrl') || '';
     if (isAdmin(event)) {
-      allowedFields.push('status', 'pinned');
+      if (body.status !== undefined) validated.status = limitEnum(body.status, THREAD_STATUSES, 'status');
+      if (body.pinned !== undefined) validated.pinned = !!body.pinned;
     }
 
-    for (const field of allowedFields) {
-      if (body[field] !== undefined) {
-        updateFields.push(`#${field} = :${field}`);
-        exprNames[`#${field}`] = field;
-        exprValues[`:${field}`] = body[field];
-      }
+    for (const field of Object.keys(validated)) {
+      updateFields.push(`#${field} = :${field}`);
+      exprNames[`#${field}`] = field;
+      exprValues[`:${field}`] = validated[field];
     }
 
     const result = await client.send(
@@ -310,6 +344,7 @@ export async function updateThread(
 
     return success(result.Attributes);
   } catch (error: any) {
+    if (error instanceof ValidationError) return badRequest(error.message);
     if (error.name === 'ConditionalCheckFailedException') return notFound('Thread not found');
     console.error('updateThread error:', error);
     return serverError('Failed to update thread');
@@ -376,8 +411,13 @@ export async function createReply(
   if (!threadId) return badRequest('Thread ID is required');
 
   try {
+    if (!(await checkRateLimit(`COMMUNITY_REPLY#${claims.sub}`, 30, 3600))) {
+      return badRequest('Rate limit exceeded: 30 replies per hour');
+    }
+
     const body = JSON.parse(event.body || '{}');
-    if (!body.content) return badRequest('Content is required');
+    const content = limitString(body.content, 10000, 'content');
+    const imageUrl = limitStringOptional(body.imageUrl, 500, 'imageUrl');
 
     // Verify thread exists
     const threadResult = await client.send(
@@ -394,14 +434,14 @@ export async function createReply(
       sk: `REPLY#${now}#${replyId}`,
       id: replyId,
       threadId,
-      content: body.content,
+      content,
       authorId: claims.sub,
       authorName: body.anonymous ? 'Anonymous' : authorInfo.authorName,
       authorTier: authorInfo.authorTier,
       authorMemberSince: authorInfo.authorMemberSince,
       anonymous: !!body.anonymous,
       status: 'approved', // auto-approve
-      imageUrl: body.imageUrl || '',
+      imageUrl: imageUrl || '',
       createdAt: now,
       updatedAt: now,
     };
@@ -420,6 +460,7 @@ export async function createReply(
 
     return created(reply);
   } catch (error) {
+    if (error instanceof ValidationError) return badRequest(error.message);
     console.error('createReply error:', error);
     return serverError('Failed to create reply');
   }
@@ -469,15 +510,17 @@ export async function updateReply(
     const exprNames: Record<string, string> = { '#updatedAt': 'updatedAt' };
     const exprValues: Record<string, unknown> = { ':updatedAt': new Date().toISOString() };
 
-    const allowedFields = ['content', 'imageUrl'];
-    if (isAdmin(event)) allowedFields.push('status');
+    const validated: Record<string, unknown> = {};
+    if (body.content !== undefined) validated.content = limitString(body.content, 10000, 'content');
+    if (body.imageUrl !== undefined) validated.imageUrl = limitStringOptional(body.imageUrl, 500, 'imageUrl') || '';
+    if (isAdmin(event) && body.status !== undefined) {
+      validated.status = limitEnum(body.status, THREAD_STATUSES, 'status');
+    }
 
-    for (const field of allowedFields) {
-      if (body[field] !== undefined) {
-        updateFields.push(`#${field} = :${field}`);
-        exprNames[`#${field}`] = field;
-        exprValues[`:${field}`] = body[field];
-      }
+    for (const field of Object.keys(validated)) {
+      updateFields.push(`#${field} = :${field}`);
+      exprNames[`#${field}`] = field;
+      exprValues[`:${field}`] = validated[field];
     }
 
     const result = await client.send(
@@ -493,6 +536,7 @@ export async function updateReply(
 
     return success(result.Attributes);
   } catch (error) {
+    if (error instanceof ValidationError) return badRequest(error.message);
     console.error('updateReply error:', error);
     return serverError('Failed to update reply');
   }
@@ -568,41 +612,55 @@ export async function toggleReaction(
 
   try {
     const body = JSON.parse(event.body || '{}');
-    if (!body.targetType || !body.targetId || !body.type) {
-      return badRequest('targetType, targetId, and type are required');
+    // Accept canonical {targetType, targetId, type} or the frontend's
+    // convenience shapes {threadId, type} / {replyId, type}.
+    let targetType: 'thread' | 'reply';
+    let targetId: string;
+    if (body.threadId) {
+      targetType = 'thread';
+      targetId = limitString(body.threadId, 50, 'threadId');
+    } else if (body.replyId) {
+      targetType = 'reply';
+      targetId = limitString(body.replyId, 50, 'replyId');
+    } else {
+      targetType = limitEnum(body.targetType, REACTION_TARGETS, 'targetType');
+      targetId = limitString(body.targetId, 50, 'targetId');
     }
+    const type = limitEnum(body.type, REACTION_TYPES, 'type');
 
-    const pk = `REACTIONS#${body.targetType}#${body.targetId}`;
-    const sk = `USER#${claims.sub}`;
+    const pk = `REACTIONS#${targetType}#${targetId}`;
+    // Per-type sk so a user can independently toggle each reaction type.
+    const sk = `USER#${claims.sub}#${type}`;
 
     // Check if reaction already exists
     const existing = await client.send(
       new GetCommand({ TableName: TABLE_NAME, Key: { pk, sk } })
     );
 
-    if (existing.Item && existing.Item.type === body.type) {
-      // Remove reaction (toggle off)
+    let added: boolean;
+    if (existing.Item) {
       await client.send(new DeleteCommand({ TableName: TABLE_NAME, Key: { pk, sk } }));
+      added = false;
     } else {
-      // Create or update reaction
       await client.send(
         new PutCommand({
           TableName: TABLE_NAME,
           Item: {
             pk,
             sk,
-            type: body.type,
+            type,
             userId: claims.sub,
             createdAt: new Date().toISOString(),
           },
         })
       );
+      added = true;
     }
 
-    // Return updated counts
-    const counts = await getReactionCounts(body.targetType, body.targetId);
-    return success(counts);
+    const counts = await getReactionCounts(targetType, targetId, claims.sub);
+    return success({ added, ...counts });
   } catch (error) {
+    if (error instanceof ValidationError) return badRequest(error.message);
     console.error('toggleReaction error:', error);
     return serverError('Failed to toggle reaction');
   }
@@ -623,10 +681,15 @@ export async function createReport(
   if (!claims) return badRequest('Authentication required');
 
   try {
-    const body = JSON.parse(event.body || '{}');
-    if (!body.targetType || !body.targetId || !body.reason) {
-      return badRequest('targetType, targetId, and reason are required');
+    if (!(await checkRateLimit(`COMMUNITY_REPORT#${claims.sub}`, 20, 3600))) {
+      return badRequest('Rate limit exceeded: 20 reports per hour');
     }
+
+    const body = JSON.parse(event.body || '{}');
+    const targetType = limitEnum(body.targetType, REACTION_TARGETS, 'targetType');
+    const targetId = limitString(body.targetId, 50, 'targetId');
+    const reason = limitEnum(body.reason, REPORT_REASONS, 'reason');
+    const details = limitStringOptional(body.details, 1000, 'details');
 
     const id = randomUUID().slice(0, 8);
     const now = new Date().toISOString();
@@ -637,11 +700,12 @@ export async function createReport(
       gsi1pk: 'REPORT_STATUS',
       gsi1sk: `pending#${now}`,
       id,
-      targetType: body.targetType,
-      targetId: body.targetId,
+      targetType,
+      targetId,
       reporterId: claims.sub,
       reporterEmail: claims.email,
-      reason: body.reason,
+      reason,
+      details: details || '',
       status: 'pending',
       resolvedBy: '',
       createdAt: now,
@@ -650,6 +714,7 @@ export async function createReport(
     await client.send(new PutCommand({ TableName: TABLE_NAME, Item: item }));
     return created(item);
   } catch (error) {
+    if (error instanceof ValidationError) return badRequest(error.message);
     console.error('createReport error:', error);
     return serverError('Failed to create report');
   }
@@ -721,7 +786,7 @@ export async function moderateThread(
 
   try {
     const body = JSON.parse(event.body || '{}');
-    if (!body.status) return badRequest('Status is required');
+    const status = limitEnum(body.status, THREAD_STATUSES, 'status');
 
     const result = await client.send(
       new UpdateCommand({
@@ -730,7 +795,7 @@ export async function moderateThread(
         UpdateExpression: 'SET #status = :status, #updatedAt = :updatedAt',
         ExpressionAttributeNames: { '#status': 'status', '#updatedAt': 'updatedAt' },
         ExpressionAttributeValues: {
-          ':status': body.status,
+          ':status': status,
           ':updatedAt': new Date().toISOString(),
         },
         ConditionExpression: 'attribute_exists(pk)',
@@ -740,6 +805,7 @@ export async function moderateThread(
 
     return success(result.Attributes);
   } catch (error: any) {
+    if (error instanceof ValidationError) return badRequest(error.message);
     if (error.name === 'ConditionalCheckFailedException') return notFound('Thread not found');
     console.error('moderateThread error:', error);
     return serverError('Failed to moderate thread');
@@ -760,7 +826,7 @@ export async function resolveReport(
 
   try {
     const body = JSON.parse(event.body || '{}');
-    if (!body.status) return badRequest('Status is required (resolved or dismissed)');
+    const status = limitEnum(body.status, REPORT_STATUSES, 'status');
 
     const claims = extractClaims(event);
     const now = new Date().toISOString();
@@ -772,9 +838,9 @@ export async function resolveReport(
         UpdateExpression: 'SET #status = :status, resolvedBy = :resolvedBy, gsi1sk = :gsi1sk',
         ExpressionAttributeNames: { '#status': 'status' },
         ExpressionAttributeValues: {
-          ':status': body.status,
+          ':status': status,
           ':resolvedBy': claims?.email || 'admin',
-          ':gsi1sk': `${body.status}#${now}`,
+          ':gsi1sk': `${status}#${now}`,
         },
         ConditionExpression: 'attribute_exists(pk)',
         ReturnValues: 'ALL_NEW',
@@ -783,6 +849,7 @@ export async function resolveReport(
 
     return success(result.Attributes);
   } catch (error: any) {
+    if (error instanceof ValidationError) return badRequest(error.message);
     if (error.name === 'ConditionalCheckFailedException') return notFound('Report not found');
     console.error('resolveReport error:', error);
     return serverError('Failed to resolve report');

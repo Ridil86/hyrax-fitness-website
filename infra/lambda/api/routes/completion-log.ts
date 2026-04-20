@@ -10,6 +10,13 @@ import {
 import type { APIGatewayProxyEvent, APIGatewayProxyResult } from 'aws-lambda';
 import { success, created, badRequest, forbidden, serverError } from '../utils/response';
 import { extractClaims } from '../utils/auth';
+import {
+  limitString,
+  limitStringOptional,
+  limitArray,
+  limitNumber,
+  ValidationError,
+} from '../utils/validate';
 import { randomUUID } from 'crypto';
 
 const client = DynamoDBDocumentClient.from(new DynamoDBClient({}));
@@ -91,9 +98,15 @@ export async function createLog(
   try {
     const body = JSON.parse(event.body || '{}');
 
-    if (!body.exerciseId || !body.exerciseName) {
-      return badRequest('exerciseId and exerciseName are required');
-    }
+    const exerciseId = limitString(body.exerciseId, 100, 'exerciseId');
+    const exerciseName = limitString(body.exerciseName, 200, 'exerciseName');
+    const sets = body.sets != null ? limitNumber(body.sets, 0, 100, 'sets') : 1;
+    const reps = body.reps != null ? limitNumber(body.reps, 0, 10000, 'reps') : 0;
+    const weight = body.weight != null ? limitNumber(body.weight, 0, 10000, 'weight') : undefined;
+    const duration = body.duration != null ? limitNumber(body.duration, 0, 86400, 'duration') : undefined;
+    const rpe = body.rpe != null ? limitNumber(body.rpe, 0, 10, 'rpe') : undefined;
+    const notes = limitStringOptional(body.notes, 1000, 'notes') || '';
+    const workoutTitle = limitStringOptional(body.workoutTitle, 200, 'workoutTitle') || '';
 
     const id = randomUUID().slice(0, 8);
     const now = new Date().toISOString();
@@ -108,18 +121,18 @@ export async function createLog(
       userEmail: claims.email || '',
       sessionId: body.sessionId || id,
       type: (body.type === 'benchmark' ? 'benchmark' : 'exercise') as string,
-      exerciseId: body.exerciseId,
-      exerciseName: body.exerciseName,
+      exerciseId,
+      exerciseName,
       workoutId: body.workoutId || '',
-      workoutTitle: body.workoutTitle || '',
+      workoutTitle,
       difficulty: body.difficulty || 'intermediate',
-      sets: Number(body.sets) || 1,
-      reps: Number(body.reps) || 0,
-      weight: body.weight != null ? Number(body.weight) : undefined,
+      sets,
+      reps,
+      weight,
       weightUnit: body.weightUnit || 'lbs',
-      duration: body.duration != null ? Number(body.duration) : undefined,
-      rpe: body.rpe != null ? Number(body.rpe) : undefined,
-      notes: body.notes || '',
+      duration,
+      rpe,
+      notes,
       source: body.source || 'manual',
       sourceId: body.sourceId || '',
       completedAt: now,
@@ -139,6 +152,7 @@ export async function createLog(
 
     return created(cleanItem);
   } catch (error) {
+    if (error instanceof ValidationError) return badRequest(error.message);
     console.error('createLog error:', error);
     return serverError('Failed to create completion log');
   }
@@ -157,15 +171,19 @@ export async function createWorkoutLog(
   try {
     const body = JSON.parse(event.body || '{}');
 
-    if (!body.exercises || !Array.isArray(body.exercises) || body.exercises.length === 0) {
-      return badRequest('exercises array is required');
+    let exercises: any[];
+    try {
+      exercises = limitArray(body.exercises, 50, 'exercises');
+    } catch (err) {
+      return badRequest(err instanceof ValidationError ? err.message : 'Invalid exercises');
     }
+    if (exercises.length === 0) return badRequest('exercises array is required');
 
     const sessionId = randomUUID().slice(0, 12);
     const now = new Date().toISOString();
     const logs: Record<string, unknown>[] = [];
 
-    for (const ex of body.exercises) {
+    for (const ex of exercises) {
       const id = randomUUID().slice(0, 8);
       const ts = new Date(Date.now() + logs.length).toISOString(); // offset by 1ms per exercise for unique SK
 

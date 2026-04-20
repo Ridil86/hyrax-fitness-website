@@ -87,6 +87,14 @@ export async function createExercise(
       return badRequest('Name is required');
     }
 
+    if (body.modifications && typeof body.modifications === 'object'
+        && Object.keys(body.modifications).length > 20) {
+      return badRequest('modifications cannot exceed 20 entries');
+    }
+    if (Array.isArray(body.tags) && body.tags.length > 20) {
+      return badRequest('tags cannot exceed 20 items');
+    }
+
     const id = randomUUID().slice(0, 8);
     const now = new Date().toISOString();
 
@@ -132,6 +140,14 @@ export async function updateExercise(
 
   try {
     const body = JSON.parse(event.body || '{}');
+
+    if (body.modifications && typeof body.modifications === 'object'
+        && Object.keys(body.modifications).length > 20) {
+      return badRequest('modifications cannot exceed 20 entries');
+    }
+    if (Array.isArray(body.tags) && body.tags.length > 20) {
+      return badRequest('tags cannot exceed 20 items');
+    }
 
     const updateFields: string[] = ['#updatedAt = :updatedAt'];
     const exprNames: Record<string, string> = { '#updatedAt': 'updatedAt' };

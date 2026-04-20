@@ -162,15 +162,18 @@ export async function sendChatMessage(
       new QueryCommand({
         TableName: TABLE_NAME,
         KeyConditionExpression: 'pk = :pk AND sk BETWEEN :from AND :to',
+        FilterExpression: '#role = :user',
+        ExpressionAttributeNames: { '#role': 'role' },
         ExpressionAttributeValues: {
           ':pk': `USER#${claims.sub}`,
           ':from': `CHAT#${today}`,
           ':to': `CHAT#${today}~`,
+          ':user': 'user',
         },
         Select: 'COUNT',
       })
     );
-    if ((countResult.Count || 0) >= MAX_MESSAGES_PER_DAY * 2) { // *2 for user+assistant pairs
+    if ((countResult.Count || 0) >= MAX_MESSAGES_PER_DAY) {
       return badRequest(`Daily message limit reached (${MAX_MESSAGES_PER_DAY} messages/day)`);
     }
 

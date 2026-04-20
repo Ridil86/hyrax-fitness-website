@@ -4,7 +4,15 @@ import type { APIGatewayProxyEvent, APIGatewayProxyResult } from 'aws-lambda';
 import { success, created, badRequest, forbidden, notFound, serverError } from '../utils/response';
 import { extractClaims, isAdmin } from '../utils/auth';
 import { isTrialActive, getEffectiveTier, buildTrialFields } from '../utils/trial';
+import {
+  limitString,
+  limitStringOptional,
+  limitArray,
+  ValidationError,
+} from '../utils/validate';
 import { randomUUID } from 'crypto';
+
+const PROFILE_JSON_MAX_BYTES = 20_000;
 
 const client = DynamoDBDocumentClient.from(new DynamoDBClient({}));
 const TABLE_NAME = process.env.TABLE_NAME!;
@@ -186,13 +194,13 @@ export async function updateProfile(
 
     if (givenName !== undefined) {
       expressionParts.push('#gn = :gn');
-      expressionValues[':gn'] = givenName;
+      expressionValues[':gn'] = limitString(givenName, 100, 'givenName');
       expressionNames['#gn'] = 'givenName';
     }
 
     if (familyName !== undefined) {
       expressionParts.push('#fn = :fn');
-      expressionValues[':fn'] = familyName;
+      expressionValues[':fn'] = limitString(familyName, 100, 'familyName');
       expressionNames['#fn'] = 'familyName';
     }
 
@@ -236,6 +244,7 @@ export async function updateProfile(
 
     return success(result.Attributes);
   } catch (error) {
+    if (error instanceof ValidationError) return badRequest(error.message);
     console.error('updateProfile error:', error);
     return serverError('Failed to update profile');
   }
@@ -293,10 +302,42 @@ export async function updateFitnessProfile(
       return badRequest('fitnessProfile object is required');
     }
 
+    if (JSON.stringify(fitnessProfile).length > PROFILE_JSON_MAX_BYTES) {
+      return badRequest('fitnessProfile is too large');
+    }
+
     // Validate required fields
     const validExperienceLevels = ['beginner', 'intermediate', 'advanced', 'elite'];
     if (fitnessProfile.experienceLevel && !validExperienceLevels.includes(fitnessProfile.experienceLevel)) {
       return badRequest('Invalid experience level');
+    }
+
+    // Cap the known free-text and array fields
+    if (fitnessProfile.injuries !== undefined) {
+      fitnessProfile.injuries = limitStringOptional(fitnessProfile.injuries, 1000, 'injuries') || '';
+    }
+    if (fitnessProfile.fitnessGoals !== undefined) {
+      fitnessProfile.fitnessGoals = limitArray(fitnessProfile.fitnessGoals, 20, 'fitnessGoals');
+    }
+    if (fitnessProfile.availableEquipment !== undefined) {
+      fitnessProfile.availableEquipment = limitArray(
+        fitnessProfile.availableEquipment,
+        30,
+        'availableEquipment'
+      );
+    }
+    if (fitnessProfile.trainingEnvironment !== undefined) {
+      fitnessProfile.trainingEnvironment = limitArray(
+        fitnessProfile.trainingEnvironment,
+        10,
+        'trainingEnvironment'
+      );
+    }
+    if (fitnessProfile.focusAreas !== undefined) {
+      fitnessProfile.focusAreas = limitArray(fitnessProfile.focusAreas, 10, 'focusAreas');
+    }
+    if (fitnessProfile.limitations !== undefined) {
+      fitnessProfile.limitations = limitArray(fitnessProfile.limitations, 20, 'limitations');
     }
 
     const now = new Date().toISOString();
@@ -328,6 +369,7 @@ export async function updateFitnessProfile(
       fitnessProfileCompletedAt: result.Attributes?.fitnessProfileCompletedAt,
     });
   } catch (error) {
+    if (error instanceof ValidationError) return badRequest(error.message);
     console.error('updateFitnessProfile error:', error);
     return serverError('Failed to update fitness profile');
   }
@@ -385,6 +427,31 @@ export async function updateNutritionProfile(
       return badRequest('nutritionProfile object is required');
     }
 
+    if (JSON.stringify(nutritionProfile).length > PROFILE_JSON_MAX_BYTES) {
+      return badRequest('nutritionProfile is too large');
+    }
+
+    if (nutritionProfile.allergies !== undefined) {
+      nutritionProfile.allergies = limitArray(nutritionProfile.allergies, 50, 'allergies');
+    }
+    if (nutritionProfile.dietaryRestrictions !== undefined) {
+      nutritionProfile.dietaryRestrictions = limitArray(
+        nutritionProfile.dietaryRestrictions,
+        20,
+        'dietaryRestrictions'
+      );
+    }
+    if (nutritionProfile.dislikedFoods !== undefined) {
+      nutritionProfile.dislikedFoods = limitArray(
+        nutritionProfile.dislikedFoods,
+        50,
+        'dislikedFoods'
+      );
+    }
+    if (nutritionProfile.notes !== undefined) {
+      nutritionProfile.notes = limitStringOptional(nutritionProfile.notes, 1000, 'notes') || '';
+    }
+
     const now = new Date().toISOString();
 
     const result = await client.send(
@@ -414,6 +481,7 @@ export async function updateNutritionProfile(
       nutritionProfileCompletedAt: result.Attributes?.nutritionProfileCompletedAt,
     });
   } catch (error) {
+    if (error instanceof ValidationError) return badRequest(error.message);
     console.error('updateNutritionProfile error:', error);
     return serverError('Failed to update nutrition profile');
   }

@@ -19,7 +19,7 @@ const USER_POOL_ID = process.env.USER_POOL_ID!;
 const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 const MAX_SIGNUPS_PER_HOUR = 5;
 
-/** IP-based rate limiting using DynamoDB with TTL */
+/** IP-based rate limiting using DynamoDB with TTL. Fails CLOSED on errors. */
 async function checkSignupRateLimit(ip: string): Promise<boolean> {
   const key = { pk: 'RATE_LIMIT', sk: `SIGNUP#${ip}` };
   const now = Math.floor(Date.now() / 1000);
@@ -48,8 +48,9 @@ async function checkSignupRateLimit(ip: string): Promise<boolean> {
       }));
     }
     return true;
-  } catch {
-    return true; // fail open to avoid blocking legitimate signups
+  } catch (err) {
+    console.error('checkSignupRateLimit DynamoDB failure, failing closed:', err);
+    return false;
   }
 }
 

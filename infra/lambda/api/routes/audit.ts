@@ -7,22 +7,54 @@ import {
 import type { APIGatewayProxyEvent, APIGatewayProxyResult } from 'aws-lambda';
 import { success, created, badRequest, serverError } from '../utils/response';
 import { isAdmin } from '../utils/auth';
+import { checkRateLimit } from '../utils/rateLimit';
 import { randomUUID } from 'crypto';
 
 const client = DynamoDBDocumentClient.from(new DynamoDBClient({}));
 const TABLE_NAME = process.env.TABLE_NAME!;
 
+// Only these event types are acceptable via the PUBLIC /api/audit endpoint.
+// Consent events written server-side during signup (TERMS_ACCEPT etc.) must
+// NOT be accepted here — otherwise anyone can forge a compliance record.
+const PUBLIC_EVENT_TYPES = new Set(['COOKIE_ACCEPT', 'COOKIE_REJECT']);
+const PUBLIC_CONSENT_VALUES = new Set(['accepted', 'rejected']);
+const ALLOWED_METADATA_KEYS = new Set(['path', 'referrer', 'source']);
+
 /**
- * POST /api/audit - Log a compliance/consent event (PUBLIC)
+ * POST /api/audit - Log a cookie-consent event (PUBLIC, allow-listed)
  */
 export async function logAuditEvent(
   event: APIGatewayProxyEvent
 ): Promise<APIGatewayProxyResult> {
   try {
+    const ip = event.requestContext?.identity?.sourceIp || 'unknown';
+    if (!(await checkRateLimit(`AUDIT#${ip}`, 30, 3600))) {
+      return badRequest('Rate limit exceeded');
+    }
+
     const body = JSON.parse(event.body || '{}');
 
-    if (!body.eventType) {
-      return badRequest('eventType is required');
+    if (typeof body.eventType !== 'string' || !PUBLIC_EVENT_TYPES.has(body.eventType)) {
+      return badRequest('Invalid eventType');
+    }
+
+    let consentValue: string | null = null;
+    if (body.consentValue !== undefined && body.consentValue !== null) {
+      if (typeof body.consentValue !== 'string' || !PUBLIC_CONSENT_VALUES.has(body.consentValue)) {
+        return badRequest('Invalid consentValue');
+      }
+      consentValue = body.consentValue;
+    }
+
+    // Strip metadata to allow-listed keys, and cap each value length.
+    const metadata: Record<string, string> = {};
+    if (body.metadata && typeof body.metadata === 'object') {
+      for (const key of Object.keys(body.metadata)) {
+        if (!ALLOWED_METADATA_KEYS.has(key)) continue;
+        const v = body.metadata[key];
+        if (typeof v !== 'string') continue;
+        metadata[key] = v.slice(0, 500);
+      }
     }
 
     const now = new Date().toISOString();
@@ -32,13 +64,14 @@ export async function logAuditEvent(
       pk: 'AUDIT',
       sk: `${now}#${uuid8}`,
       eventType: body.eventType,
-      consentValue: body.consentValue || null,
-      userAgent:
+      consentValue,
+      userAgent: (
         event.headers['User-Agent'] ||
         event.headers['user-agent'] ||
-        null,
+        ''
+      ).slice(0, 500),
       ipAddress: event.requestContext?.identity?.sourceIp || null,
-      metadata: body.metadata || {},
+      metadata,
       createdAt: now,
     };
 
