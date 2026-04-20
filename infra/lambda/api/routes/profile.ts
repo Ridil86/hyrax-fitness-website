@@ -31,40 +31,15 @@ export async function getProfile(
       })
     );
 
-    if (result.Item) {
-      return success({
-        ...result.Item,
-        isTrialActive: isTrialActive(result.Item),
-        effectiveTier: getEffectiveTier(result.Item),
-      });
+    if (!result.Item) {
+      return notFound('Profile not found');
     }
 
-    // Auto-create profile from Cognito claims for pre-existing accounts
-    // (e.g., admin account created via CLI before signup flow existed)
-    const email = claims.email || '';
-    const givenName = claims.given_name || '';
-    const familyName = claims.family_name || '';
-    const now = new Date().toISOString();
-
-    const profile = {
-      pk: `USER#${claims.sub}`,
-      sk: 'PROFILE',
-      email,
-      givenName,
-      familyName,
-      tier: 'Pup',
-      source: 'manual',
-      createdAt: now,
-    };
-
-    await client.send(
-      new PutCommand({
-        TableName: TABLE_NAME,
-        Item: profile,
-      })
-    );
-
-    return success(profile);
+    return success({
+      ...result.Item,
+      isTrialActive: isTrialActive(result.Item),
+      effectiveTier: getEffectiveTier(result.Item),
+    });
   } catch (error) {
     console.error('getProfile error:', error);
     return serverError('Failed to fetch profile');

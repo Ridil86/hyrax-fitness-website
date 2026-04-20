@@ -55,21 +55,23 @@ async function checkSignupRateLimit(ip: string): Promise<boolean> {
 
 /**
  * Generate a URL-safe temporary password that satisfies the Cognito password
- * policy (8+ chars, uppercase, lowercase, digit, no symbols required).
+ * policy (8+ chars, uppercase, lowercase, digit, symbol).
  */
 function generateTempPassword(): string {
   const upper = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
   const lower = 'abcdefghijklmnopqrstuvwxyz';
   const digits = '0123456789';
-  const all = upper + lower + digits;
+  const symbols = '-_~.';  // URL-safe symbols (temp password is embedded in email link)
+  const all = upper + lower + digits + symbols;
 
   // Start with guaranteed upper + lower
   let pwd = 'Hx';
-  for (let i = 0; i < 10; i++) {
+  for (let i = 0; i < 9; i++) {
     pwd += all[Math.floor(Math.random() * all.length)];
   }
-  // Ensure at least one digit
+  // Ensure at least one digit and one symbol (Cognito policy requires both)
   pwd += digits[Math.floor(Math.random() * digits.length)];
+  pwd += symbols[Math.floor(Math.random() * symbols.length)];
   return pwd;
 }
 

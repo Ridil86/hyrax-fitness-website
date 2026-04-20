@@ -140,9 +140,9 @@ Common query patterns:
 
 ### Lambda API Structure
 
-Single Lambda handles all routes via dispatcher (`infra/lambda/api/index.ts`). **24 route handlers** in `infra/lambda/api/routes/`:
+Single Lambda handles all routes via dispatcher (`infra/lambda/api/index.ts`). **26 route handlers** in `infra/lambda/api/routes/`:
 
-`admin-analytics`, `audit`, `billing`, `chat`, `community`, `completion-log`, `content`, `equipment`, `exercises`, `faq`, `meal-log`, `nutrition`, `profile`, `routine`, `signup`, `stripe`, `stripe-webhook`, `support`, `tiers`, `upload`, `user-upload`, `users`, `videos`, `workouts`
+`admin-analytics`, `audit`, `billing`, `chat`, `community`, `completion-log`, `content`, `email-preview`, `equipment`, `exercises`, `faq`, `fourthwall-webhook`, `meal-log`, `nutrition`, `profile`, `routine`, `signup`, `stripe`, `stripe-webhook`, `support`, `tiers`, `upload`, `user-upload`, `users`, `videos`, `workouts`
 
 Uses `fromFunctionArn` import pattern in CDK to avoid exceeding the 20KB Lambda resource-based policy limit.
 
@@ -166,10 +166,18 @@ Shared utilities in `infra/lambda/api/utils/`:
 - **CloudFront CDN**: serves media from S3. CDN domain passed to Lambda as `CDN_DOMAIN` env var
 - **Upload flow**: Admin/client requests presigned S3 URL via API (`/api/upload`, `/api/user-upload`) -> uploads directly to S3
 - **Video transcoding**: Separate Lambda (`hyrax-transcoder`) triggered by S3 `uploads/videos/` ObjectCreated events -> creates MediaConvert job -> EventBridge rule captures job completion/failure -> updates video status in DynamoDB
+- **Trial reminder**: Separate Lambda (`infra/lambda/trial-reminder/`) for trial expiry email notifications
 
 ### Community Forum
 
 Threads with replies, reactions (likes/helpful), and admin moderation. Route handler in `community.ts` (~800 lines). Categories seeded via `infra/scripts/seed-categories.ts`. Uses `COMMUNITY` pk with GSI1 `CATEGORY#<name>` for category filtering.
+
+### Merch Storefront (Fourthwall)
+
+- **Frontend**: `src/pages/Merch.jsx`, `src/pages/MerchProduct.jsx`, `src/api/fourthwall.js`
+- **Cart**: `CartContext.jsx` provider wraps app, `CartDrawer.jsx` slide-out cart component
+- **Backend**: `infra/lambda/api/routes/fourthwall-webhook.ts` handles order/shipping webhook events
+- **Integration**: Fourthwall API for product catalog and checkout; webhook secret in `FOURTHWALL_WEBHOOK_SECRET` env var
 
 ### CDK Environment Loading
 
@@ -200,7 +208,7 @@ Dashboard, My Routine, My Nutrition, AI Coach, Workouts, Videos, Progress, Bench
 
 ## Admin Pages
 
-Dashboard, Users, FAQ, Equipment, Exercises, Workouts, Videos, Community, Support, Analytics (with AI token/cost tracking), AI Debug (multi-system prompt preview)
+Dashboard, Users, FAQ, Equipment, Exercises, Workouts, Videos, Community, Support, Analytics (with AI token/cost tracking), AI Debug (multi-system prompt preview), Email Preview (template testing)
 
 ## Public Pages
 
@@ -208,7 +216,10 @@ Dashboard, Users, FAQ, Equipment, Exercises, Workouts, Videos, Community, Suppor
 - `/about` - Company story, founder bio, hyrax philosophy
 - `/events` - Event types and hosting information
 - `/programs` - Tier comparison and pricing
+- `/merch` - Merchandise storefront (Fourthwall integration)
+- `/merch/:id` - Individual product pages
 - `/login`, `/get-started` - Auth flows
+- `/terms`, `/privacy`, `/cookies` - Legal pages
 
 ## Adding a New API Route
 
@@ -230,7 +241,7 @@ Dashboard, Users, FAQ, Equipment, Exercises, Workouts, Videos, Community, Suppor
 
 Frontend (`.env.local`): `VITE_COGNITO_USER_POOL_ID`, `VITE_COGNITO_CLIENT_ID`, `VITE_AWS_REGION`, `VITE_API_URL`, `VITE_COGNITO_DOMAIN`, `VITE_OAUTH_REDIRECT`
 
-Backend (`.env.local`, loaded by CDK): `GOOGLE_CLIENT_ID`, `GOOGLE_CLIENT_SECRET`, `STRIPE_SECRET_KEY`, `STRIPE_WEBHOOK_SECRET`, `STRIPE_PUBLISHABLE_KEY`
+Backend (`.env.local`, loaded by CDK): `GOOGLE_CLIENT_ID`, `GOOGLE_CLIENT_SECRET`, `STRIPE_SECRET_KEY`, `STRIPE_WEBHOOK_SECRET`, `STRIPE_PUBLISHABLE_KEY`, `FOURTHWALL_WEBHOOK_SECRET`
 
 ## Seed Data
 

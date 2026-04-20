@@ -1,5 +1,8 @@
 import * as cdk from 'aws-cdk-lib';
 import * as cognito from 'aws-cdk-lib/aws-cognito';
+import * as acm from 'aws-cdk-lib/aws-certificatemanager';
+import * as route53 from 'aws-cdk-lib/aws-route53';
+import * as route53Targets from 'aws-cdk-lib/aws-route53-targets';
 import * as iam from 'aws-cdk-lib/aws-iam';
 import * as path from 'path';
 import { NodejsFunction } from 'aws-cdk-lib/aws-lambda-nodejs';
@@ -49,9 +52,33 @@ export class CognitoStack extends cdk.Stack {
     this.userPoolId = userPool.userPoolId;
     this.userPoolArn = userPool.userPoolArn;
 
-    // ── Cognito Hosted-UI Domain ──
-    userPool.addDomain('HyraxCognitoDomain', {
-      cognitoDomain: { domainPrefix: 'hyrax-fitness' },
+    // ── Route 53 Hosted Zone (for ACM validation + auth subdomain) ──
+    const hostedZone = route53.HostedZone.fromHostedZoneAttributes(this, 'HyraxZone', {
+      hostedZoneId: 'Z0983470RKHLQIR2UU8U',
+      zoneName: 'hyraxfitness.com',
+    });
+
+    // ── ACM Certificate for Custom Auth Domain ──
+    const authCert = new acm.Certificate(this, 'AuthCert', {
+      domainName: 'auth.hyraxfitness.com',
+      validation: acm.CertificateValidation.fromDns(hostedZone),
+    });
+
+    // ── Cognito Hosted-UI Custom Domain ──
+    const cognitoDomain = userPool.addDomain('HyraxCognitoDomain', {
+      customDomain: {
+        domainName: 'auth.hyraxfitness.com',
+        certificate: authCert,
+      },
+    });
+
+    // ── DNS A-record alias for auth.hyraxfitness.com ──
+    new route53.ARecord(this, 'AuthDomainAlias', {
+      zone: hostedZone,
+      recordName: 'auth',
+      target: route53.RecordTarget.fromAlias(
+        new route53Targets.UserPoolDomainTarget(cognitoDomain)
+      ),
     });
 
     // ── Google Identity Provider ──
@@ -221,8 +248,9 @@ export class CognitoStack extends cdk.Stack {
     });
 
     new cdk.CfnOutput(this, 'CognitoDomain', {
-      value: 'hyrax-fitness.auth.us-east-1.amazoncognito.com',
+      value: 'auth.hyraxfitness.com',
       description: 'Cognito Hosted UI Domain',
     });
+
   }
 }
