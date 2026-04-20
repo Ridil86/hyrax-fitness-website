@@ -54,8 +54,8 @@ export function AuthProvider({ children }) {
           setTrialActive(profile.isTrialActive || false);
           setEffectiveTier(profile.effectiveTier || profile.tier || 'Pup');
         }
-      } catch {
-        // Profile fetch failed - keep default tier
+      } catch (err) {
+        console.error('AuthContext: profile fetch failed, tier defaults to Pup', err);
       }
     } catch {
       setUser(null);
@@ -100,10 +100,7 @@ export function AuthProvider({ children }) {
   const signIn = async (email, password) => {
     const result = await amplifySignIn({ username: email, password });
     if (result.isSignedIn) {
-      const currentUser = await getCurrentUser();
-      setUser(currentUser);
-      const userGroups = await extractGroups();
-      setGroups(userGroups);
+      await refreshUser();
     }
     return result;
   };
