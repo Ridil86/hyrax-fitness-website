@@ -12,6 +12,7 @@ import { success, badRequest, forbidden, notFound, serverError } from '../utils/
 import { extractClaims, isAdmin } from '../utils/auth';
 import { invokeClaude } from '../utils/bedrock';
 import { getEffectiveTier } from '../utils/trial';
+import { signAsyncPayload } from '../utils/asyncAuth';
 
 const client = DynamoDBDocumentClient.from(new DynamoDBClient({}));
 const lambdaClient = new LambdaClient({});
@@ -507,15 +508,19 @@ export async function generateDailyWorkout(
     );
 
     // 6. Fire-and-forget: invoke self asynchronously to do the Bedrock call
+    const generatePayload = {
+      __asyncRoutineGeneration: true,
+      userSub: claims.sub,
+      userTier: profile.tier,
+      today,
+    };
     await lambdaClient.send(
       new InvokeCommand({
         FunctionName: SELF_FUNCTION_NAME,
         InvocationType: 'Event', // async - returns immediately
         Payload: new TextEncoder().encode(JSON.stringify({
-          __asyncRoutineGeneration: true,
-          userSub: claims.sub,
-          userTier: profile.tier,
-          today,
+          ...generatePayload,
+          __asyncSignature: signAsyncPayload(generatePayload),
         })),
       })
     );
@@ -766,20 +771,24 @@ export async function swapDailyWorkout(
     );
 
     // Fire-and-forget async swap
+    const swapPayload = {
+      __asyncRoutineSwap: true,
+      userSub: claims.sub,
+      userTier: profile.tier,
+      today,
+      swapCount: currentSwapCount + 1,
+      rejectedTitle: existing.title || '',
+      rejectedFocus: existing.focus || [],
+      avoidFocus: body.avoidFocus || [],
+      preferFocus: body.preferFocus || [],
+    };
     await lambdaClient.send(
       new InvokeCommand({
         FunctionName: SELF_FUNCTION_NAME,
         InvocationType: 'Event',
         Payload: new TextEncoder().encode(JSON.stringify({
-          __asyncRoutineSwap: true,
-          userSub: claims.sub,
-          userTier: profile.tier,
-          today,
-          swapCount: currentSwapCount + 1,
-          rejectedTitle: existing.title || '',
-          rejectedFocus: existing.focus || [],
-          avoidFocus: body.avoidFocus || [],
-          preferFocus: body.preferFocus || [],
+          ...swapPayload,
+          __asyncSignature: signAsyncPayload(swapPayload),
         })),
       })
     );

@@ -49,26 +49,41 @@ import {
 } from './routes/meal-log';
 import { getEmailPreview, sendTestEmail } from './routes/email-preview';
 import { notFound, serverError, getCorsOrigin, setRequestOrigin } from './utils/response';
+import { verifyAsyncPayload } from './utils/asyncAuth';
 
 export const handler = async (
   event: any,
   _context: Context
 ): Promise<APIGatewayProxyResult> => {
-  // Handle async self-invocations (not from API Gateway)
-  if (event.__asyncRoutineGeneration) {
-    console.log('Async routine generation for', event.userSub);
-    await generateRoutineAsync(event);
-    return { statusCode: 200, headers: {}, body: 'ok' };
-  }
-  if (event.__asyncRoutineSwap) {
-    console.log('Async routine swap for', event.userSub);
-    await swapRoutineAsync(event);
-    return { statusCode: 200, headers: {}, body: 'ok' };
-  }
-  if (event.__asyncNutritionGeneration) {
-    console.log('Async nutrition generation for', event.userSub);
-    await generateNutritionAsync(event);
-    return { statusCode: 200, headers: {}, body: 'ok' };
+  const isAsyncInvoke =
+    event.__asyncRoutineGeneration ||
+    event.__asyncRoutineSwap ||
+    event.__asyncNutritionGeneration;
+
+  if (isAsyncInvoke) {
+    // Defence-in-depth: require a valid HMAC signature for self-invocations.
+    // API Gateway proxy events never place client JSON at the top level, so
+    // this branch is not reachable from the public internet; the check guards
+    // against future misconfiguration (e.g. a new EventBridge rule).
+    if (!verifyAsyncPayload(event, event.__asyncSignature)) {
+      console.error('Async invoke rejected: invalid or missing signature');
+      return { statusCode: 403, headers: {}, body: 'forbidden' };
+    }
+    if (event.__asyncRoutineGeneration) {
+      console.log('Async routine generation for', event.userSub);
+      await generateRoutineAsync(event);
+      return { statusCode: 200, headers: {}, body: 'ok' };
+    }
+    if (event.__asyncRoutineSwap) {
+      console.log('Async routine swap for', event.userSub);
+      await swapRoutineAsync(event);
+      return { statusCode: 200, headers: {}, body: 'ok' };
+    }
+    if (event.__asyncNutritionGeneration) {
+      console.log('Async nutrition generation for', event.userSub);
+      await generateNutritionAsync(event);
+      return { statusCode: 200, headers: {}, body: 'ok' };
+    }
   }
 
   const method = event.httpMethod;

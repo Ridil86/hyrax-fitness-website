@@ -12,6 +12,7 @@ import { success, badRequest, forbidden, notFound, serverError } from '../utils/
 import { extractClaims, isAdmin } from '../utils/auth';
 import { invokeClaude } from '../utils/bedrock';
 import { getEffectiveTier } from '../utils/trial';
+import { signAsyncPayload } from '../utils/asyncAuth';
 
 const client = DynamoDBDocumentClient.from(new DynamoDBClient({}));
 const lambdaClient = new LambdaClient({});
@@ -433,15 +434,19 @@ export async function generateDailyNutrition(
     );
 
     // 6. Fire-and-forget: invoke self asynchronously to do the Bedrock call
+    const nutritionPayload = {
+      __asyncNutritionGeneration: true,
+      userSub: claims.sub,
+      userTier: profile.tier,
+      today,
+    };
     await lambdaClient.send(
       new InvokeCommand({
         FunctionName: SELF_FUNCTION_NAME,
         InvocationType: 'Event',
         Payload: new TextEncoder().encode(JSON.stringify({
-          __asyncNutritionGeneration: true,
-          userSub: claims.sub,
-          userTier: profile.tier,
-          today,
+          ...nutritionPayload,
+          __asyncSignature: signAsyncPayload(nutritionPayload),
         })),
       })
     );

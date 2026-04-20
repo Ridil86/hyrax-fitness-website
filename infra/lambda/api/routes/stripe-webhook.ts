@@ -117,6 +117,35 @@ export async function handleWebhook(
 
   console.log(`Stripe webhook: ${stripeEvent.type} (${stripeEvent.id})`);
 
+  // Idempotency: record the event id with a TTL. A duplicate delivery aborts
+  // before any side effects.
+  try {
+    const dedupTtl = Math.floor(Date.now() / 1000) + 7 * 24 * 60 * 60;
+    await client.send(
+      new PutCommand({
+        TableName: TABLE_NAME,
+        Item: {
+          pk: 'STRIPE_EVENT',
+          sk: stripeEvent.id,
+          type: stripeEvent.type,
+          ttl: dedupTtl,
+          createdAt: new Date().toISOString(),
+        },
+        ConditionExpression: 'attribute_not_exists(pk)',
+      })
+    );
+  } catch (err: any) {
+    if (err.name === 'ConditionalCheckFailedException') {
+      console.log(`Duplicate Stripe event ignored: ${stripeEvent.id}`);
+      return {
+        statusCode: 200,
+        headers: CORS_HEADERS,
+        body: JSON.stringify({ received: true, duplicate: true }),
+      };
+    }
+    throw err;
+  }
+
   try {
     switch (stripeEvent.type) {
       case 'checkout.session.completed':
@@ -191,23 +220,25 @@ async function handleCheckoutCompleted(session: Stripe.Checkout.Session) {
     }
   }
 
-  // Update subscription record
+  // Upsert subscription record. Use UpdateCommand with set_if_not_exists on
+  // createdAt so a replayed webhook doesn't reset the original timestamp.
   await client.send(
-    new PutCommand({
+    new UpdateCommand({
       TableName: TABLE_NAME,
-      Item: {
-        pk: `USER#${cognitoSub}`,
-        sk: 'SUBSCRIPTION',
-        stripeCustomerId: session.customer as string,
-        stripeSubscriptionId: stripeSubId || '',
-        tierId,
-        status: 'active',
-        currentPeriodEnd,
-        cancelAtPeriodEnd,
-        gsi1pk: 'SUBSCRIPTION',
-        gsi1sk: `active#${cognitoSub}`,
-        createdAt: now,
-        updatedAt: now,
+      Key: { pk: `USER#${cognitoSub}`, sk: 'SUBSCRIPTION' },
+      UpdateExpression:
+        'SET stripeCustomerId = :cust, stripeSubscriptionId = :sub, tierId = :tid, #st = :st, currentPeriodEnd = :cpe, cancelAtPeriodEnd = :cap, gsi1pk = :gsi1pk, gsi1sk = :gsi1sk, createdAt = if_not_exists(createdAt, :now), updatedAt = :now',
+      ExpressionAttributeNames: { '#st': 'status' },
+      ExpressionAttributeValues: {
+        ':cust': session.customer as string,
+        ':sub': stripeSubId || '',
+        ':tid': tierId,
+        ':st': 'active',
+        ':cpe': currentPeriodEnd,
+        ':cap': cancelAtPeriodEnd,
+        ':gsi1pk': 'SUBSCRIPTION',
+        ':gsi1sk': `active#${cognitoSub}`,
+        ':now': now,
       },
     })
   );
@@ -312,19 +343,33 @@ async function handleSubscriptionUpdated(subscription: Stripe.Subscription) {
     })
   );
 
-  // Update profile tier if the plan changed
+  // Update profile.tier ONLY on upgrades (rank higher than current). Downgrades
+  // are promoted at the renewal in handlePaymentSucceeded so the user keeps
+  // access for the billing period they've already paid for.
   if (tierName && status === 'active') {
-    await client.send(
-      new UpdateCommand({
+    const profileResult = await client.send(
+      new GetCommand({
         TableName: TABLE_NAME,
         Key: { pk: `USER#${cognitoSub}`, sk: 'PROFILE' },
-        UpdateExpression: 'SET tier = :tier, updatedAt = :now',
-        ExpressionAttributeValues: {
-          ':tier': tierName,
-          ':now': now,
-        },
       })
     );
+    const currentTier = (profileResult.Item?.tier as string) || 'Pup';
+    const TIER_RANK: Record<string, number> = { 'Pup': 1, 'Rock Runner': 2, 'Iron Dassie': 3 };
+    const isUpgrade = (TIER_RANK[tierName] || 0) > (TIER_RANK[currentTier] || 0);
+    const isFirstPromotion = currentTier === 'Pup' && tierName !== 'Pup';
+    if (isUpgrade || isFirstPromotion) {
+      await client.send(
+        new UpdateCommand({
+          TableName: TABLE_NAME,
+          Key: { pk: `USER#${cognitoSub}`, sk: 'PROFILE' },
+          UpdateExpression: 'SET tier = :tier, updatedAt = :now',
+          ExpressionAttributeValues: {
+            ':tier': tierName,
+            ':now': now,
+          },
+        })
+      );
+    }
   }
 
   console.log(`Subscription updated for ${cognitoSub}: ${status}, tier=${tierName}`);
@@ -438,6 +483,7 @@ async function handlePaymentSucceeded(invoice: Stripe.Invoice) {
 
   // Determine tier name from subscription
   let tierName = '';
+  let subItem: any = null;
   if (invoice.subscription) {
     const subResult = await client.send(
       new GetCommand({
@@ -445,8 +491,9 @@ async function handlePaymentSucceeded(invoice: Stripe.Invoice) {
         Key: { pk: `USER#${cognitoSub}`, sk: 'SUBSCRIPTION' },
       })
     );
-    if (subResult.Item?.tierId) {
-      tierName = await getTierName(subResult.Item.tierId);
+    subItem = subResult.Item;
+    if (subItem?.tierId) {
+      tierName = await getTierName(subItem.tierId);
     }
   }
 
@@ -469,6 +516,41 @@ async function handlePaymentSucceeded(invoice: Stripe.Invoice) {
       },
     })
   );
+
+  // Apply any pending downgrade at renewal: when an invoice is paid for a
+  // subscription that has pendingTierId, promote profile.tier + SUBSCRIPTION.tierId
+  // to the new tier and clear the pending fields. This is how deferred
+  // downgrades become effective.
+  if (subItem?.pendingTierId && subItem.pendingTierId !== subItem.tierId) {
+    const newTierName = await getTierName(subItem.pendingTierId);
+    if (newTierName) {
+      await client.send(
+        new UpdateCommand({
+          TableName: TABLE_NAME,
+          Key: { pk: `USER#${cognitoSub}`, sk: 'SUBSCRIPTION' },
+          UpdateExpression:
+            'SET tierId = :tid, updatedAt = :now REMOVE pendingTierId, pendingTierChangeAt',
+          ExpressionAttributeValues: {
+            ':tid': subItem.pendingTierId,
+            ':now': now,
+          },
+        })
+      );
+      await client.send(
+        new UpdateCommand({
+          TableName: TABLE_NAME,
+          Key: { pk: `USER#${cognitoSub}`, sk: 'PROFILE' },
+          UpdateExpression: 'SET tier = :tier, updatedAt = :now',
+          ExpressionAttributeValues: {
+            ':tier': newTierName,
+            ':now': now,
+          },
+        })
+      );
+      console.log(`Pending tier change applied for ${cognitoSub}: -> ${newTierName}`);
+      tierName = newTierName;
+    }
+  }
 
   console.log(`Payment recorded for ${cognitoSub}: $${(invoice.amount_paid / 100).toFixed(2)}`);
 }

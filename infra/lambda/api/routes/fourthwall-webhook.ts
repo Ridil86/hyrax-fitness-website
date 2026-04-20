@@ -258,7 +258,9 @@ export async function handleFourthwallWebhook(
   const eventType = payload?.type || payload?.event || payload?.eventType || '';
   console.log(`Fourthwall webhook: ${eventType}`);
 
-  // Route to handler — respond quickly (Fourthwall requires <2s)
+  // Route to handler. Persistence failures return 5xx so Fourthwall retries;
+  // email delivery failures are caught inside each handler and logged without
+  // failing the webhook (the order is already recorded).
   try {
     switch (eventType) {
       case 'ORDER_PLACED':
@@ -271,8 +273,12 @@ export async function handleFourthwallWebhook(
         console.log(`Fourthwall webhook: Unhandled event type "${eventType}"`);
     }
   } catch (err) {
-    // Log but still return 200 to prevent retries for handler errors
     console.error(`Fourthwall webhook handler error for ${eventType}:`, err);
+    return {
+      statusCode: 500,
+      headers: CORS_HEADERS,
+      body: JSON.stringify({ error: 'Webhook handler failed' }),
+    };
   }
 
   return success({ received: true });
