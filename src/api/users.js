@@ -10,6 +10,10 @@ export function fetchUsers({ limit, paginationToken, filter } = {}, authToken) {
   return apiGet(`/api/users${query ? `?${query}` : ''}`, authToken);
 }
 
+export function fetchUser(username, token) {
+  return apiGet(`/api/users/${encodeURIComponent(username)}`, token);
+}
+
 export function fetchUserGroups(username, token) {
   return apiGet(`/api/users/${encodeURIComponent(username)}/groups`, token);
 }

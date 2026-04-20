@@ -112,6 +112,87 @@
   color: rgba(27, 18, 10, .55);
 }
 
+/* ── Tier Badge ── */
+
+.users-tier {
+  display: inline-block;
+  padding: 3px 10px;
+  border-radius: 20px;
+  font-size: .78rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: .03em;
+  background: rgba(27, 18, 10, .06);
+  color: rgba(27, 18, 10, .55);
+}
+
+.users-tier.tier-trial {
+  background: var(--sunset);
+  color: #fff;
+}
+
+.users-tier.tier-pup {
+  background: rgba(27, 18, 10, .06);
+  color: rgba(27, 18, 10, .6);
+}
+
+.users-tier.tier-rock-runner {
+  background: rgba(253, 185, 15, .18);
+  color: #8a5a00;
+}
+
+.users-tier.tier-iron-dassie {
+  background: rgba(242, 133, 1, .14);
+  color: #b86800;
+}
+
+/* ── Subscription Status Badge (user detail) ── */
+
+.sub-status-badge {
+  display: inline-block;
+  padding: 3px 10px;
+  border-radius: 20px;
+  font-size: .78rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: .03em;
+  background: rgba(27, 18, 10, .06);
+  color: rgba(27, 18, 10, .55);
+}
+
+.sub-status-badge.sub-status-active {
+  background: rgba(34, 139, 34, .12);
+  color: #1a7a1a;
+}
+
+.sub-status-badge.sub-status-warn {
+  background: rgba(242, 133, 1, .14);
+  color: #b86800;
+}
+
+.sub-status-badge.sub-status-cancelled {
+  background: rgba(197, 48, 48, .12);
+  color: #c53030;
+}
+
+.sub-cancel-note {
+  font-size: .8rem;
+  color: #c53030;
+  margin-left: 6px;
+}
+
+.sub-mono {
+  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  font-size: .82rem;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  max-width: 260px;
+  display: inline-block;
+  vertical-align: middle;
+  color: rgba(27, 18, 10, .75);
+}
+
 /* ── Status Badge ── */
 
 .users-status {
@@ -235,10 +316,10 @@
 
   .users-table th:nth-child(2),
   .users-table td:nth-child(2),
-  .users-table th:nth-child(4),
-  .users-table td:nth-child(4),
   .users-table th:nth-child(5),
-  .users-table td:nth-child(5) {
+  .users-table td:nth-child(5),
+  .users-table th:nth-child(6),
+  .users-table td:nth-child(6) {
     display: none;
   }
 }

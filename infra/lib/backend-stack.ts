@@ -363,6 +363,10 @@ export class BackendStack extends cdk.Stack {
     });
 
     const userItem = usersResource.addResource('{username}');
+    userItem.addMethod('GET', lambdaIntegration, {
+      authorizer,
+      authorizationType: apigateway.AuthorizationType.COGNITO,
+    });
     userItem.addMethod('DELETE', lambdaIntegration, {
       authorizer,
       authorizationType: apigateway.AuthorizationType.COGNITO,

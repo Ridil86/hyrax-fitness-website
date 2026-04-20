@@ -5,7 +5,7 @@ import type {
 } from 'aws-lambda';
 import { listFaq, createFaq, updateFaq, deleteFaq, reorderFaq } from './routes/faq';
 import { getContent, updateContent } from './routes/content';
-import { listUsers, getUserGroups, updateUserGroups, deleteUser, setUserStatus } from './routes/users';
+import { listUsers, getUser, getUserGroups, updateUserGroups, deleteUser, setUserStatus } from './routes/users';
 import { getUploadUrl } from './routes/upload';
 import { getUserUploadUrl } from './routes/user-upload';
 import { logAuditEvent, listAuditLogs, getAuditStats } from './routes/audit';
@@ -186,14 +186,15 @@ export const handler = async (
       if (method === 'PUT') return updateUserGroups(event);
     }
 
-    // /api/users/{username} DELETE
-    const userDeleteMatch = path.match(/^\/api\/users\/([^/]+)$/);
-    if (userDeleteMatch && method === 'DELETE') {
+    // /api/users/{username} GET or DELETE
+    const userItemMatch = path.match(/^\/api\/users\/([^/]+)$/);
+    if (userItemMatch) {
       event.pathParameters = {
         ...event.pathParameters,
-        username: userDeleteMatch[1],
+        username: userItemMatch[1],
       };
-      return deleteUser(event);
+      if (method === 'GET') return getUser(event);
+      if (method === 'DELETE') return deleteUser(event);
     }
 
     // ── Equipment Routes ──

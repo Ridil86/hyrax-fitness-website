@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useParams, useLocation, Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
-import { fetchUsers, fetchUserGroups, updateUserGroups, deleteUser, freezeUser } from '../../api/users';
+import { fetchUser, fetchUserGroups, updateUserGroups, deleteUser, freezeUser } from '../../api/users';
 import { apiGet } from '../../api/client';
 import './admin.css';
 import './users-admin.css';
@@ -28,28 +28,23 @@ export default function UserProfile() {
 
   const decodedUsername = decodeURIComponent(username);
 
-  // Load user data if not passed via route state
+  // Hydrate user from the detail endpoint (always, so we get subscription + trial)
   useEffect(() => {
-    if (user) return;
-
     let cancelled = false;
 
     async function loadUser() {
       try {
-        setLoading(true);
         setError(null);
+        if (!user) setLoading(true);
         const token = await getIdToken();
-        const result = await fetchUsers({ limit: 60 }, token);
-        const found = (result.users || []).find(u => u.username === decodedUsername);
+        const detail = await fetchUser(decodedUsername, token);
         if (!cancelled) {
-          if (found) {
-            setUser(found);
-          } else {
-            setError('User not found');
-          }
+          setUser(prev => ({ ...(prev || {}), ...detail }));
         }
       } catch (err) {
-        if (!cancelled) setError(err.message || 'Failed to load user');
+        if (!cancelled && !user) {
+          setError(err.message || 'Failed to load user');
+        }
       } finally {
         if (!cancelled) setLoading(false);
       }
@@ -57,7 +52,8 @@ export default function UserProfile() {
 
     loadUser();
     return () => { cancelled = true; };
-  }, [decodedUsername, getIdToken, user]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [decodedUsername, getIdToken]);
 
   // Load groups (always fetch fresh)
   useEffect(() => {
@@ -197,6 +193,19 @@ export default function UserProfile() {
   const userType = groups.includes('Admin') ? 'Admin' : 'Client';
   const fullName = [user.givenName, user.familyName].filter(Boolean).join(' ') || 'Unnamed User';
   const initial = (user.givenName || user.email || '?')[0].toUpperCase();
+  const onTrial = !!user.onTrial;
+  const tier = user.tier || 'Pup';
+  const tierLabel = onTrial ? 'Trial' : tier;
+  const tierClass = onTrial ? 'tier-trial' : `tier-${tier.toLowerCase().replace(/\s+/g, '-')}`;
+  const subscription = user.subscription || null;
+  const subStatusClass = (() => {
+    const s = subscription?.status;
+    if (!s) return '';
+    if (s === 'active' || s === 'trialing') return 'sub-status-active';
+    if (s === 'past_due' || s === 'unpaid') return 'sub-status-warn';
+    if (s === 'canceled' || s === 'cancelled' || s === 'incomplete_expired') return 'sub-status-cancelled';
+    return 'sub-status-neutral';
+  })();
 
   return (
     <div>
@@ -250,6 +259,96 @@ export default function UserProfile() {
           <div className="profile-field">
             <label>Last Modified</label>
             <span>{formatDate(user.lastModified)}</span>
+          </div>
+          {user.emailVerified !== undefined && (
+            <div className="profile-field">
+              <label>Email Verified</label>
+              <span>{user.emailVerified ? 'Yes' : 'No'}</span>
+            </div>
+          )}
+          {user.source && (
+            <div className="profile-field">
+              <label>Signup Source</label>
+              <span style={{ textTransform: 'capitalize' }}>
+                {user.source === 'google' ? 'Google' : 'Email'}
+              </span>
+            </div>
+          )}
+        </div>
+
+        <div className="profile-groups-section">
+          <h3>Subscription</h3>
+          <div className="profile-details" style={{ marginTop: 0 }}>
+            <div className="profile-field">
+              <label>Current Tier</label>
+              <span className={`users-tier ${tierClass}`}>{tierLabel}</span>
+            </div>
+            {onTrial && user.effectiveTier && user.effectiveTier !== tier && (
+              <div className="profile-field">
+                <label>Effective Tier (during trial)</label>
+                <span>{user.effectiveTier}</span>
+              </div>
+            )}
+            {user.trialStartedAt && (
+              <div className="profile-field">
+                <label>Trial Started</label>
+                <span>{formatDate(user.trialStartedAt)}</span>
+              </div>
+            )}
+            {user.trialEndsAt && (
+              <div className="profile-field">
+                <label>Trial Ends</label>
+                <span>{formatDate(user.trialEndsAt)}</span>
+              </div>
+            )}
+            {subscription ? (
+              <>
+                <div className="profile-field">
+                  <label>Subscription Status</label>
+                  <span className={`sub-status-badge ${subStatusClass}`}>
+                    {subscription.status || '--'}
+                  </span>
+                </div>
+                {subscription.currentPeriodEnd && (
+                  <div className="profile-field">
+                    <label>Current Period End</label>
+                    <span>
+                      {formatDate(subscription.currentPeriodEnd)}
+                      {subscription.cancelAtPeriodEnd && (
+                        <span className="sub-cancel-note"> (cancels at period end)</span>
+                      )}
+                    </span>
+                  </div>
+                )}
+                {subscription.stripeCustomerId && (
+                  <div className="profile-field">
+                    <label>Stripe Customer</label>
+                    <span className="sub-mono" title={subscription.stripeCustomerId}>
+                      {subscription.stripeCustomerId}
+                    </span>
+                  </div>
+                )}
+                {subscription.stripeSubscriptionId && (
+                  <div className="profile-field">
+                    <label>Stripe Subscription</label>
+                    <span className="sub-mono" title={subscription.stripeSubscriptionId}>
+                      {subscription.stripeSubscriptionId}
+                    </span>
+                  </div>
+                )}
+                {subscription.createdAt && (
+                  <div className="profile-field">
+                    <label>Subscription Created</label>
+                    <span>{formatDate(subscription.createdAt)}</span>
+                  </div>
+                )}
+              </>
+            ) : (
+              <div className="profile-field">
+                <label>Stripe</label>
+                <span className="muted">No active subscription</span>
+              </div>
+            )}
           </div>
         </div>
 

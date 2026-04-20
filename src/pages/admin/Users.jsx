@@ -120,6 +120,7 @@ export default function Users() {
                 <tr>
                   <th>Email</th>
                   <th>Type</th>
+                  <th>Tier</th>
                   <th>Name</th>
                   <th>Status</th>
                   <th>Created</th>
@@ -136,6 +137,8 @@ export default function Users() {
                       key={user.username}
                       email={user.email || user.username}
                       userType={userType}
+                      tier={user.tier || 'Pup'}
+                      onTrial={!!user.onTrial}
                       name={name}
                       status={user.status || '--'}
                       created={formatDate(user.createdAt)}
@@ -160,14 +163,21 @@ export default function Users() {
   );
 }
 
-function UserRow({ email, userType, name, status, created, onClick }) {
+function tierSlug(tier) {
+  return (tier || '').toLowerCase().replace(/\s+/g, '-');
+}
+
+function UserRow({ email, userType, tier, onTrial, name, status, created, onClick }) {
   const statusClass = status === 'CONFIRMED' ? 'confirmed' : status === 'FORCE_CHANGE_PASSWORD' ? 'pending' : '';
   const typeClass = userType === 'Admin' ? 'type-admin' : 'type-client';
+  const tierLabel = onTrial ? 'Trial' : tier;
+  const tierClass = onTrial ? 'tier-trial' : `tier-${tierSlug(tier)}`;
 
   return (
     <tr className="users-row" onClick={onClick}>
       <td className="users-email">{email}</td>
       <td><span className={`users-type ${typeClass}`}>{userType}</span></td>
+      <td><span className={`users-tier ${tierClass}`}>{tierLabel}</span></td>
       <td>{name}</td>
       <td><span className={`users-status ${statusClass}`}>{status}</span></td>
       <td>{created}</td>
