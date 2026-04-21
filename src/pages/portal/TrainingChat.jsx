@@ -138,10 +138,15 @@ export default function TrainingChat() {
 
       {error && <div className="chat-error">{error}</div>}
 
-      <div className="chat-rate-limit" style={{ textAlign: 'center', fontSize: '0.85rem', color: 'var(--rock)', padding: '4px 0' }}>
+      <div
+        className={`chat-rate-limit${messagesRemaining <= 3 && !atLimit ? ' warning' : ''}${atLimit ? ' exhausted' : ''}`}
+        style={{ textAlign: 'center', fontSize: '0.85rem', padding: '4px 0' }}
+      >
         {atLimit
-          ? 'Daily message limit reached. Resets tomorrow.'
-          : `${messagesRemaining}/${MAX_DAILY_MESSAGES} messages remaining today`}
+          ? 'Daily message limit reached. Resets at midnight local time.'
+          : messagesRemaining <= 3
+            ? `Only ${messagesRemaining} message${messagesRemaining === 1 ? '' : 's'} remaining today.`
+            : `${messagesRemaining}/${MAX_DAILY_MESSAGES} messages remaining today`}
       </div>
 
       <div className="chat-input-area">
@@ -159,6 +164,7 @@ export default function TrainingChat() {
           className="btn primary chat-send-btn"
           onClick={handleSend}
           disabled={!input.trim() || sending || atLimit}
+          title={atLimit ? 'Daily limit reached. Resets at midnight local time.' : undefined}
         >
           {sending ? '...' : 'Send'}
         </button>

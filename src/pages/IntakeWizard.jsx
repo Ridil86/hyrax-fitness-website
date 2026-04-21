@@ -44,7 +44,7 @@ function CheckIcon() {
 export default function IntakeWizard() {
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
-  const { isAuthenticated, signInWithGoogle, getIdToken, loading: authLoading } = useAuth();
+  const { isAuthenticated, signInWithGoogle, getIdToken, loading: authLoading, refreshUser } = useAuth();
 
   // Detect if this is a Google user coming back from OAuth (step 3 only)
   const isGoogleUser = searchParams.get('google') === '1';
@@ -101,7 +101,9 @@ export default function IntakeWizard() {
           termsAccepted: true,
           privacyAccepted: true,
         });
-        // Navigate to portal
+        // Re-fetch profile so AuthContext clears the profileMissing flag
+        // before navigating to the portal.
+        await refreshUser();
         navigate('/portal', { replace: true });
       } else {
         // Normal user: create account via public signup endpoint

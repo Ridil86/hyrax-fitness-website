@@ -222,6 +222,28 @@ export default function PortalSubscription() {
         </motion.div>
       )}
 
+      {/* Pending downgrade banner */}
+      {subscription?.pendingTierId && subscription?.pendingTier && (
+        <motion.div
+          className="sub-message sub-message-pending"
+          initial={{ opacity: 0, y: -10 }}
+          animate={{ opacity: 1, y: 0 }}
+        >
+          <div>
+            <strong>Downgrade scheduled.</strong>{' '}
+            On {formatDate(subscription.pendingTierChangeAt || subscription.currentPeriodEnd)} you will switch to{' '}
+            <strong>{subscription.pendingTier.name}</strong>. You keep {subscription.tier?.name || 'your current plan'} benefits until then.
+          </div>
+          <button
+            className="btn small"
+            onClick={() => handleUpgrade(subscription.tierId)}
+            disabled={!!actionLoading}
+          >
+            {actionLoading === subscription.tierId ? 'Undoing...' : 'Undo downgrade'}
+          </button>
+        </motion.div>
+      )}
+
       {/* Current Plan Card */}
       <div className="portal-card sub-current-plan">
         <h3>Current Plan</h3>
@@ -421,8 +443,9 @@ export default function PortalSubscription() {
                     showCancelConfirm ? (
                       <div className="sub-cancel-confirm">
                         <p>
-                          Are you sure? You'll keep access until the end of your
-                          billing period.
+                          You'll downgrade to <strong>{tier.name}</strong> on{' '}
+                          <strong>{formatDate(subscription?.currentPeriodEnd)}</strong>.
+                          You'll keep <strong>{userTier}</strong> benefits until then.
                         </p>
                         <div className="sub-cancel-actions">
                           <button

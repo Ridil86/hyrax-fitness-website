@@ -78,6 +78,24 @@ export async function getSubscription(
       }
     }
 
+    // Enrich with pending tier info (set when user downgrades mid-period)
+    let pendingTierInfo = null;
+    if (result.Item.pendingTierId) {
+      const pendingResult = await client.send(
+        new GetCommand({
+          TableName: TABLE_NAME,
+          Key: { pk: 'TIER', sk: `TIER#${result.Item.pendingTierId}` },
+        })
+      );
+      if (pendingResult.Item) {
+        pendingTierInfo = {
+          name: pendingResult.Item.name,
+          price: pendingResult.Item.price,
+          priceInCents: pendingResult.Item.priceInCents,
+        };
+      }
+    }
+
     return success({
       subscription: {
         stripeSubscriptionId: result.Item.stripeSubscriptionId,
@@ -86,6 +104,9 @@ export async function getSubscription(
         currentPeriodEnd: result.Item.currentPeriodEnd,
         cancelAtPeriodEnd: result.Item.cancelAtPeriodEnd || false,
         tier: tierInfo,
+        pendingTierId: result.Item.pendingTierId || null,
+        pendingTierChangeAt: result.Item.pendingTierChangeAt || null,
+        pendingTier: pendingTierInfo,
       },
     });
   } catch (error) {

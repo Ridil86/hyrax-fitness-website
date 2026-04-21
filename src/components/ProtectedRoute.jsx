@@ -2,7 +2,7 @@ import { Navigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 
 export default function ProtectedRoute({ requiredGroup, children }) {
-  const { isAuthenticated, groups, loading } = useAuth();
+  const { isAuthenticated, groups, loading, profileMissing } = useAuth();
 
   if (loading) {
     return (
@@ -14,6 +14,12 @@ export default function ProtectedRoute({ requiredGroup, children }) {
 
   if (!isAuthenticated) {
     return <Navigate to="/login" replace />;
+  }
+
+  // Authenticated but no DynamoDB profile yet (aborted Google OAuth terms step).
+  // Funnel them back through the legal-acceptance step so we can create one.
+  if (profileMissing && requiredGroup !== 'Admin') {
+    return <Navigate to="/get-started?google=1" replace />;
   }
 
   if (requiredGroup && !groups.includes(requiredGroup)) {

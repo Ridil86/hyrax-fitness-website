@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import { fetchNutritionProfile, updateNutritionProfile } from '../../api/nutritionProfile';
+import { loadDraft, saveDraft, clearDraft } from '../../utils/questionnaireDraft';
 import './nutrition-questionnaire.css';
 
 const STEPS = [
@@ -138,14 +139,16 @@ const DEFAULT_PROFILE = {
 };
 
 export default function NutritionQuestionnaire() {
-  const { getIdToken } = useAuth();
+  const { getIdToken, user } = useAuth();
   const navigate = useNavigate();
+  const userKey = user?.username || user?.userId || 'anon';
   const [step, setStep] = useState(0);
   const [profile, setProfile] = useState(DEFAULT_PROFILE);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [message, setMessage] = useState(null);
   const [isEdit, setIsEdit] = useState(false);
+  const [draftReady, setDraftReady] = useState(false);
 
   useEffect(() => {
     let cancelled = false;
@@ -157,16 +160,34 @@ export default function NutritionQuestionnaire() {
         if (data?.nutritionProfile) {
           setProfile({ ...DEFAULT_PROFILE, ...data.nutritionProfile });
           setIsEdit(true);
+        } else {
+          const draft = loadDraft('nutrition', userKey);
+          if (draft?.profile) {
+            setProfile({ ...DEFAULT_PROFILE, ...draft.profile });
+            if (typeof draft.step === 'number') setStep(draft.step);
+          }
         }
       } catch {
-        // first time — use defaults
+        const draft = loadDraft('nutrition', userKey);
+        if (!cancelled && draft?.profile) {
+          setProfile({ ...DEFAULT_PROFILE, ...draft.profile });
+          if (typeof draft.step === 'number') setStep(draft.step);
+        }
       } finally {
-        if (!cancelled) setLoading(false);
+        if (!cancelled) {
+          setLoading(false);
+          setDraftReady(true);
+        }
       }
     }
     load();
     return () => { cancelled = true; };
-  }, [getIdToken]);
+  }, [getIdToken, userKey]);
+
+  useEffect(() => {
+    if (!draftReady) return;
+    saveDraft('nutrition', userKey, { profile, step });
+  }, [draftReady, userKey, profile, step]);
 
   const updateField = (field, value) => {
     setProfile((prev) => ({ ...prev, [field]: value }));
@@ -228,6 +249,7 @@ export default function NutritionQuestionnaire() {
         weight: profile.weight ? Number(profile.weight) : '',
       };
       await updateNutritionProfile(token, { nutritionProfile: profileData });
+      clearDraft('nutrition', userKey);
       setMessage({ type: 'success', text: 'Nutrition profile saved!' });
       setTimeout(() => navigate('/portal/nutrition'), 1200);
     } catch (err) {
@@ -282,11 +304,11 @@ export default function NutritionQuestionnaire() {
               <p>Critical information for your safety</p>
             </div>
 
-            <div className="nq-allergy-warning">
+            <div className="nq-allergy-warning" role="alert">
               <span className="nq-allergy-warning-icon">&#9888;</span>
               <div>
-                <strong>Allergy information is critical for your safety.</strong>
-                <p>Please list ALL allergies. This ensures your meal plans never include harmful ingredients.</p>
+                <strong>Safety-critical step</strong>
+                <p>List every allergy, even mild ones. Our plans exclude every listed allergen - including trace ingredients and garnishes. Missing an entry here can cause a reaction.</p>
               </div>
             </div>
 

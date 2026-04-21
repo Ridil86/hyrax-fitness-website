@@ -107,6 +107,43 @@
   line-height: 1.5;
 }
 
+/* Success banner */
+.auth-success {
+  padding: 10px 14px;
+  margin-bottom: 18px;
+  border-radius: 10px;
+  background: rgba(22, 163, 74, .08);
+  border: 1px solid rgba(22, 163, 74, .20);
+  color: #166534;
+  font-size: .9rem;
+  line-height: 1.5;
+}
+
+/* Forgot-password link row (smaller, right-aligned) */
+.auth-field-row {
+  display: flex;
+  justify-content: flex-end;
+  margin-top: 6px;
+  margin-bottom: 18px;
+}
+
+.auth-field-row a,
+.auth-link-button {
+  font-size: .85rem;
+  font-weight: 600;
+  color: var(--sunset);
+  background: none;
+  border: none;
+  padding: 0;
+  cursor: pointer;
+  font-family: inherit;
+}
+
+.auth-field-row a:hover,
+.auth-link-button:hover {
+  color: var(--earth);
+}
+
 /* Links row */
 .auth-links {
   margin-top: 20px;

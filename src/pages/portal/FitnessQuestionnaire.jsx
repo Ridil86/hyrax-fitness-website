@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import { fetchFitnessProfile, updateFitnessProfile } from '../../api/fitnessProfile';
+import { loadDraft, saveDraft, clearDraft } from '../../utils/questionnaireDraft';
 import './fitness-questionnaire.css';
 
 const STEPS = [
@@ -146,14 +147,16 @@ const DEFAULT_PROFILE = {
 };
 
 export default function FitnessQuestionnaire() {
-  const { getIdToken } = useAuth();
+  const { getIdToken, user } = useAuth();
   const navigate = useNavigate();
+  const userKey = user?.username || user?.userId || 'anon';
   const [step, setStep] = useState(0);
   const [profile, setProfile] = useState(DEFAULT_PROFILE);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [message, setMessage] = useState(null);
   const [isEdit, setIsEdit] = useState(false);
+  const [draftReady, setDraftReady] = useState(false);
 
   useEffect(() => {
     let cancelled = false;
@@ -165,16 +168,35 @@ export default function FitnessQuestionnaire() {
         if (data?.fitnessProfile) {
           setProfile({ ...DEFAULT_PROFILE, ...data.fitnessProfile });
           setIsEdit(true);
+        } else {
+          const draft = loadDraft('fitness', userKey);
+          if (draft?.profile) {
+            setProfile({ ...DEFAULT_PROFILE, ...draft.profile });
+            if (typeof draft.step === 'number') setStep(draft.step);
+          }
         }
       } catch {
-        // first time — use defaults
+        // first time — fall back to draft if any
+        const draft = loadDraft('fitness', userKey);
+        if (!cancelled && draft?.profile) {
+          setProfile({ ...DEFAULT_PROFILE, ...draft.profile });
+          if (typeof draft.step === 'number') setStep(draft.step);
+        }
       } finally {
-        if (!cancelled) setLoading(false);
+        if (!cancelled) {
+          setLoading(false);
+          setDraftReady(true);
+        }
       }
     }
     load();
     return () => { cancelled = true; };
-  }, [getIdToken]);
+  }, [getIdToken, userKey]);
+
+  useEffect(() => {
+    if (!draftReady) return;
+    saveDraft('fitness', userKey, { profile, step });
+  }, [draftReady, userKey, profile, step]);
 
   const updateField = (field, value) => {
     setProfile((prev) => ({ ...prev, [field]: value }));
@@ -244,6 +266,7 @@ export default function FitnessQuestionnaire() {
         age: profile.age ? Number(profile.age) : null,
       };
       await updateFitnessProfile(token, { fitnessProfile: profileData });
+      clearDraft('fitness', userKey);
       setMessage({ type: 'success', text: 'Fitness profile saved!' });
       setTimeout(() => navigate('/portal/routine'), 1200);
     } catch (err) {

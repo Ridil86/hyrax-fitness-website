@@ -26,22 +26,28 @@ export default function Merch() {
   const [products, setProducts] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [retryKey, setRetryKey] = useState(0);
 
   useEffect(() => {
     let cancelled = false;
+    setLoading(true);
+    setError(null);
     async function load() {
       try {
         const data = await fetchProducts(0, 50);
         if (!cancelled) setProducts(data.results || []);
       } catch (err) {
-        if (!cancelled) setError(err.message);
+        if (!cancelled) {
+          setError(err.message);
+          console.error('Merch load failed', { status: err.status, message: err.message });
+        }
       } finally {
         if (!cancelled) setLoading(false);
       }
     }
     load();
     return () => { cancelled = true; };
-  }, []);
+  }, [retryKey]);
 
   const getImage = (product, index = 0) => {
     const img = product.images?.[index];
@@ -66,7 +72,14 @@ export default function Merch() {
 
       {error && (
         <div className="merch-empty">
-          <p>Unable to load products right now. Please try again later.</p>
+          <p>Unable to load products right now.</p>
+          <button
+            type="button"
+            className="btn primary"
+            onClick={() => setRetryKey((k) => k + 1)}
+          >
+            Try Again
+          </button>
         </div>
       )}
 

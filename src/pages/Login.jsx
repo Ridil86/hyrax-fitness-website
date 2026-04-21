@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import GoogleIcon from '../components/GoogleIcon';
 import './auth.css';
@@ -7,12 +7,20 @@ import './auth.css';
 export default function Login() {
   const { signIn, signInWithGoogle } = useAuth();
   const navigate = useNavigate();
+  const location = useLocation();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [newPassword, setNewPassword] = useState('');
   const [challengeState, setChallengeState] = useState(null);
   const [error, setError] = useState('');
   const [submitting, setSubmitting] = useState(false);
+  const [googleRedirecting, setGoogleRedirecting] = useState(false);
+
+  const flash = location.state?.confirmed
+    ? 'Email verified. You can now sign in.'
+    : location.state?.passwordReset
+    ? 'Password reset. Sign in with your new password.'
+    : null;
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -28,7 +36,7 @@ export default function Login() {
       }
 
       if (result.nextStep?.signInStep === 'DONE') {
-        navigate('/');
+        navigate('/portal');
         return;
       }
 
@@ -61,6 +69,12 @@ export default function Login() {
     } finally {
       setSubmitting(false);
     }
+  };
+
+  const handleGoogleClick = () => {
+    sessionStorage.setItem('hyrax-google-intent', 'login');
+    setGoogleRedirecting(true);
+    signInWithGoogle();
   };
 
   // New password challenge form
@@ -101,6 +115,7 @@ export default function Login() {
       <div className="auth-card">
         <h2>Sign In</h2>
         <p className="auth-subtitle">Welcome back to Hyrax Fitness</p>
+        {flash && <div className="auth-success">{flash}</div>}
         {error && <div className="auth-error">{error}</div>}
         <form onSubmit={handleSubmit}>
           <div className="auth-field">
@@ -128,6 +143,9 @@ export default function Login() {
               autoComplete="current-password"
             />
           </div>
+          <div className="auth-field-row">
+            <Link to="/forgot-password">Forgot password?</Link>
+          </div>
           <button className="auth-submit" type="submit" disabled={submitting}>
             {submitting ? 'Signing In...' : 'Sign In'}
           </button>
@@ -140,13 +158,11 @@ export default function Login() {
         <button
           type="button"
           className="auth-google-btn"
-          onClick={() => {
-            sessionStorage.setItem('hyrax-google-intent', 'login');
-            signInWithGoogle();
-          }}
+          onClick={handleGoogleClick}
+          disabled={googleRedirecting || submitting}
         >
           <GoogleIcon />
-          <span>Login with Google</span>
+          <span>{googleRedirecting ? 'Redirecting to Google...' : 'Login with Google'}</span>
         </button>
 
         <p className="auth-links">

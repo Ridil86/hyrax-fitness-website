@@ -24,6 +24,21 @@
   border: 1px solid rgba(220, 38, 38, .12);
 }
 
+.sub-message-pending {
+  display: flex;
+  gap: 14px;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  background: rgba(253, 185, 15, .18);
+  color: #854d0e;
+  border: 1px solid rgba(253, 185, 15, .38);
+}
+
+.sub-message-pending .btn {
+  flex-shrink: 0;
+}
+
 /* Current plan card */
 .sub-current-plan h3 {
   margin: 0 0 14px;

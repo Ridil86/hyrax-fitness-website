@@ -147,6 +147,20 @@
   min-width: 60px;
 }
 
+.chat-rate-limit {
+  color: var(--rock);
+}
+
+.chat-rate-limit.warning {
+  color: #b45309;
+  font-weight: 600;
+}
+
+.chat-rate-limit.exhausted {
+  color: #991b1b;
+  font-weight: 600;
+}
+
 /* ── Responsive ── */
 @media (max-width: 600px) {
   .chat-bubble {

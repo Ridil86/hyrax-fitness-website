@@ -41,6 +41,31 @@
   white-space: nowrap;
 }
 
+.portal-tier-badge {
+  display: inline-block;
+  margin-top: 8px;
+  padding: 3px 10px;
+  border-radius: 999px;
+  font-size: .72rem;
+  font-weight: 700;
+  letter-spacing: .04em;
+  text-transform: uppercase;
+  color: var(--ink);
+  background: var(--sand, #F5E7CD);
+  border: 1px solid rgba(27, 18, 10, .10);
+}
+
+.portal-tier-badge.portal-tier-rock-runner {
+  background: var(--sunrise, #FDB90F);
+  color: #3a250a;
+}
+
+.portal-tier-badge.portal-tier-iron-dassie {
+  background: linear-gradient(135deg, var(--sunrise, #FDB90F), var(--sunset, #F28501));
+  color: #fff;
+  border-color: transparent;
+}
+
 /* ── Nav Links ── */
 .portal-sidebar-nav {
   display: flex;
@@ -70,6 +95,25 @@
   background: rgba(242, 133, 1, .12);
   color: var(--ink);
   font-weight: 650;
+}
+
+.portal-nav-link.locked {
+  color: rgba(27, 18, 10, .42);
+}
+
+.portal-nav-link.locked:hover {
+  background: rgba(27, 18, 10, .04);
+  color: rgba(27, 18, 10, .55);
+}
+
+.portal-nav-link.locked .portal-nav-label {
+  flex: 1;
+}
+
+.portal-nav-lock {
+  font-size: .8rem;
+  margin-left: auto;
+  opacity: .7;
 }
 
 .portal-nav-icon {

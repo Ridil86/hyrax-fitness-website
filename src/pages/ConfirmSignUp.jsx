@@ -69,7 +69,11 @@ export default function ConfirmSignUp() {
               autoComplete="one-time-code"
             />
           </div>
-          <button className="auth-submit" type="submit" disabled={submitting}>
+          <button
+            className="auth-submit"
+            type="submit"
+            disabled={submitting || code.length !== 6}
+          >
             {submitting ? 'Verifying...' : 'Verify Email'}
           </button>
         </form>

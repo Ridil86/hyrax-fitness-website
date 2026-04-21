@@ -24,6 +24,10 @@ cd infra && MSYS_NO_PATHCONV=1 npx tsx scripts/seed-content.ts --profile hyrax-f
 cd infra && MSYS_NO_PATHCONV=1 npx tsx scripts/seed-tiers.ts --profile hyrax-fitness  # one-time
 cd infra && MSYS_NO_PATHCONV=1 npx tsx scripts/seed-program.ts --profile hyrax-fitness  # 14 equipment, 15 exercises, 15 workouts
 
+# Promote a Cognito user to the Admin group (required to access /admin)
+cd infra && MSYS_NO_PATHCONV=1 npx tsx scripts/promote-admin.ts user@example.com --profile hyrax-fitness
+cd infra && MSYS_NO_PATHCONV=1 npx tsx scripts/promote-admin.ts user@example.com --remove --profile hyrax-fitness
+
 # Trigger Amplify deploy
 MSYS_NO_PATHCONV=1 aws amplify start-job --app-id d2lx0kagzo4fyv --branch-name master --job-type RELEASE --profile hyrax-fitness
 ```
@@ -227,6 +231,28 @@ Dashboard, Users, FAQ, Equipment, Exercises, Workouts, Videos, Community, Suppor
 2. **Import and register** in `infra/lambda/api/index.ts` - add regex match in the handler function (place specific paths before generic ones)
 3. **Add API Gateway resource** in `infra/lib/backend-stack.ts` - create resource + method with Cognito authorizer if authenticated; include OPTIONS method for CORS
 4. **Deploy**: `cd infra && MSYS_NO_PATHCONV=1 npx cdk deploy --all --profile hyrax-fitness`
+
+## Admin Bootstrap
+
+There is no self-serve path to become an admin. The first admin on a fresh deployment (and any subsequent promotions) must be added to the Cognito `Admin` group manually.
+
+Preferred: run the bootstrap script after the user has signed up.
+
+```bash
+cd infra && MSYS_NO_PATHCONV=1 npx tsx scripts/promote-admin.ts user@example.com --profile hyrax-fitness
+```
+
+The script reads `VITE_COGNITO_USER_POOL_ID` from the project-root `.env.local`, finds the Cognito user by email, and calls `AdminAddUserToGroup`. Pass `--remove` to demote. The user must sign out and back in for the group claim to appear on their access token.
+
+Equivalent raw AWS CLI (if the script is unavailable):
+
+```bash
+MSYS_NO_PATHCONV=1 aws cognito-idp admin-add-user-to-group \
+  --user-pool-id $VITE_COGNITO_USER_POOL_ID \
+  --username <email> \
+  --group-name Admin \
+  --region us-east-1 --profile hyrax-fitness
+```
 
 ## Deployment
 

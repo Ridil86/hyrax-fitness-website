@@ -152,6 +152,10 @@ export async function handleWebhook(
         await handleCheckoutCompleted(stripeEvent.data.object as Stripe.Checkout.Session);
         break;
 
+      case 'checkout.session.expired':
+        await handleCheckoutExpired(stripeEvent.data.object as Stripe.Checkout.Session);
+        break;
+
       case 'customer.subscription.updated':
         await handleSubscriptionUpdated(stripeEvent.data.object as Stripe.Subscription);
         break;
@@ -284,6 +288,52 @@ async function handleCheckoutCompleted(session: Stripe.Checkout.Session) {
     );
   } catch (err) {
     console.warn('Failed to send subscription confirmation email:', err);
+  }
+}
+
+/**
+ * Clean up the placeholder `pending` subscription record written when the
+ * user starts a checkout session but never completes payment. Keeps the
+ * SUBSCRIPTION row from lingering with stale state.
+ */
+async function handleCheckoutExpired(session: Stripe.Checkout.Session) {
+  const cognitoSub =
+    session.metadata?.cognitoSub ||
+    (session.customer ? await getCognitoSub(session.customer as string) : null);
+
+  if (!cognitoSub) {
+    console.log('checkout.session.expired: no cognitoSub on session');
+    return;
+  }
+
+  try {
+    const existing = await client.send(
+      new GetCommand({
+        TableName: TABLE_NAME,
+        Key: { pk: `USER#${cognitoSub}`, sk: 'SUBSCRIPTION' },
+      })
+    );
+    // Only clear when the record is still in the placeholder state we wrote
+    // during createCheckoutSession. If the user has since completed another
+    // checkout or modified their plan, leave it alone.
+    if (existing.Item && existing.Item.status === 'pending' && !existing.Item.stripeSubscriptionId) {
+      await client.send(
+        new UpdateCommand({
+          TableName: TABLE_NAME,
+          Key: { pk: `USER#${cognitoSub}`, sk: 'SUBSCRIPTION' },
+          UpdateExpression: 'SET #st = :st, gsi1sk = :gsi, updatedAt = :now',
+          ExpressionAttributeNames: { '#st': 'status' },
+          ExpressionAttributeValues: {
+            ':st': 'expired',
+            ':gsi': `expired#${cognitoSub}`,
+            ':now': new Date().toISOString(),
+          },
+        })
+      );
+      console.log(`Cleared stale pending subscription for ${cognitoSub} after checkout expiry`);
+    }
+  } catch (err) {
+    console.warn('checkout.session.expired cleanup failed:', err);
   }
 }
 

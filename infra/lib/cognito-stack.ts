@@ -144,13 +144,15 @@ export class CognitoStack extends cdk.Stack {
 
     // ── Post-Confirmation Lambda Trigger ──
     // Auto-bundles TypeScript with esbuild via NodejsFunction
-    // Note: No environment variables needed - the event provides userPoolId
     const postConfirmationFn = new NodejsFunction(this, 'PostConfirmationFn', {
       functionName: 'hyrax-post-confirmation',
       runtime: Runtime.NODEJS_20_X,
       entry: path.join(__dirname, '..', 'lambda', 'post-confirmation', 'index.ts'),
       handler: 'handler',
       timeout: cdk.Duration.seconds(10),
+      environment: {
+        TABLE_NAME: 'HyraxContent',
+      },
       bundling: {
         minify: true,
         sourceMap: false,
@@ -158,14 +160,24 @@ export class CognitoStack extends cdk.Stack {
       },
     });
 
-    // Grant the Lambda permission to add users to groups
-    // Use a constructed ARN to avoid circular dependency
-    // (UserPool -> Lambda trigger, Lambda policy -> UserPool ARN)
+    // Grant the Lambda permission to add users to groups.
+    // Use constructed ARNs to avoid circular dependency between this stack
+    // and the backend stack that owns the DynamoDB table.
     postConfirmationFn.addToRolePolicy(
       new iam.PolicyStatement({
         actions: ['cognito-idp:AdminAddUserToGroup'],
         resources: [
           `arn:aws:cognito-idp:${this.region}:${this.account}:userpool/*`,
+        ],
+      })
+    );
+
+    // Seed an empty profile row on confirmed signup.
+    postConfirmationFn.addToRolePolicy(
+      new iam.PolicyStatement({
+        actions: ['dynamodb:PutItem'],
+        resources: [
+          `arn:aws:dynamodb:${this.region}:${this.account}:table/HyraxContent`,
         ],
       })
     );

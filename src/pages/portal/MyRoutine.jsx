@@ -42,10 +42,12 @@ export default function MyRoutine() {
   const [userProfile, setUserProfile] = useState(null);
 
   const hasAccess = hasTierAccess(effectiveTier, 'Rock Runner');
+  const [generatingSince, setGeneratingSince] = useState(null);
+  const [elapsed, setElapsed] = useState(0);
 
   // Poll for workout when generation is in progress
   const pollForWorkout = useCallback(async (token) => {
-    const MAX_POLLS = 30;
+    const MAX_POLLS = 60;
     for (let i = 0; i < MAX_POLLS; i++) {
       await new Promise((r) => setTimeout(r, 3000));
       try {
@@ -60,6 +62,20 @@ export default function MyRoutine() {
     }
     throw new Error('Generation timed out. Please refresh.');
   }, []);
+
+  useEffect(() => {
+    if (!generating) {
+      setElapsed(0);
+      setGeneratingSince(null);
+      return undefined;
+    }
+    const start = generatingSince || Date.now();
+    if (!generatingSince) setGeneratingSince(start);
+    const id = setInterval(() => {
+      setElapsed(Math.floor((Date.now() - start) / 1000));
+    }, 1000);
+    return () => clearInterval(id);
+  }, [generating, generatingSince]);
 
   useEffect(() => {
     let cancelled = false;
@@ -255,6 +271,9 @@ export default function MyRoutine() {
 
   // No workout generated yet today
   if (!workout) {
+    const patience = generating && elapsed >= 60
+      ? 'Still working on it. This can take up to three minutes.'
+      : null;
     return (
       <div>
         <div className="admin-page-header">
@@ -266,13 +285,21 @@ export default function MyRoutine() {
           <div className="routine-gate-icon">&#x1F3CB;</div>
           <h2>Ready for Today&rsquo;s Workout?</h2>
           <p>Your digital training assistant will create a personalized workout based on your profile, recent activity, and recovery needs.</p>
-          {error && <div className="routine-error">{error}</div>}
+          {error && (
+            <div className="routine-error">
+              <p>{error}</p>
+              <button className="btn secondary" onClick={handleGenerate}>
+                Try Again
+              </button>
+            </div>
+          )}
+          {patience && <p className="routine-patience">{patience}</p>}
           <button
             className="btn primary"
             onClick={handleGenerate}
             disabled={generating}
           >
-            {generating ? 'Generating...' : 'Generate Today\u2019s Workout'}
+            {generating ? `Generating... (${elapsed}s)` : 'Generate Today\u2019s Workout'}
           </button>
           <div className="routine-profile-summary">
             <span><strong>Level:</strong> {fitnessProfile.experienceLevel}</span>

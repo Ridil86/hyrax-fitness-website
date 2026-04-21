@@ -23,8 +23,8 @@ export async function generateDailyNutrition(token, onStatusChange) {
 
   if (onStatusChange) onStatusChange('generating');
 
-  // Poll GET /api/nutrition/today every 3 seconds until ready
-  const MAX_POLLS = 30; // 90 seconds max
+  // Poll GET /api/nutrition/today every 3 seconds until ready (up to 3 min).
+  const MAX_POLLS = 60;
   for (let i = 0; i < MAX_POLLS; i++) {
     await new Promise((r) => setTimeout(r, 3000));
     try {

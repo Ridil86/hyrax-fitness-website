@@ -20,6 +20,7 @@ export function AuthProvider({ children }) {
   const [trialEndsAt, setTrialEndsAt] = useState(null);
   const [trialActive, setTrialActive] = useState(false);
   const [effectiveTier, setEffectiveTier] = useState('Pup');
+  const [profileMissing, setProfileMissing] = useState(false);
   const [loading, setLoading] = useState(true);
 
   const isAuthenticated = !!user;
@@ -53,9 +54,14 @@ export function AuthProvider({ children }) {
           setTrialEndsAt(profile.trialEndsAt || null);
           setTrialActive(profile.isTrialActive || false);
           setEffectiveTier(profile.effectiveTier || profile.tier || 'Pup');
+          setProfileMissing(false);
         }
       } catch (err) {
-        console.error('AuthContext: profile fetch failed, tier defaults to Pup', err);
+        if (err?.status === 404) {
+          setProfileMissing(true);
+        } else {
+          console.error('AuthContext: profile fetch failed, tier defaults to Pup', err);
+        }
       }
     } catch {
       setUser(null);
@@ -64,35 +70,36 @@ export function AuthProvider({ children }) {
       setTrialEndsAt(null);
       setTrialActive(false);
       setEffectiveTier('Pup');
+      setProfileMissing(false);
     }
   }, [extractGroups]);
 
-  // Check for existing session on mount
+  // Check for existing session on mount, then listen for OAuth redirect
+  // completion. The initial mount owns the `loading` flag; the OAuth listener
+  // only clears `loading` if an OAuth event fires before the mount finishes.
   useEffect(() => {
+    let initialLoadDone = false;
+    const unsubscribe = Hub.listen('auth', async ({ payload }) => {
+      if (payload.event === 'signInWithRedirect') {
+        await refreshUser();
+        if (!initialLoadDone) setLoading(false);
+      }
+      if (payload.event === 'signInWithRedirect_failure') {
+        console.error('OAuth redirect failed:', payload.data);
+        if (!initialLoadDone) setLoading(false);
+      }
+    });
+
     (async () => {
       try {
         await refreshUser();
       } catch {
         // Not signed in
       } finally {
+        initialLoadDone = true;
         setLoading(false);
       }
     })();
-  }, [refreshUser]);
-
-  // Listen for OAuth redirect completion (Google sign-in)
-  useEffect(() => {
-    const unsubscribe = Hub.listen('auth', async ({ payload }) => {
-      if (payload.event === 'signInWithRedirect') {
-        // OAuth redirect completed successfully
-        await refreshUser();
-        setLoading(false);
-      }
-      if (payload.event === 'signInWithRedirect_failure') {
-        console.error('OAuth redirect failed:', payload.data);
-        setLoading(false);
-      }
-    });
 
     return unsubscribe;
   }, [refreshUser]);
@@ -133,6 +140,7 @@ export function AuthProvider({ children }) {
     setTrialEndsAt(null);
     setTrialActive(false);
     setEffectiveTier('Pup');
+    setProfileMissing(false);
   };
 
   // Sign in with Google via Cognito Hosted UI redirect
@@ -160,9 +168,10 @@ export function AuthProvider({ children }) {
         setTrialEndsAt(profile.trialEndsAt || null);
         setTrialActive(profile.isTrialActive || false);
         setEffectiveTier(profile.effectiveTier || profile.tier || 'Pup');
+        setProfileMissing(false);
       }
-    } catch {
-      // Profile fetch failed - keep current tier
+    } catch (err) {
+      if (err?.status === 404) setProfileMissing(true);
     }
   }, [getIdToken]);
 
@@ -175,6 +184,7 @@ export function AuthProvider({ children }) {
     trialEndsAt,
     trialActive,
     effectiveTier,
+    profileMissing,
     loading,
     signIn,
     signUp,
@@ -183,6 +193,7 @@ export function AuthProvider({ children }) {
     signInWithGoogle,
     getIdToken,
     refreshTier,
+    refreshUser,
   };
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

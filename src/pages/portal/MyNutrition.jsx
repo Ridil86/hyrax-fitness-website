@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import { fetchNutritionProfile } from '../../api/nutritionProfile';
 import { generateDailyNutrition, fetchTodayNutrition } from '../../api/nutrition';
@@ -36,8 +36,23 @@ export default function MyNutrition() {
   const [showAdhocForm, setShowAdhocForm] = useState(false);
   const [adhocForm, setAdhocForm] = useState({ name: '', items: [{ food: '', amount: '', calories: '' }], notes: '' });
 
-  const navigate = useNavigate();
   const hasAccess = hasTierAccess(effectiveTier, 'Iron Dassie');
+  const [generatingSince, setGeneratingSince] = useState(null);
+  const [elapsed, setElapsed] = useState(0);
+
+  useEffect(() => {
+    if (!generating) {
+      setElapsed(0);
+      setGeneratingSince(null);
+      return undefined;
+    }
+    const start = generatingSince || Date.now();
+    if (!generatingSince) setGeneratingSince(start);
+    const id = setInterval(() => {
+      setElapsed(Math.floor((Date.now() - start) / 1000));
+    }, 1000);
+    return () => clearInterval(id);
+  }, [generating, generatingSince]);
 
   useEffect(() => {
     let cancelled = false;
@@ -80,16 +95,9 @@ export default function MyNutrition() {
     return () => { cancelled = true; };
   }, [getIdToken, hasAccess]);
 
-  // Redirect to questionnaire if nutrition profile not completed
-  useEffect(() => {
-    if (!loading && hasAccess && fitnessProfile && !nutritionProfile) {
-      navigate('/portal/nutrition-questionnaire', { replace: true });
-    }
-  }, [loading, hasAccess, fitnessProfile, nutritionProfile, navigate]);
-
   /** Poll for a generating plan until ready */
   async function fetchTodayNutritionPoll(token) {
-    const MAX_POLLS = 30;
+    const MAX_POLLS = 60;
     for (let i = 0; i < MAX_POLLS; i++) {
       await new Promise((r) => setTimeout(r, 3000));
       try {
@@ -284,7 +292,14 @@ export default function MyNutrition() {
       <div className="nutrition-page">
         <div className="admin-page-header">
           <h1>My Nutrition</h1>
-          <p>Redirecting to questionnaire...</p>
+          <p>Personalized daily nutrition plans</p>
+        </div>
+        <TrialBanner compact featureName="Custom Nutrition" />
+        <div className="nutrition-gate">
+          <div className="nutrition-gate-icon">&#x1F957;</div>
+          <h2>Complete Your Nutrition Profile</h2>
+          <p>Tell us about your allergies, restrictions, calorie targets, and meal schedule so we can plan safely.</p>
+          <Link to="/portal/nutrition-questionnaire" className="btn primary">Start Nutrition Questionnaire</Link>
         </div>
       </div>
     );
@@ -292,6 +307,9 @@ export default function MyNutrition() {
 
   // Generating state
   if (generating && !plan) {
+    const patience = elapsed >= 60
+      ? 'Still working on it. This can take up to three minutes.'
+      : 'Your personalized plan is being crafted tailored to your profile, goals, and today\u2019s activity level.';
     return (
       <div className="nutrition-page">
         <div className="admin-page-header">
@@ -300,8 +318,8 @@ export default function MyNutrition() {
         </div>
         <div className="nutrition-generating">
           <div className="nutrition-generating-spinner" />
-          <h2>Generating your personalized nutrition plan...</h2>
-          <p>Your personalized plan is being crafted tailored to your profile, goals, and today&rsquo;s activity level.</p>
+          <h2>Generating your personalized nutrition plan... ({elapsed}s)</h2>
+          <p>{patience}</p>
         </div>
       </div>
     );

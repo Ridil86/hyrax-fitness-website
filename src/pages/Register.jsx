@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
+import { validatePassword } from '../utils/passwordPolicy';
 import './auth.css';
 
 export default function Register() {
@@ -17,6 +18,12 @@ export default function Register() {
   const handleSubmit = async (e) => {
     e.preventDefault();
     setError('');
+
+    const passwordIssue = validatePassword(password);
+    if (passwordIssue) {
+      setError(passwordIssue);
+      return;
+    }
 
     if (password !== confirmPassword) {
       setError('Passwords do not match.');

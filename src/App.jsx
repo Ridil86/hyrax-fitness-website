@@ -29,6 +29,7 @@ const MerchProduct = lazy(() => import('./pages/MerchProduct'));
 const Login = lazy(() => import('./pages/Login'));
 const Register = lazy(() => import('./pages/Register'));
 const ConfirmSignUp = lazy(() => import('./pages/ConfirmSignUp'));
+const ForgotPassword = lazy(() => import('./pages/ForgotPassword'));
 
 // Admin pages
 const AdminLayout = lazy(() => import('./components/AdminLayout'));
@@ -173,6 +174,7 @@ export default function App() {
             <Route path="/login" element={<LazySection><Login /></LazySection>} />
             <Route path="/register" element={<LazySection><Register /></LazySection>} />
             <Route path="/confirm" element={<LazySection><ConfirmSignUp /></LazySection>} />
+            <Route path="/forgot-password" element={<LazySection><ForgotPassword /></LazySection>} />
 
             {/* Intake wizard + welcome */}
             <Route path="/get-started" element={<LazySection><IntakeWizard /></LazySection>} />
