@@ -10,9 +10,13 @@ import { LambdaClient, InvokeCommand } from '@aws-sdk/client-lambda';
 import type { APIGatewayProxyEvent, APIGatewayProxyResult } from 'aws-lambda';
 import { success, badRequest, forbidden, notFound, serverError } from '../utils/response';
 import { extractClaims, isAdmin } from '../utils/auth';
-import { invokeClaude } from '../utils/bedrock';
 import { getEffectiveTier } from '../utils/trial';
 import { signAsyncPayload } from '../utils/asyncAuth';
+import {
+  validateNutritionCooking,
+  generateWithValidation,
+  ConstraintViolationError,
+} from '../utils/generation-validate';
 
 const client = DynamoDBDocumentClient.from(new DynamoDBClient({}));
 const lambdaClient = new LambdaClient({});
@@ -70,12 +74,13 @@ export function buildNutritionSystemPrompt(): string {
   lines.push(`2. Respect all dietary restrictions (vegan, vegetarian, halal, kosher, pescatarian, etc.) without exception. Never suggest foods that violate these restrictions.`);
   lines.push(`3. Respect food dislikes. Never include disliked foods in any meal or snack.`);
   lines.push(`4. Only suggest foods the user has access to based on their region, shopping access, and food availability.`);
+  lines.push(`5. HARD CONSTRAINT - COOKING SKILL: Respect the user's cookingSkill and kitchenEquipment. If cookingSkill is "none", every meal MUST be a no-cook preparation: cold foods, pre-made items, overnight oats, yogurt bowls, deli meats, salads, sandwiches, fruit, nuts, jerky, canned fish, cottage cheese. NEVER include stovetop, oven, grill, air-fryer, sauté, boil, simmer, fry, bake, roast, or microwave steps when the user cannot cook. For any cookingMethod other than "none", the user MUST have the matching kitchenEquipment entry (stovetop -> Stove, oven -> Oven, grill -> Grill, microwave -> Microwave, air_fryer -> Air Fryer).`);
   lines.push('');
 
   lines.push(`## Rules`);
   lines.push(`1. Account for the user's workout schedule. Provide more carbs and protein on training days. Time meals around workouts (pre-workout fuel, post-workout recovery).`);
   lines.push(`2. Match the user's caloric targets and macro preferences as closely as possible.`);
-  lines.push(`3. Respect cooking skill level, available time per meal, and kitchen equipment.`);
+  lines.push(`3. Respect available time per meal. If the user prefers under 15 minutes, keep prep time below that ceiling.`);
   lines.push(`4. Keep meal plans within the user's stated budget range.`);
   lines.push(`5. Vary meals day to day. Check previous nutrition plans and avoid repeating the same meals within 7 days.`);
   lines.push(`6. Include hydration recommendations based on training intensity, climate, and body weight.`);
@@ -84,6 +89,7 @@ export function buildNutritionSystemPrompt(): string {
   lines.push(`9. Respond ONLY with valid JSON matching the schema below. No explanation text outside the JSON.`);
   lines.push(`10. NEVER use em-dashes (--), unicode dashes, or emojis in any text field. Use commas, periods, or semicolons instead.`);
   lines.push(`11. Be concise in all text fields. Prep notes: 1-2 short sentences. Coaching notes: 2-3 sentences max. Item notes: 1 short sentence. Avoid filler words and motivational fluff.`);
+  lines.push(`12. Every meal MUST include requiresCooking (boolean), cookingMethod (one of: none, microwave, stovetop, oven, grill, air_fryer, other), and prepTimeMinutes (integer). These fields are validated programmatically after you respond; a plan that misses or mis-sets them will be rejected.`);
   lines.push('');
 
   // JSON response schema
@@ -106,6 +112,9 @@ export function buildNutritionSystemPrompt(): string {
         items: [{ food: 'Rolled Oats', amount: '1 cup', calories: 300, notes: '' }],
         prepNotes: 'Quick cooking instructions',
         timing: 'Pre-workout or null',
+        requiresCooking: false,
+        cookingMethod: 'none',
+        prepTimeMinutes: 5,
       }],
       hydration: { target: '3L', notes: 'Hydration guidance' },
       supplements: [{ name: 'Creatine', dosage: '5g', timing: 'Post-workout' }],
@@ -137,14 +146,30 @@ export function buildNutritionUserPrompt(
 
   // ── ALLERGEN ALERT (first, prominent) ──
   const allergies = nutritionProfile.allergies || [];
+  const otherAllergies = (nutritionProfile.otherAllergies || '').trim();
   lines.push(`## !! ALLERGEN ALERT !!`);
-  if (allergies.length > 0) {
+  if (allergies.length > 0 || otherAllergies) {
     lines.push(`THE FOLLOWING ARE CONFIRMED ALLERGIES. NEVER include ANY food containing these allergens:`);
-    lines.push(`ALLERGIES: ${allergies.join(', ')}`);
+    if (allergies.length > 0) lines.push(`ALLERGIES: ${allergies.join(', ')}`);
+    if (otherAllergies) lines.push(`OTHER ALLERGIES: ${otherAllergies}`);
+    if (nutritionProfile.allergySeverity) {
+      lines.push(`Severity: ${nutritionProfile.allergySeverity}`);
+    }
   } else {
     lines.push(`No known allergies reported.`);
   }
   lines.push('');
+
+  // ── NO-COOK REQUIREMENT (only when cookingSkill === 'none') ──
+  const cookingSkillRaw = String(nutritionProfile.cookingSkill || '').toLowerCase();
+  if (cookingSkillRaw === 'none') {
+    lines.push(`## !! NO-COOK REQUIREMENT !!`);
+    lines.push(`THE USER CANNOT COOK. Every single meal in this plan MUST be assembled with zero cooking.`);
+    lines.push(`ALLOWED: cold foods, pre-made items, deli meats, overnight oats, yogurt bowls, salads, sandwiches, wraps, fruit, nuts, jerky, canned tuna or salmon, cottage cheese, hummus, hard-boiled eggs (pre-made), pre-cooked rotisserie chicken.`);
+    lines.push(`BANNED: stovetop, oven, grill, air-fryer, microwave, sautéing, boiling, simmering, frying, baking, roasting, broiling, steaming. Do NOT instruct the user to heat anything.`);
+    lines.push(`Every meal must have requiresCooking=false and cookingMethod="none".`);
+    lines.push('');
+  }
 
   // ── Dietary Restrictions ──
   lines.push(`## Dietary Restrictions`);
@@ -164,13 +189,11 @@ export function buildNutritionUserPrompt(
 
   // ── Food Access & Budget ──
   lines.push(`## Food Access & Budget`);
-  lines.push(`Shopping access: ${nutritionProfile.shoppingAccess || 'standard grocery store'}`);
+  const foodAccess = nutritionProfile.foodAccess || [];
+  lines.push(`Shopping access: ${foodAccess.length > 0 ? foodAccess.join(', ') : 'standard grocery store'}`);
   lines.push(`Budget range: ${nutritionProfile.budgetRange || 'moderate'}`);
-  if (nutritionProfile.region) {
-    lines.push(`Region: ${nutritionProfile.region}`);
-  }
-  if (nutritionProfile.foodAccessNotes) {
-    lines.push(`Notes: ${nutritionProfile.foodAccessNotes}`);
+  if (nutritionProfile.regionalFoodNotes) {
+    lines.push(`Regional notes: ${nutritionProfile.regionalFoodNotes}`);
   }
   lines.push('');
 
@@ -180,28 +203,52 @@ export function buildNutritionUserPrompt(
   if (nutritionProfile.mealTimes) {
     lines.push(`Preferred meal times: ${nutritionProfile.mealTimes}`);
   }
-  lines.push(`Snacking: ${nutritionProfile.snacking || 'moderate'}`);
-  if (nutritionProfile.fastingSchedule) {
-    lines.push(`Fasting schedule: ${nutritionProfile.fastingSchedule}`);
+  lines.push(`Snacking preference: ${nutritionProfile.snackingPreference || 'light'}`);
+  if (nutritionProfile.intermittentFasting) {
+    lines.push(`Intermittent fasting: yes${nutritionProfile.fastingWindow ? ` (window: ${nutritionProfile.fastingWindow})` : ''}`);
   }
   lines.push('');
 
   // ── Cooking Profile ──
+  const timeMap: Record<string, string> = {
+    under_15: 'under 15 min',
+    '15_30': '15 to 30 min',
+    '30_60': '30 to 60 min',
+    '60_plus': '60+ min',
+  };
+  const cookingTimeLabel = timeMap[nutritionProfile.cookingTimePerMeal as string] || (nutritionProfile.cookingTimePerMeal || 'flexible');
   lines.push(`## Cooking Profile`);
   lines.push(`Cooking skill: ${nutritionProfile.cookingSkill || 'intermediate'}`);
-  lines.push(`Time per meal: ${nutritionProfile.timePerMeal || '15-30 minutes'}`);
-  lines.push(`Kitchen equipment: ${(nutritionProfile.kitchenEquipment || []).join(', ') || 'standard kitchen'}`);
-  if (nutritionProfile.mealPrepPreference) {
-    lines.push(`Meal prep preference: ${nutritionProfile.mealPrepPreference}`);
-  }
+  lines.push(`Max prep time per meal: ${cookingTimeLabel}`);
+  const kitchenEquipment = nutritionProfile.kitchenEquipment || [];
+  lines.push(`Kitchen equipment available: ${kitchenEquipment.length > 0 ? kitchenEquipment.join(', ') : 'none specified'}`);
   lines.push('');
 
   // ── Caloric Goals & Macros ──
   lines.push(`## Caloric Goals & Macros`);
-  lines.push(`Daily calorie target: ${nutritionProfile.calorieTarget || 'not specified'}`);
-  if (nutritionProfile.macroTargets) {
-    const mt = nutritionProfile.macroTargets;
-    lines.push(`Macro targets: Protein ${mt.protein || 'flexible'}, Carbs ${mt.carbs || 'flexible'}, Fat ${mt.fat || 'flexible'}`);
+  const caloricGoalRaw = String(nutritionProfile.caloricGoal || '').toLowerCase();
+  const caloricGoalLabel: Record<string, string> = {
+    lose: 'lose weight (caloric deficit)',
+    maintain: 'maintain weight',
+    gain: 'gain weight (caloric surplus)',
+    specific: 'specific calorie target',
+  };
+  if (caloricGoalRaw) {
+    lines.push(`Caloric goal: ${caloricGoalLabel[caloricGoalRaw] || caloricGoalRaw}`);
+  }
+  if (caloricGoalRaw === 'specific' && nutritionProfile.specificCalories) {
+    lines.push(`Specific daily calorie target: ${nutritionProfile.specificCalories} kcal`);
+  }
+  const macroPrefRaw = String(nutritionProfile.macroPreference || '').toLowerCase();
+  const macroPrefLabel: Record<string, string> = {
+    balanced: 'balanced (even macro split)',
+    high_protein: 'high protein emphasis',
+    high_carb: 'higher carb emphasis',
+    low_carb: 'reduced carbs',
+    keto: 'keto (very low carb, high fat)',
+  };
+  if (macroPrefRaw) {
+    lines.push(`Macro preference: ${macroPrefLabel[macroPrefRaw] || macroPrefRaw}`);
   }
   if (nutritionProfile.weight) {
     lines.push(`Weight: ${nutritionProfile.weight}${nutritionProfile.weightUnit || 'lbs'}`);
@@ -209,18 +256,17 @@ export function buildNutritionUserPrompt(
   if (nutritionProfile.height) {
     lines.push(`Height: ${nutritionProfile.height}`);
   }
-  if (nutritionProfile.weightGoal) {
-    lines.push(`Weight goal: ${nutritionProfile.weightGoal}`);
-  }
   lines.push('');
 
   // ── Supplements & Hydration ──
   lines.push(`## Supplements & Hydration`);
-  const supplements = nutritionProfile.currentSupplements || [];
+  const supplements = nutritionProfile.supplements || [];
   lines.push(`Current supplements: ${supplements.length > 0 ? supplements.join(', ') : 'None'}`);
-  lines.push(`Daily water intake: ${nutritionProfile.waterIntake || 'not tracked'}`);
-  if (nutritionProfile.caffeineIntake) {
-    lines.push(`Caffeine intake: ${nutritionProfile.caffeineIntake}`);
+  if (nutritionProfile.dailyWaterIntake) {
+    lines.push(`Daily water target: ${nutritionProfile.dailyWaterIntake} L`);
+  }
+  if (nutritionProfile.caffeineConsumption) {
+    lines.push(`Caffeine consumption: ${nutritionProfile.caffeineConsumption}`);
   }
   lines.push('');
 
@@ -560,57 +606,71 @@ export async function generateNutritionAsync(payload: {
       recentMealLogs
     );
 
-    // Call Bedrock
-    const result = await invokeClaude(systemPrompt, userPrompt, { maxTokens: 4096 });
-
-    // Parse JSON from response
-    let dailyNutrition: any;
+    // Call Bedrock, validate cooking constraints, regenerate once on violation.
     try {
-      const parsed = JSON.parse(result.content);
-      dailyNutrition = parsed.dailyNutrition || parsed;
-    } catch {
-      const jsonMatch = result.content.match(/```(?:json)?\s*([\s\S]*?)```/);
-      if (jsonMatch) {
-        const parsed = JSON.parse(jsonMatch[1].trim());
-        dailyNutrition = parsed.dailyNutrition || parsed;
-      } else {
-        console.error('Failed to parse Bedrock response:', result.content.slice(0, 500));
-        await client.send(new PutCommand({
-          TableName: TABLE_NAME,
-          Item: {
-            pk: `USER#${userSub}`,
-            sk: `DAILY_NUTRITION#${today}`,
-            gsi1pk: 'DAILY_NUTRITION',
-            gsi1sk: `${today}#${userSub}`,
-            status: 'error',
-            date: today,
-            error: 'AI returned invalid response format',
-            generatedAt: new Date().toISOString(),
-          },
-        }));
-        return;
-      }
+      const gen = await generateWithValidation<any>({
+        systemPrompt,
+        userPrompt,
+        maxTokens: 4096,
+        label: `nutrition/${userSub}/${today}`,
+        parse: (raw) => {
+          let dn: any;
+          try {
+            const parsed = JSON.parse(raw);
+            dn = parsed.dailyNutrition || parsed;
+          } catch {
+            const m = raw.match(/```(?:json)?\s*([\s\S]*?)```/);
+            if (!m) throw new Error('AI returned invalid response format');
+            const parsed = JSON.parse(m[1].trim());
+            dn = parsed.dailyNutrition || parsed;
+          }
+          return dn;
+        },
+        validate: (dn) => validateNutritionCooking(dn, profile.nutritionProfile),
+        buildRetryAddendum: (violations) =>
+          `## RETRY: PREVIOUS RESPONSE VIOLATED HARD CONSTRAINTS\n` +
+          `Your previous plan had these constraint violations:\n` +
+          violations.map((v) => `- ${v}`).join('\n') +
+          `\nRegenerate. Every meal must set requiresCooking and cookingMethod correctly. If the user has cookingSkill="none", every meal MUST have requiresCooking=false and cookingMethod="none" with zero cooking verbs in prepNotes. Only use cookingMethods the user's kitchenEquipment supports.`,
+      });
+
+      const dailyNutrition = gen.parsed;
+      dailyNutrition.date = today;
+
+      const item = {
+        pk: `USER#${userSub}`,
+        sk: `DAILY_NUTRITION#${today}`,
+        gsi1pk: 'DAILY_NUTRITION',
+        gsi1sk: `${today}#${userSub}`,
+        ...dailyNutrition,
+        status: 'ready',
+        generatedAt: new Date().toISOString(),
+        modelId: 'us.anthropic.claude-haiku-4-5-20251001-v1:0',
+        tokenUsage: gen.totalUsage,
+        generationCount: prevGenCount + 1,
+      };
+      await client.send(new PutCommand({ TableName: TABLE_NAME, Item: item }));
+      console.log(`Nutrition plan generated for ${userSub} on ${today} (attempts=${gen.attempts})`);
+    } catch (err) {
+      const violationErr = err instanceof ConstraintViolationError ? err : null;
+      const errorMsg = violationErr
+        ? `Generated plan violated cooking constraints even after retry: ${violationErr.violations.join('; ')}`
+        : (err instanceof Error ? err.message : 'AI returned invalid response format');
+      console.error('generateNutritionAsync validation/parse failed:', errorMsg);
+      await client.send(new PutCommand({
+        TableName: TABLE_NAME,
+        Item: {
+          pk: `USER#${userSub}`,
+          sk: `DAILY_NUTRITION#${today}`,
+          gsi1pk: 'DAILY_NUTRITION',
+          gsi1sk: `${today}#${userSub}`,
+          status: 'error',
+          date: today,
+          error: errorMsg,
+          generatedAt: new Date().toISOString(),
+        },
+      }));
     }
-
-    // Ensure date is set
-    dailyNutrition.date = today;
-
-    // Store in DynamoDB
-    const item = {
-      pk: `USER#${userSub}`,
-      sk: `DAILY_NUTRITION#${today}`,
-      gsi1pk: 'DAILY_NUTRITION',
-      gsi1sk: `${today}#${userSub}`,
-      ...dailyNutrition,
-      status: 'ready',
-      generatedAt: new Date().toISOString(),
-      modelId: 'us.anthropic.claude-haiku-4-5-20251001-v1:0',
-      tokenUsage: result.usage,
-      generationCount: prevGenCount + 1,
-    };
-
-    await client.send(new PutCommand({ TableName: TABLE_NAME, Item: item }));
-    console.log(`Nutrition plan generated for ${userSub} on ${today}`);
   } catch (error) {
     console.error('generateNutritionAsync error:', error);
     // Save error status

@@ -10,9 +10,15 @@ import { LambdaClient, InvokeCommand } from '@aws-sdk/client-lambda';
 import type { APIGatewayProxyEvent, APIGatewayProxyResult } from 'aws-lambda';
 import { success, badRequest, forbidden, notFound, serverError } from '../utils/response';
 import { extractClaims, isAdmin } from '../utils/auth';
-import { invokeClaude } from '../utils/bedrock';
 import { getEffectiveTier } from '../utils/trial';
 import { signAsyncPayload } from '../utils/asyncAuth';
+import {
+  filterExercisesByEquipment,
+  filterEquipmentByIds,
+  validateWorkoutEquipment,
+  generateWithValidation,
+  ConstraintViolationError,
+} from '../utils/generation-validate';
 
 const client = DynamoDBDocumentClient.from(new DynamoDBClient({}));
 const lambdaClient = new LambdaClient({});
@@ -72,20 +78,24 @@ function buildSystemPrompt(
   lines.push(`The Hyrax training system is inspired by the rock hyrax, an animal that thrives in rugged terrain through explosive movement, endurance, and community. Every workout follows the Forage-Bask cycle: high-effort training bouts (Forage) followed by structured cooldown and recovery (Bask). Workouts emphasize functional, compound movements with progressive overload.`);
   lines.push('');
 
+  lines.push(`## CRITICAL SAFETY RULES`);
+  lines.push(`1. HARD CONSTRAINT - EQUIPMENT: Every exercise's equipment array MUST be a subset of the Exercise Catalog entries you see below. The catalog has already been filtered to equipment the user owns. NEVER suggest a modification that requires equipment not listed in the catalog. This is not a preference; it is a physical requirement.`);
+  lines.push(`2. HARD CONSTRAINT - INJURIES: Never prescribe movements that contraindicate the user's stated injuries or limitations.`);
+  lines.push('');
+
   lines.push(`## Rules`);
   lines.push(`1. Use ONLY exercises from the Exercise Catalog below. Never invent exercises.`);
-  lines.push(`2. Select the exercise modification level matching the user's experience level. If they lack the required equipment for that level, drop DOWN to the nearest level they can perform.`);
+  lines.push(`2. Select the exercise modification level matching the user's experience level. If their level is not listed for an exercise (because it required equipment they do not own), pick the nearest available level from the ones shown. Only modifications that appear in the catalog below are usable - others have been filtered out.`);
   lines.push(`3. Ensure proper muscle group rotation: examine the user's recent workout history and avoid programming the same primary movement pattern (tags) on consecutive days.`);
   lines.push(`4. Include a warm-up section (3-5 min dynamic movement) at the start of every training day.`);
   lines.push(`5. Include a Bask (cooldown) section (3-5 min stretching + breathing) at the end of every training day.`);
-  lines.push(`6. Avoid exercises that contraindicate the user's stated injuries or limitations.`);
-  lines.push(`7. Respect the user's preferred session duration, training environment, and available equipment.`);
-  lines.push(`8. If the user has trained intensely for 3+ consecutive days (based on history), suggest a rest day or active recovery.`);
-  lines.push(`9. Use the workout templates as structural inspiration (round format, AMRAP, intervals, etc.) but adapt exercises and volume to the individual user.`);
-  lines.push(`10. Respond ONLY with valid JSON matching the schema below. No explanation text outside the JSON.`);
-  lines.push(`11. For premium (Iron Dassie) tier users, include a brief nutrition timing suggestion in coachingNotes (e.g., pre-workout fueling, post-workout protein window, hydration tips).`);
-  lines.push(`12. NEVER use em-dashes (--), unicode dashes, or emojis in any text field. Use commas, periods, or semicolons instead.`);
-  lines.push(`13. Be concise in all text fields. Warm-up and Bask descriptions: 1-2 short sentences max (under 120 characters). Modification descriptions: 1 sentence. Coaching notes: 2-3 sentences max. Exercise notes: 1 short sentence. Avoid filler words and motivational fluff.`);
+  lines.push(`6. Respect the user's preferred session duration and training environment.`);
+  lines.push(`7. If the user has trained intensely for 3+ consecutive days (based on history), suggest a rest day or active recovery.`);
+  lines.push(`8. Use the workout templates as structural inspiration (round format, AMRAP, intervals, etc.) but adapt exercises and volume to the individual user.`);
+  lines.push(`9. Respond ONLY with valid JSON matching the schema below. No explanation text outside the JSON.`);
+  lines.push(`10. For premium (Iron Dassie) tier users, include a brief nutrition timing suggestion in coachingNotes (e.g., pre-workout fueling, post-workout protein window, hydration tips).`);
+  lines.push(`11. NEVER use em-dashes (--), unicode dashes, or emojis in any text field. Use commas, periods, or semicolons instead.`);
+  lines.push(`12. Be concise in all text fields. Warm-up and Bask descriptions: 1-2 short sentences max (under 120 characters). Modification descriptions: 1 sentence. Coaching notes: 2-3 sentences max. Exercise notes: 1 short sentence. Avoid filler words and motivational fluff.`);
   lines.push('');
 
   // Exercise catalog
@@ -601,6 +611,12 @@ export async function generateRoutineAsync(payload: {
     const workouts = workoutResult.Items || [];
     const equipment = equipmentResult.Items || [];
 
+    // Filter catalogs to only exercises/equipment the user can actually use.
+    // The AI cannot select an exercise it never sees.
+    const allowedIds = new Set<string>(profile.fitnessProfile.availableEquipment || []);
+    const filteredExercises = filterExercisesByEquipment(exercises, allowedIds);
+    const filteredEquipment = filterEquipmentByIds(equipment, allowedIds);
+
     // Load user context in parallel
     const fourteenDaysAgo = daysAgo(14);
     const [logsResult, dailyWorkoutsResult] = await Promise.all([
@@ -629,75 +645,88 @@ export async function generateRoutineAsync(payload: {
     const recentLogs = logsResult.Items || [];
     const recentDailyWorkouts = dailyWorkoutsResult.Items || [];
 
-    // Build prompts
+    // Build prompts against the FILTERED catalog
     const nutritionContext = profile.nutritionProfile ? {
       caloricGoal: profile.nutritionProfile.caloricGoal,
       macroPreference: profile.nutritionProfile.macroPreference,
       allergies: profile.nutritionProfile.allergies,
     } : null;
-    const systemPrompt = buildSystemPrompt(exercises, workouts, equipment);
+    const systemPrompt = buildSystemPrompt(filteredExercises, workouts, filteredEquipment);
     const userPrompt = buildUserPrompt(
       profile.fitnessProfile,
       recentLogs,
       recentDailyWorkouts,
-      exercises,
+      filteredExercises,
       today,
       userTier,
       nutritionContext
     );
 
-    // Call Bedrock
-    const result = await invokeClaude(systemPrompt, userPrompt, { maxTokens: 4096 });
-
-    // Parse JSON from response
-    let dailyWorkout: any;
+    // Call Bedrock, validate equipment, regenerate once on violation.
     try {
-      const parsed = JSON.parse(result.content);
-      dailyWorkout = parsed.dailyWorkout || parsed;
-    } catch {
-      const jsonMatch = result.content.match(/```(?:json)?\s*([\s\S]*?)```/);
-      if (jsonMatch) {
-        const parsed = JSON.parse(jsonMatch[1].trim());
-        dailyWorkout = parsed.dailyWorkout || parsed;
-      } else {
-        console.error('Failed to parse Bedrock response:', result.content.slice(0, 500));
-        // Save error status so frontend can show error
-        await client.send(new PutCommand({
-          TableName: TABLE_NAME,
-          Item: {
-            pk: `USER#${userSub}`,
-            sk: `DAILY_WORKOUT#${today}`,
-            gsi1pk: 'DAILY_WORKOUT',
-            gsi1sk: `${today}#${userSub}`,
-            status: 'error',
-            date: today,
-            error: 'AI returned invalid response format',
-            generatedAt: new Date().toISOString(),
-          },
-        }));
-        return;
-      }
+      const gen = await generateWithValidation<any>({
+        systemPrompt,
+        userPrompt,
+        maxTokens: 4096,
+        label: `routine/${userSub}/${today}`,
+        parse: (raw) => {
+          let dw: any;
+          try {
+            const parsed = JSON.parse(raw);
+            dw = parsed.dailyWorkout || parsed;
+          } catch {
+            const m = raw.match(/```(?:json)?\s*([\s\S]*?)```/);
+            if (!m) throw new Error('AI returned invalid response format');
+            const parsed = JSON.parse(m[1].trim());
+            dw = parsed.dailyWorkout || parsed;
+          }
+          return dw;
+        },
+        validate: (dw) => validateWorkoutEquipment(dw, allowedIds),
+        buildRetryAddendum: (violations) =>
+          `## RETRY: PREVIOUS RESPONSE VIOLATED HARD CONSTRAINTS\n` +
+          `Your previous workout included equipment the user does not own:\n` +
+          violations.map((v) => `- ${v}`).join('\n') +
+          `\nRegenerate. Every exercise's equipment array MUST contain only equipment IDs present in the Exercise Catalog above. If no suitable modification exists for a given exercise, pick a different exercise. Allowed equipment IDs: ${Array.from(allowedIds).join(', ') || '(bodyweight only)'}.`,
+      });
+
+      const dailyWorkout = gen.parsed;
+      dailyWorkout.date = today;
+
+      const item = {
+        pk: `USER#${userSub}`,
+        sk: `DAILY_WORKOUT#${today}`,
+        gsi1pk: 'DAILY_WORKOUT',
+        gsi1sk: `${today}#${userSub}`,
+        ...dailyWorkout,
+        status: 'ready',
+        generatedAt: new Date().toISOString(),
+        modelId: 'us.anthropic.claude-haiku-4-5-20251001-v1:0',
+        tokenUsage: gen.totalUsage,
+        generationCount: prevGenCount + 1,
+      };
+      await client.send(new PutCommand({ TableName: TABLE_NAME, Item: item }));
+      console.log(`Routine generated for ${userSub} on ${today} (attempts=${gen.attempts})`);
+    } catch (err) {
+      const violationErr = err instanceof ConstraintViolationError ? err : null;
+      const errorMsg = violationErr
+        ? `Generated workout violated equipment constraints even after retry: ${violationErr.violations.join('; ')}`
+        : (err instanceof Error ? err.message : 'AI returned invalid response format');
+      console.error('generateRoutineAsync validation/parse failed:', errorMsg);
+      await client.send(new PutCommand({
+        TableName: TABLE_NAME,
+        Item: {
+          pk: `USER#${userSub}`,
+          sk: `DAILY_WORKOUT#${today}`,
+          gsi1pk: 'DAILY_WORKOUT',
+          gsi1sk: `${today}#${userSub}`,
+          status: 'error',
+          date: today,
+          error: errorMsg,
+          generatedAt: new Date().toISOString(),
+        },
+      }));
     }
-
-    // Ensure date is set
-    dailyWorkout.date = today;
-
-    // Store in DynamoDB
-    const item = {
-      pk: `USER#${userSub}`,
-      sk: `DAILY_WORKOUT#${today}`,
-      gsi1pk: 'DAILY_WORKOUT',
-      gsi1sk: `${today}#${userSub}`,
-      ...dailyWorkout,
-      status: 'ready',
-      generatedAt: new Date().toISOString(),
-      modelId: 'us.anthropic.claude-haiku-4-5-20251001-v1:0',
-      tokenUsage: result.usage,
-      generationCount: prevGenCount + 1,
-    };
-
-    await client.send(new PutCommand({ TableName: TABLE_NAME, Item: item }));
-    console.log(`Routine generated for ${userSub} on ${today}`);
   } catch (error) {
     console.error('generateRoutineAsync error:', error);
     // Save error status
@@ -841,13 +870,18 @@ export async function swapRoutineAsync(payload: {
     ]);
 
     const exercises = exerciseResult.Items || [];
-    const systemPrompt = buildSystemPrompt(exercises, workoutResult.Items || [], equipmentResult.Items || []);
+    const equipment = equipmentResult.Items || [];
+    const allowedIds = new Set<string>(profile.fitnessProfile.availableEquipment || []);
+    const filteredExercises = filterExercisesByEquipment(exercises, allowedIds);
+    const filteredEquipment = filterEquipmentByIds(equipment, allowedIds);
+
+    const systemPrompt = buildSystemPrompt(filteredExercises, workoutResult.Items || [], filteredEquipment);
     const swapNutritionContext = profile.nutritionProfile ? {
       caloricGoal: profile.nutritionProfile.caloricGoal,
       macroPreference: profile.nutritionProfile.macroPreference,
       allergies: profile.nutritionProfile.allergies,
     } : null;
-    let userPrompt = buildUserPrompt(profile.fitnessProfile, logsResult.Items || [], dailyWorkoutsResult.Items || [], exercises, today, userTier, swapNutritionContext);
+    let userPrompt = buildUserPrompt(profile.fitnessProfile, logsResult.Items || [], dailyWorkoutsResult.Items || [], filteredExercises, today, userTier, swapNutritionContext);
 
     userPrompt += `\n## SWAP REQUEST\n`;
     userPrompt += `The user rejected this workout: "${rejectedTitle}" (focus: ${rejectedFocus.join(', ')})\n`;
@@ -855,48 +889,65 @@ export async function swapRoutineAsync(payload: {
     if (avoidFocus.length > 0) userPrompt += `Avoid focus areas: ${avoidFocus.join(', ')}\n`;
     if (preferFocus.length > 0) userPrompt += `Prefer focus areas: ${preferFocus.join(', ')}\n`;
 
-    const result = await invokeClaude(systemPrompt, userPrompt, { maxTokens: 4096 });
-
-    let dailyWorkout: any;
     try {
-      const parsed = JSON.parse(result.content);
-      dailyWorkout = parsed.dailyWorkout || parsed;
-    } catch {
-      const jsonMatch = result.content.match(/```(?:json)?\s*([\s\S]*?)```/);
-      if (jsonMatch) {
-        const parsed = JSON.parse(jsonMatch[1].trim());
-        dailyWorkout = parsed.dailyWorkout || parsed;
-      } else {
-        console.error('Swap: failed to parse response:', result.content.slice(0, 500));
-        await client.send(new PutCommand({
-          TableName: TABLE_NAME,
-          Item: {
-            pk: `USER#${userSub}`, sk: `DAILY_WORKOUT#${today}`,
-            gsi1pk: 'DAILY_WORKOUT', gsi1sk: `${today}#${userSub}`,
-            status: 'error', date: today, error: 'AI returned invalid format',
-            generatedAt: new Date().toISOString(), swapCount,
-          },
-        }));
-        return;
-      }
+      const gen = await generateWithValidation<any>({
+        systemPrompt,
+        userPrompt,
+        maxTokens: 4096,
+        label: `routine-swap/${userSub}/${today}`,
+        parse: (raw) => {
+          let dw: any;
+          try {
+            const parsed = JSON.parse(raw);
+            dw = parsed.dailyWorkout || parsed;
+          } catch {
+            const m = raw.match(/```(?:json)?\s*([\s\S]*?)```/);
+            if (!m) throw new Error('AI returned invalid format');
+            const parsed = JSON.parse(m[1].trim());
+            dw = parsed.dailyWorkout || parsed;
+          }
+          return dw;
+        },
+        validate: (dw) => validateWorkoutEquipment(dw, allowedIds),
+        buildRetryAddendum: (violations) =>
+          `## RETRY: PREVIOUS RESPONSE VIOLATED HARD CONSTRAINTS\n` +
+          `Your previous swap included equipment the user does not own:\n` +
+          violations.map((v) => `- ${v}`).join('\n') +
+          `\nRegenerate. Allowed equipment IDs: ${Array.from(allowedIds).join(', ') || '(bodyweight only)'}.`,
+      });
+
+      const dailyWorkout = gen.parsed;
+      dailyWorkout.date = today;
+      const item = {
+        pk: `USER#${userSub}`,
+        sk: `DAILY_WORKOUT#${today}`,
+        gsi1pk: 'DAILY_WORKOUT',
+        gsi1sk: `${today}#${userSub}`,
+        ...dailyWorkout,
+        status: 'ready',
+        generatedAt: new Date().toISOString(),
+        modelId: 'us.anthropic.claude-haiku-4-5-20251001-v1:0',
+        tokenUsage: gen.totalUsage,
+        swapCount,
+      };
+      await client.send(new PutCommand({ TableName: TABLE_NAME, Item: item }));
+      console.log(`Swap completed for ${userSub} on ${today} (attempts=${gen.attempts})`);
+    } catch (err) {
+      const violationErr = err instanceof ConstraintViolationError ? err : null;
+      const errorMsg = violationErr
+        ? `Swap violated equipment constraints even after retry: ${violationErr.violations.join('; ')}`
+        : (err instanceof Error ? err.message : 'AI returned invalid format');
+      console.error('Swap validation/parse failed:', errorMsg);
+      await client.send(new PutCommand({
+        TableName: TABLE_NAME,
+        Item: {
+          pk: `USER#${userSub}`, sk: `DAILY_WORKOUT#${today}`,
+          gsi1pk: 'DAILY_WORKOUT', gsi1sk: `${today}#${userSub}`,
+          status: 'error', date: today, error: errorMsg,
+          generatedAt: new Date().toISOString(), swapCount,
+        },
+      }));
     }
-
-    dailyWorkout.date = today;
-    const item = {
-      pk: `USER#${userSub}`,
-      sk: `DAILY_WORKOUT#${today}`,
-      gsi1pk: 'DAILY_WORKOUT',
-      gsi1sk: `${today}#${userSub}`,
-      ...dailyWorkout,
-      status: 'ready',
-      generatedAt: new Date().toISOString(),
-      modelId: 'us.anthropic.claude-haiku-4-5-20251001-v1:0',
-      tokenUsage: result.usage,
-      swapCount,
-    };
-
-    await client.send(new PutCommand({ TableName: TABLE_NAME, Item: item }));
-    console.log(`Swap completed for ${userSub} on ${today}`);
   } catch (error) {
     console.error('swapRoutineAsync error:', error);
     // Restore the original workout status instead of destroying it
@@ -990,12 +1041,17 @@ export async function previewPrompts(
     const recentLogs = logsResult.Items || [];
     const recentDailyWorkouts = dailyWorkoutsResult.Items || [];
 
-    const systemPrompt = buildSystemPrompt(exercises, workouts, equipment);
+    // Mirror the live generator's catalog filtering so admins see the actual prompt.
+    const allowedIds = new Set<string>(profile.fitnessProfile.availableEquipment || []);
+    const filteredExercises = filterExercisesByEquipment(exercises, allowedIds);
+    const filteredEquipment = filterEquipmentByIds(equipment, allowedIds);
+
+    const systemPrompt = buildSystemPrompt(filteredExercises, workouts, filteredEquipment);
     const userPrompt = buildUserPrompt(
       profile.fitnessProfile,
       recentLogs,
       recentDailyWorkouts,
-      exercises,
+      filteredExercises,
       today,
       profile.tier
     );
@@ -1008,9 +1064,12 @@ export async function previewPrompts(
       userPrompt,
       estimatedTokens,
       catalogStats: {
-        exercises: exercises.length,
+        exercises: filteredExercises.length,
+        exercisesBeforeFilter: exercises.length,
         workouts: workouts.length,
-        equipment: equipment.length,
+        equipment: filteredEquipment.length,
+        equipmentBeforeFilter: equipment.length,
+        allowedEquipmentIds: Array.from(allowedIds),
       },
       contextStats: {
         recentLogs: recentLogs.length,
