@@ -4,6 +4,45 @@ import type { APIGatewayProxyEvent, APIGatewayProxyResult } from 'aws-lambda';
 import { success, created, badRequest, forbidden, notFound, serverError } from '../utils/response';
 import { extractClaims, isAdmin } from '../utils/auth';
 import { isTrialActive, getEffectiveTier, buildTrialFields } from '../utils/trial';
+
+/**
+ * Legacy profile rows created before the trial feature rolled out have no
+ * `trialEndsAt` field. Once, on first read, grant those accounts a fresh
+ * 7-day trial window. The conditional update makes this idempotent — a
+ * concurrent or subsequent call sees the attribute already set and skips.
+ * Returns the backfilled trial fields when applied, null otherwise.
+ */
+async function backfillTrialIfMissing(
+  ddb: DynamoDBDocumentClient,
+  tableName: string,
+  sub: string,
+  existing: Record<string, unknown>
+): Promise<{ trialStartedAt: string; trialEndsAt: string } | null> {
+  if (existing.trialEndsAt) return null;
+  const fields = buildTrialFields();
+  try {
+    await ddb.send(
+      new UpdateCommand({
+        TableName: tableName,
+        Key: { pk: `USER#${sub}`, sk: 'PROFILE' },
+        UpdateExpression:
+          'SET trialStartedAt = :tsa, trialEndsAt = :tea, updatedAt = :now',
+        ConditionExpression: 'attribute_not_exists(trialEndsAt)',
+        ExpressionAttributeValues: {
+          ':tsa': fields.trialStartedAt,
+          ':tea': fields.trialEndsAt,
+          ':now': new Date().toISOString(),
+        },
+      })
+    );
+    console.log(`getProfile: backfilled trial for ${sub}`);
+    return fields;
+  } catch (err: any) {
+    if (err?.name === 'ConditionalCheckFailedException') return null;
+    console.warn('backfillTrialIfMissing failed:', err);
+    return null;
+  }
+}
 import {
   limitString,
   limitStringOptional,
@@ -43,10 +82,18 @@ export async function getProfile(
       return notFound('Profile not found');
     }
 
+    const backfilled = await backfillTrialIfMissing(
+      client,
+      TABLE_NAME,
+      claims.sub,
+      result.Item
+    );
+    const item = backfilled ? { ...result.Item, ...backfilled } : result.Item;
+
     return success({
-      ...result.Item,
-      isTrialActive: isTrialActive(result.Item),
-      effectiveTier: getEffectiveTier(result.Item),
+      ...item,
+      isTrialActive: isTrialActive(item),
+      effectiveTier: getEffectiveTier(item),
     });
   } catch (error) {
     console.error('getProfile error:', error);
@@ -89,7 +136,33 @@ export async function createProfile(
       })
     );
 
+    // If a profile already exists, only backfill trial fields if they're
+    // missing (e.g. a pre-trial-feature legacy row, or a row created by an
+    // alternate path that forgot to set them). This is the moment the user
+    // actually completes the onboarding contract, so it's the right place
+    // to grant the trial.
     if (existing.Item) {
+      if (!existing.Item.trialEndsAt) {
+        const backfill = buildTrialFields();
+        await client.send(
+          new UpdateCommand({
+            TableName: TABLE_NAME,
+            Key: {
+              pk: `USER#${claims.sub}`,
+              sk: 'PROFILE',
+            },
+            UpdateExpression:
+              'SET trialStartedAt = :tsa, trialEndsAt = :tea, updatedAt = :now',
+            ExpressionAttributeValues: {
+              ':tsa': backfill.trialStartedAt,
+              ':tea': backfill.trialEndsAt,
+              ':now': new Date().toISOString(),
+            },
+          })
+        );
+        console.log(`createProfile: backfilled trial for ${claims.sub}`);
+        return success({ ...existing.Item, ...backfill });
+      }
       return success(existing.Item);
     }
 
